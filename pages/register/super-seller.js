@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useRouter } from 'next/router'
 import {
   Store,
   MapPin,
@@ -38,6 +39,8 @@ export default function SuperSellerRegister() {
 
   const [showPassword, setShowPassword] = useState(false)
 
+  const router = useRouter()
+
   function handleChange(e) {
     const { name, value } = e.target
 
@@ -73,8 +76,8 @@ export default function SuperSellerRegister() {
 
     setLoginSubmitted(true)
 
-    // Example:
-    // navigate('/seller/dashboard')
+    // Redirect to seller dashboard after successful login
+    router.push('/seller/dashboard')
   }
 
   /* ================================================= */

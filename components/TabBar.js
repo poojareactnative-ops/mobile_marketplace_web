@@ -13,6 +13,9 @@ import {
 export default function TabBar() {
   const pathname = usePathname()
 
+  // Hide TabBar on seller dashboard and related seller routes
+  if (pathname && pathname.startsWith('/seller')) return null
+
   const navItems = [
     {
       href: '/',
