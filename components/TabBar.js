@@ -8,15 +8,22 @@ import {
   UserPlus,
   ShoppingCart,
 } from 'lucide-react'
+import { useEffect, useState } from 'react'
 
 export default function TabBar() {
-  // `usePathname` from App Router isn't available in Pages router.
-  // Use a safe runtime fallback to `window.location.pathname` so TabBar
-  // doesn't crash when rendered under the pages/ router.
-  const pathname = typeof window !== 'undefined' ? window.location.pathname : ''
+  const [mounted, setMounted] = useState(false)
+  const [pathname, setPathname] = useState('')
+
+  useEffect(() => {
+    setMounted(true)
+    setPathname(window.location.pathname)
+  }, [])
+
+  // Avoid rendering on the server to prevent hydration mismatch.
+  if (!mounted) return null
 
   // Hide TabBar on seller dashboard and related seller routes
-  if (pathname && pathname.startsWith('/seller')) return null
+  if (pathname.startsWith('/seller')) return null
 
   const navItems = [
     {

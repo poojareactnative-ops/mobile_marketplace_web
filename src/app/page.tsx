@@ -1,5 +1,5 @@
 "use client"
-
+import './globals.css'
 import React, { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import TopBanner from '../../components/TopBanner'
@@ -9,7 +9,7 @@ import HowItWorks from '../../components/HowItWorks'
 import Features from '../../components/Features'
 import Testimonials from '../../components/Testimonials'
 import Footer from '../../components/Footer'
-import "./globals.css"
+
 
 export default function Page() {
   const router = useRouter()
