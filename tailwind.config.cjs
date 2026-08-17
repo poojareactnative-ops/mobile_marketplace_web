@@ -1,6 +1,20 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-  content: ['./pages/**/*.{js,jsx,ts,tsx}', './components/**/*.{js,jsx,ts,tsx}'],
+  // Enable dark mode via a `.dark` class on <html> or <body>
+  darkMode: 'class',
+  content: [
+    // Next.js /app and /pages
+    './src/app/**/*.{js,jsx,ts,tsx,html}',
+    './pages/**/*.{js,jsx,ts,tsx,html}',
+
+    // Components and root src
+    './src/components/**/*.{js,jsx,ts,tsx,html}',
+    './components/**/*.{js,jsx,ts,tsx,html}',
+    './src/**/*.{js,jsx,ts,tsx,html}',
+
+    // Public static HTML (if any)
+    './public/**/*.html',
+  ],
   theme: {
     extend: {
       colors: {

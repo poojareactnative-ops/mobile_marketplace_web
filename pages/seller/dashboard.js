@@ -43,26 +43,26 @@ export default function SellerDashboard() {
       </header>
 
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <div className="grid gap-6 lg:grid-cols-[220px_1fr]">
+        <div className="grid gap-6 grid-cols-[220px_1fr]">
           {/* Sidebar */}
-          <aside className="sticky top-6">
+          <aside className="sticky top-6 self-start max-h-[calc(100vh-6rem)] overflow-auto">
             <nav className="space-y-3">
               <Link href="/seller/dashboard" className="flex items-center gap-3 rounded-lg border border-slate-100 bg-white px-3 py-2 text-sm font-medium shadow-sm">
                 <ShoppingBag className="h-4 w-4 text-indigo-600" />
                 Products
               </Link>
 
-              <Link href="#" className="flex items-center gap-3 rounded-lg border border-transparent px-3 py-2 text-sm hover:bg-white/60">
+              <Link href="/seller/orders" className="flex items-center gap-3 rounded-lg border border-transparent px-3 py-2 text-sm hover:bg-white/60">
                 <ClipboardList className="h-4 w-4 text-slate-600" />
                 Orders
               </Link>
 
-              <Link href="#" className="flex items-center gap-3 rounded-lg border border-transparent px-3 py-2 text-sm hover:bg-white/60">
+              <Link href="/seller/offers" className="flex items-center gap-3 rounded-lg border border-transparent px-3 py-2 text-sm hover:bg-white/60">
                 <Tag className="h-4 w-4 text-slate-600" />
                 Offers
               </Link>
 
-              <Link href="#" className="flex items-center gap-3 rounded-lg border border-transparent px-3 py-2 text-sm hover:bg-white/60">
+              <Link href="/seller/enquiries" className="flex items-center gap-3 rounded-lg border border-transparent px-3 py-2 text-sm hover:bg-white/60">
                 <MessageCircle className="h-4 w-4 text-slate-600" />
                 Enquiries
               </Link>
@@ -131,7 +131,7 @@ export default function SellerDashboard() {
               <h2 className="text-lg font-semibold">Your Products</h2>
 
               <div className="flex items-center gap-2">
-                <Link href="#" className="inline-flex items-center gap-2 rounded-md bg-indigo-600 px-3 py-2 text-sm font-medium text-white shadow-sm">
+                <Link href="/seller/products/new" className="inline-flex items-center gap-2 rounded-md bg-indigo-600 px-3 py-2 text-sm font-medium text-white shadow-sm">
                   <PlusCircle className="h-4 w-4" />
                   Add product
                 </Link>

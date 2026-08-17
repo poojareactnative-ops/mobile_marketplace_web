@@ -1,7 +1,6 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
 import {
   Home,
   Store,
@@ -11,7 +10,10 @@ import {
 } from 'lucide-react'
 
 export default function TabBar() {
-  const pathname = usePathname()
+  // `usePathname` from App Router isn't available in Pages router.
+  // Use a safe runtime fallback to `window.location.pathname` so TabBar
+  // doesn't crash when rendered under the pages/ router.
+  const pathname = typeof window !== 'undefined' ? window.location.pathname : ''
 
   // Hide TabBar on seller dashboard and related seller routes
   if (pathname && pathname.startsWith('/seller')) return null

@@ -9,6 +9,9 @@
   }
 }
 
+.body{
+background: linear-gradient(90deg, rgba(99,102,241,0.06), rgba(6,182,212,0.03));
+}
 @layer utilities {
   .animate-float {
     animation: floatUp .6s cubic-bezier(.2,.9,.3,1) both;
