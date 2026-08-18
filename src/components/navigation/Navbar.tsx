@@ -65,8 +65,7 @@ export default function Navbar() {
 
           <div className="flex items-center gap-3">
             <div className="hidden md:flex md:items-center md:gap-2">
-              <Link href="/register/super-seller" className="text-sm font-semibold text-indigo-600">Register</Link>
-              <Link href="/login" className="rounded-md border border-slate-200 px-3 py-1 text-sm font-medium text-slate-700 hover:bg-indigo-50">Login</Link>
+              <Link href="/register/super-seller" className="text-sm font-semibold text-indigo-600">Login</Link>
             </div>
 
             <button

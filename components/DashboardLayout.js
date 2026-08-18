@@ -8,11 +8,11 @@ import {
   ClipboardList,
   Tag,
   MessageCircle,
-  LogOut,
   User,
   ChevronRight,
   Store,
 } from 'lucide-react'
+import LogoutButton from './Auth/LogoutButton'
 
 const NAV_ITEMS = [
   {
@@ -90,17 +90,7 @@ export default function DashboardLayout({ children }) {
               </span>
             </Link>
 
-            {/* Logout */}
-            <button
-              type="button"
-              className="group inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-600 transition hover:border-red-200 hover:bg-red-50 hover:text-red-600"
-            >
-              <LogOut className="h-4 w-4 transition group-hover:translate-x-0.5" />
-
-              <span className="hidden sm:inline">
-                Logout
-              </span>
-            </button>
+            <LogoutButton />
 
           </div>
         </div>

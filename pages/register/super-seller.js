@@ -18,6 +18,9 @@ import {
   LogIn,
   KeyRound,
 } from 'lucide-react'
+import InputField from '../../components/InputField'
+import Feature from '../../components/Auth/Feature'
+import DetailRow from '../../components/DetailRow'
 
 export default function SuperSellerRegister() {
   const [mode, setMode] = useState('register')
@@ -637,89 +640,14 @@ function LoginBenefit({ title, description }) {
 /* INPUT */
 /* ================================================= */
 
-function InputField({
-  label,
-  name,
-  value,
-  onChange,
-  placeholder,
-  type = 'text',
-  icon,
-  required = false,
-  step,
-}) {
-  return (
-    <div>
-      <label
-        htmlFor={name}
-        className="mb-2 block text-sm font-semibold text-slate-700"
-      >
-        {label}
-      </label>
 
-      <div className="relative">
-        {icon && (
-          <div className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400">
-            {icon}
-          </div>
-        )}
-
-        <input
-          id={name}
-          name={name}
-          type={type}
-          step={step}
-          value={value}
-          onChange={onChange}
-          placeholder={placeholder}
-          required={required}
-          className={`w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 hover:border-slate-300 focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-500/10 ${
-            icon ? 'pl-11' : ''
-          }`}
-        />
-      </div>
-    </div>
-  )
-}
 
 /* ================================================= */
 /* FEATURE */
 /* ================================================= */
 
-function Feature({ icon, title, description }) {
-  return (
-    <div className="flex gap-4">
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/10">
-        {icon}
-      </div>
-
-      <div>
-        <h3 className="font-semibold">
-          {title}
-        </h3>
-
-        <p className="mt-1 text-sm leading-6 text-indigo-100">
-          {description}
-        </p>
-      </div>
-    </div>
-  )
-}
 
 /* ================================================= */
 /* DETAIL ROW */
 /* ================================================= */
 
-function DetailRow({ label, value }) {
-  return (
-    <div className="flex justify-between gap-4">
-      <span className="text-slate-500">
-        {label}
-      </span>
-
-      <span className="max-w-[240px] text-right font-medium text-slate-900">
-        {value}
-      </span>
-    </div>
-  )
-}
