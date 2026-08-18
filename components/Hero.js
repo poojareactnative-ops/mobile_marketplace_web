@@ -1,3 +1,5 @@
+"use client"
+
 import { MapPin, UserPlus } from 'lucide-react'
 
 export default function Hero({ onFind }) {

@@ -1,3 +1,5 @@
+"use client"
+
 import {
   Store,
   MapPin,
@@ -7,6 +9,9 @@ import {
   Mail,
   Globe,
   ArrowRight,
+  Twitter,
+  Instagram,
+  Facebook,
 } from 'lucide-react'
 
 const FooterColumn = ({ title, children }) => {
@@ -83,7 +88,7 @@ const Footer = () => {
         <div className="grid gap-12 lg:grid-cols-[1.6fr_1fr_1fr_1fr]">
           {/* Brand */}
           <div>
-              <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3">
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 via-blue-600 to-cyan-500 shadow-lg shadow-blue-500/20">
                 <Store className="h-6 w-6 text-white" />
               </div>

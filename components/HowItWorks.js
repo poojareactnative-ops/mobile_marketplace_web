@@ -1,3 +1,5 @@
+"use client"
+
 import { MapPin, Search, MessageSquare, Repeat } from 'lucide-react'
 
 export default function HowItWorks() {

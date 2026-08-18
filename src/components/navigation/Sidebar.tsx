@@ -1,3 +1,5 @@
+"use client"
+
 import Link from 'next/link'
 import { ShoppingBag, ClipboardList, Tag, MessageCircle } from 'lucide-react'
 
