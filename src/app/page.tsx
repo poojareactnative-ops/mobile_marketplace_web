@@ -3,6 +3,7 @@ import './globals.css'
 import React, { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import TopBanner from '../../components/TopBanner'
+import Navbar from '../components/navigation/Navbar'
 import Hero from '../../components/Hero'
 import ProductShowcase from '../../components/ProductShowcase'
 import HowItWorks from '../../components/HowItWorks'
@@ -36,11 +37,12 @@ export default function Page() {
   // If not logged in, show the public homepage with hero and UI
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50">
+      <Navbar />
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <TopBanner />
 
-        <section className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
-          <div className="animate-float overflow-hidden rounded-3xl border border-white/70 bg-white/60 p-6 shadow-[0_8px_30px_rgba(15,23,42,0.08)] backdrop-blur-xl sm:p-8 lg:p-10">
+        <section id="hero" className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
+          <div id="hero-section" className="animate-float overflow-hidden rounded-3xl border border-white/70 bg-white/60 p-6 shadow-[0_8px_30px_rgba(15,23,42,0.08)] backdrop-blur-xl sm:p-8 lg:p-10">
             <div className="flex flex-col gap-6">
               <Hero onFind={() => {}} />
 
@@ -69,19 +71,19 @@ export default function Page() {
           </div>
         </section>
 
-        <section className="mt-6 rounded-3xl border border-white/70 bg-white/60 p-6 shadow-[0_8px_30px_rgba(15,23,42,0.06)] backdrop-blur-xl sm:p-8">
+        <section id="products" className="mt-6 rounded-3xl border border-white/70 bg-white/60 p-6 shadow-[0_8px_30px_rgba(15,23,42,0.06)] backdrop-blur-xl sm:p-8">
           <ProductShowcase />
         </section>
 
-        <section className="mt-8 rounded-3xl border border-white/70 bg-white/60 p-6 shadow-[0_8px_30px_rgba(15,23,42,0.06)] backdrop-blur-xl sm:p-8">
+        <section id="how" className="mt-8 rounded-3xl border border-white/70 bg-white/60 p-6 shadow-[0_8px_30px_rgba(15,23,42,0.06)] backdrop-blur-xl sm:p-8">
           <HowItWorks />
         </section>
 
-        <section className="mt-6 rounded-3xl border border-white/70 bg-white/60 p-6 shadow-[0_8px_30px_rgba(15,23,42,0.06)] backdrop-blur-xl sm:p-8">
+        <section id="features" className="mt-6 rounded-3xl border border-white/70 bg-white/60 p-6 shadow-[0_8px_30px_rgba(15,23,42,0.06)] backdrop-blur-xl sm:p-8">
           <Features />
         </section>
 
-        <section className="mt-6 rounded-3xl border border-white/70 bg-white/60 p-6 shadow-[0_8px_30px_rgba(15,23,42,0.06)] backdrop-blur-xl sm:p-8">
+        <section id="testimonials" className="mt-6 rounded-3xl border border-white/70 bg-white/60 p-6 shadow-[0_8px_30px_rgba(15,23,42,0.06)] backdrop-blur-xl sm:p-8">
           <Testimonials />
         </section>
       </main>
