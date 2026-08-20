@@ -29,6 +29,10 @@ const NAV_ITEMS = [
     name: 'Orders',
     href: '/seller/orders',
     icon: ClipboardList,
+    children: [
+      { name: 'Mobile Accessories', href: '/seller/orders/mobile-accessories' },
+      { name: 'Mobile Repairing', href: '/seller/orders/mobile-repairing' },
+    ],
   },
   {
     name: 'Offers',
@@ -158,57 +162,76 @@ export default function DashboardLayout({ children }) {
                     pathname.startsWith(`${item.href}/`)
 
                   return (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      className={`
-                        group relative flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium
-                        transition-all duration-200
-                        ${
-                          isActive
-                            ? 'bg-indigo-50 text-indigo-700 shadow-sm'
-                            : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'
-                        }
-                      `}
-                    >
-
-                      {/* Active indicator */}
-                      {isActive && (
-                        <span className="absolute left-0 top-1/2 h-7 w-1 -translate-y-1/2 rounded-r-full bg-indigo-600" />
-                      )}
-
-                      {/* Icon */}
-                      <span
+                    <div key={item.href}>
+                      <Link
+                        href={item.href}
                         className={`
-                          flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition
+                          group relative flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium
+                          transition-all duration-200
                           ${
                             isActive
-                              ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20'
-                              : 'bg-slate-100 text-slate-500 group-hover:bg-white group-hover:text-indigo-600'
+                              ? 'bg-indigo-50 text-indigo-700 shadow-sm'
+                              : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'
                           }
                         `}
                       >
-                        <Icon className="h-4 w-4" />
-                      </span>
 
-                      {/* Label */}
-                      <span className="flex-1">
-                        {item.name}
-                      </span>
+                        {/* Active indicator */}
+                        {isActive && (
+                          <span className="absolute left-0 top-1/2 h-7 w-1 -translate-y-1/2 rounded-r-full bg-indigo-600" />
+                        )}
 
-                      {/* Arrow */}
-                      <ChevronRight
-                        className={`
-                          h-4 w-4 transition-all
-                          ${
-                            isActive
-                              ? 'translate-x-0 text-indigo-500 opacity-100'
-                              : '-translate-x-1 text-slate-300 opacity-0 group-hover:translate-x-0 group-hover:opacity-100'
-                          }
-                        `}
-                      />
+                        {/* Icon */}
+                        <span
+                          className={`
+                            flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition
+                            ${
+                              isActive
+                                ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20'
+                                : 'bg-slate-100 text-slate-500 group-hover:bg-white group-hover:text-indigo-600'
+                            }
+                          `}
+                        >
+                          <Icon className="h-4 w-4" />
+                        </span>
 
-                    </Link>
+                        {/* Label */}
+                        <span className="flex-1">
+                          {item.name}
+                        </span>
+
+                        {/* Arrow */}
+                        <ChevronRight
+                          className={`
+                            h-4 w-4 transition-all
+                            ${
+                              isActive
+                                ? 'translate-x-0 text-indigo-500 opacity-100'
+                                : '-translate-x-1 text-slate-300 opacity-0 group-hover:translate-x-0 group-hover:opacity-100'
+                            }
+                          `}
+                        />
+
+                      </Link>
+
+                      {/* children links (subsections) */}
+                      {item.children && (
+                        <div className="mt-1 space-y-1 pl-12">
+                          {item.children.map((child) => {
+                            const childActive = pathname === child.href || pathname.startsWith(`${child.href}/`)
+                            return (
+                              <Link
+                                key={child.href}
+                                href={child.href}
+                                className={`block rounded-lg px-3 py-2 text-sm font-medium transition ${childActive ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'}`}
+                              >
+                                {child.name}
+                              </Link>
+                            )
+                          })}
+                        </div>
+                      )}
+                    </div>
                   )
                 })}
 

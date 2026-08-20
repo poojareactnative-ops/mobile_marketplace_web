@@ -1,25 +1,99 @@
-import Link from 'next/link'
-import { MessageCircle } from 'lucide-react'
+"use client"
+
+import { useEffect, useState } from 'react'
 import DashboardLayout from '../../components/DashboardLayout'
+import InputField from '../../components/InputField'
+
+const STORAGE_KEY = 'product_inquiries_v1'
+
+function sample() {
+  return [
+    { id: 'q1', name: 'Amit', phone: '9001112233', location: '0.8 km', interest: 'Screen Protector', message: 'Do you have curved-edge protectors?', date: '2026-08-19', resolved: false },
+    { id: 'q2', name: 'Neha', phone: '9002223344', location: '1.2 km', interest: 'Battery Replacement', message: 'How long is the warranty?', date: '2026-08-18', resolved: true },
+  ]
+}
 
 export default function EnquiriesPage() {
+  const [items, setItems] = useState([])
+  const [form, setForm] = useState({ name: '', phone: '', location: '', interest: '', message: '' })
+
+  useEffect(() => {
+    try { const raw = localStorage.getItem(STORAGE_KEY); setItems(raw ? JSON.parse(raw) : sample()) } catch (e) { setItems(sample()) }
+  }, [])
+
+  useEffect(() => { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(items)) } catch (e) {} }, [items])
+
+  function addInquiry(e) {
+    e.preventDefault()
+    const id = `inq_${Date.now()}`
+    setItems((s) => [{ ...form, id, date: new Date().toISOString().slice(0,10), resolved: false }, ...s])
+    setForm({ name: '', phone: '', location: '', interest: '', message: '' })
+  }
+
+  function toggleResolved(id) {
+    setItems((s) => s.map((it) => (it.id === id ? { ...it, resolved: !it.resolved } : it)))
+  }
+
+  function remove(id) {
+    if (!confirm('Delete inquiry?')) return
+    setItems((s) => s.filter((it) => it.id !== id))
+  }
+
   return (
     <DashboardLayout>
-     
-
-      <div className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
-        <div className="flex items-center gap-3">
-          <div className="rounded-lg bg-emerald-50 p-2 text-emerald-600">
-            <MessageCircle className="h-5 w-5" />
-          </div>
-
-          <div>
-            <p className="text-sm font-semibold">Customer Enquiries</p>
-            <p className="mt-1 text-xs text-slate-500">View and respond to customer enquiries.</p>
-          </div>
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">Product Inquiries</h1>
+          <p className="mt-1 text-sm text-slate-500">View and manage customer enquiries about products and services.</p>
         </div>
 
-        <div className="mt-6 text-sm text-slate-500">(Mock data) No enquiries yet.</div>
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+          <div className="col-span-2">
+            <div className="overflow-hidden rounded-2xl border bg-white">
+              <ul className="divide-y divide-slate-100">
+                {items.map((it) => (
+                  <li key={it.id} className="flex items-start justify-between px-4 py-4">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-3">
+                          <div className={`h-9 w-9 rounded-md flex items-center justify-center text-sm font-bold ${it.resolved ? 'bg-emerald-50 text-emerald-700' : 'bg-indigo-50 text-indigo-600'}`}>{it.name?.[0]}</div>
+                        <div>
+                          <div className="font-semibold text-slate-900">{it.name} • {it.phone}</div>
+                          <div className="mt-1 text-xs text-slate-500">{it.interest} — {it.location}</div>
+                        </div>
+                      </div>
+
+                      <div className="mt-3 text-sm text-slate-700">{it.message}</div>
+                      <div className="mt-2 text-xs text-slate-400">{it.date}</div>
+                    </div>
+
+                    <div className="ml-4 flex flex-col items-end gap-2">
+                      <button onClick={() => toggleResolved(it.id)} className={`rounded-md px-3 py-1 text-sm font-medium ${it.resolved ? 'bg-emerald-50 text-emerald-700' : 'bg-indigo-50 text-indigo-700'}`}>{it.resolved ? 'Resolved' : 'Mark Resolved'}</button>
+                      <button onClick={() => remove(it.id)} className="rounded-md bg-red-50 px-3 py-1 text-sm font-medium text-red-600">Delete</button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+
+          <aside className="rounded-2xl border bg-white p-4">
+            <h3 className="text-sm font-bold text-slate-900">Add Test Inquiry</h3>
+            <form onSubmit={addInquiry} className="mt-3 grid gap-3">
+              <InputField label="Name" name="name" value={form.name} onChange={(e) => setForm((s) => ({ ...s, name: e.target.value }))} />
+              <InputField label="Phone" name="phone" value={form.phone} onChange={(e) => setForm((s) => ({ ...s, phone: e.target.value }))} />
+              <InputField label="Interest" name="interest" value={form.interest} onChange={(e) => setForm((s) => ({ ...s, interest: e.target.value }))} />
+              <InputField label="Location" name="location" value={form.location} onChange={(e) => setForm((s) => ({ ...s, location: e.target.value }))} />
+              <div>
+                <label className="mb-2 block text-sm font-semibold text-slate-700">Message</label>
+                <textarea value={form.message} onChange={(e) => setForm((s) => ({ ...s, message: e.target.value }))} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3.5 text-sm text-slate-900" rows={3} />
+              </div>
+
+              <div className="flex justify-end">
+                <button type="submit" className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white">Add</button>
+              </div>
+            </form>
+          </aside>
+        </div>
       </div>
     </DashboardLayout>
   )
