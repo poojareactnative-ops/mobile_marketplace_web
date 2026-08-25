@@ -28,11 +28,7 @@ const NAV_ITEMS = [
   {
     name: 'Orders',
     href: '/seller/orders',
-    icon: ClipboardList,
-    children: [
-      { name: 'Mobile Accessories', href: '/seller/orders/mobile-accessories' },
-      { name: 'Mobile Repairing', href: '/seller/orders/mobile-repairing' },
-    ],
+    icon: ClipboardList
   },
   {
     name: 'Offers',

@@ -47,8 +47,8 @@ export default function EnquiriesPage() {
           <p className="mt-1 text-sm text-slate-500">View and manage customer enquiries about products and services.</p>
         </div>
 
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-          <div className="col-span-2">
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-1">
+          
             <div className="overflow-hidden rounded-2xl border bg-white">
               <ul className="divide-y divide-slate-100">
                 {items.map((it) => (
@@ -74,25 +74,7 @@ export default function EnquiriesPage() {
                 ))}
               </ul>
             </div>
-          </div>
-
-          <aside className="rounded-2xl border bg-white p-4">
-            <h3 className="text-sm font-bold text-slate-900">Add Test Inquiry</h3>
-            <form onSubmit={addInquiry} className="mt-3 grid gap-3">
-              <InputField label="Name" name="name" value={form.name} onChange={(e) => setForm((s) => ({ ...s, name: e.target.value }))} />
-              <InputField label="Phone" name="phone" value={form.phone} onChange={(e) => setForm((s) => ({ ...s, phone: e.target.value }))} />
-              <InputField label="Interest" name="interest" value={form.interest} onChange={(e) => setForm((s) => ({ ...s, interest: e.target.value }))} />
-              <InputField label="Location" name="location" value={form.location} onChange={(e) => setForm((s) => ({ ...s, location: e.target.value }))} />
-              <div>
-                <label className="mb-2 block text-sm font-semibold text-slate-700">Message</label>
-                <textarea value={form.message} onChange={(e) => setForm((s) => ({ ...s, message: e.target.value }))} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3.5 text-sm text-slate-900" rows={3} />
-              </div>
-
-              <div className="flex justify-end">
-                <button type="submit" className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white">Add</button>
-              </div>
-            </form>
-          </aside>
+          
         </div>
       </div>
     </DashboardLayout>
