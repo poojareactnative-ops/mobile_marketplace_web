@@ -11,14 +11,31 @@ import {
   User,
   ChevronRight,
   Store,
+  ShieldCheck,
+  Users,
 } from 'lucide-react'
 import LogoutButton from './Auth/LogoutButton'
 
-const NAV_ITEMS = [
+const SELLER_NAV_ITEMS = [
   {
-    name: 'Dashboard',
+    name: 'Seller',
     href: '/seller/dashboard',
     icon: LayoutDashboard,
+  },
+  {
+    name: 'Admin',
+    href: '/admin',
+    icon: ShieldCheck,
+  },
+  {
+    name: 'Create Admin',
+    href: '/admin/admins/new',
+    icon: Users,
+  },
+  {
+    name: 'Customers',
+    href: '/seller/customers',
+    icon: Users,
   },
   {
     name: 'Products',
@@ -26,9 +43,9 @@ const NAV_ITEMS = [
     icon: ShoppingBag,
   },
   {
-    name: 'Orders',
+    name: 'Repairing',
     href: '/seller/orders',
-    icon: ClipboardList
+    icon: ClipboardList,
   },
   {
     name: 'Offers',
@@ -44,6 +61,12 @@ const NAV_ITEMS = [
 
 export default function DashboardLayout({ children }) {
   const pathname = usePathname()
+  const NAV_ITEMS = SELLER_NAV_ITEMS
+  const dashboardHref = '/seller/dashboard'
+  const roleLabel = 'Super Seller'
+  const shopName = 'Pooja Mobile'
+  const ctaHref = '/seller/products/new'
+  const adminPortalHref = '/admin'
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -57,7 +80,7 @@ export default function DashboardLayout({ children }) {
 
           {/* Logo */}
           <Link
-            href="/seller/dashboard"
+            href={dashboardHref}
             className="flex items-center gap-3"
           >
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 text-white shadow-lg shadow-indigo-600/20">
@@ -70,7 +93,7 @@ export default function DashboardLayout({ children }) {
               </h1>
 
               <p className="text-[11px] text-slate-400">
-                Seller Dashboard
+                {roleLabel}
               </p>
             </div>
           </Link>
@@ -121,11 +144,11 @@ export default function DashboardLayout({ children }) {
 
                 <div className="min-w-0">
                   <p className="truncate text-sm font-bold text-slate-900">
-                    Pooja Mobile
+                    {shopName}
                   </p>
 
                   <p className="mt-0.5 truncate text-xs text-slate-400">
-                    Super Seller
+                    {roleLabel}
                   </p>
                 </div>
 
@@ -251,12 +274,21 @@ export default function DashboardLayout({ children }) {
                   Add more products and reach nearby customers.
                 </p>
 
-                <Link
-                  href="/seller/products/new"
-                  className="mt-3 flex items-center justify-center rounded-lg bg-white px-3 py-2 text-xs font-bold text-indigo-600 transition hover:bg-indigo-50"
-                >
-                  Add Product
-                </Link>
+                <div className="mt-3 flex flex-col gap-2">
+                  <Link
+                    href={ctaHref}
+                    className="flex items-center justify-center rounded-lg bg-white px-3 py-2 text-xs font-bold text-indigo-600 transition hover:bg-indigo-50"
+                  >
+                    Add Product
+                  </Link>
+
+                  <Link
+                    href={adminPortalHref}
+                    className="flex items-center justify-center rounded-lg border border-white/30 bg-white/10 px-3 py-2 text-xs font-bold text-white transition hover:bg-white/15"
+                  >
+                    Admin Portal
+                  </Link>
+                </div>
 
               </div>
 
