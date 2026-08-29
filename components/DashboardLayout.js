@@ -29,12 +29,12 @@ const SELLER_NAV_ITEMS = [
   },
   {
     name: 'Create Admin',
-    href: '/admin/admins/new',
+    href: '/seller/admin/admins/new',
     icon: Users,
   },
   {
     name: 'Customers',
-    href: '/seller/customers',
+    href: '/admin/customers',
     icon: Users,
   },
   {

@@ -9,7 +9,6 @@ const SAMPLE_JOBS = [
 
 export default function MobileRepairingOrders() {
   return (
-    <DashboardLayout>
       <div className="space-y-6">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Mobile Repairing Orders</h1>
@@ -31,6 +30,5 @@ export default function MobileRepairingOrders() {
           </ul>
         </div>
       </div>
-    </DashboardLayout>
   )
 }
