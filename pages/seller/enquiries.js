@@ -16,6 +16,7 @@ function sample() {
 export default function EnquiriesPage() {
   const [items, setItems] = useState([])
   const [form, setForm] = useState({ name: '', phone: '', location: '', interest: '', message: '' })
+  const [openIds, setOpenIds] = useState([])
 
   useEffect(() => {
     try { const raw = localStorage.getItem(STORAGE_KEY); setItems(raw ? JSON.parse(raw) : sample()) } catch (e) { setItems(sample()) }
@@ -39,6 +40,10 @@ export default function EnquiriesPage() {
     setItems((s) => s.filter((it) => it.id !== id))
   }
 
+  function toggleOpen(id) {
+    setOpenIds((s) => (s.includes(id) ? s.filter((x) => x !== id) : [id, ...s]))
+  }
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -52,24 +57,29 @@ export default function EnquiriesPage() {
             <div className="overflow-hidden rounded-2xl border bg-white">
               <ul className="divide-y divide-slate-100">
                 {items.map((it) => (
-                  <li key={it.id} className="flex items-start justify-between px-4 py-4">
-                    <div className="min-w-0">
+                  <li key={it.id} className="px-4 py-3">
+                    <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                          <div className={`h-9 w-9 rounded-md flex items-center justify-center text-sm font-bold ${it.resolved ? 'bg-emerald-50 text-emerald-700' : 'bg-indigo-50 text-indigo-600'}`}>{it.name?.[0]}</div>
+                        <div className={`h-9 w-9 rounded-md flex items-center justify-center text-sm font-bold ${it.resolved ? 'bg-emerald-50 text-emerald-700' : 'bg-indigo-50 text-indigo-600'}`}>{it.name?.[0]}</div>
                         <div>
                           <div className="font-semibold text-slate-900">{it.name} • {it.phone}</div>
                           <div className="mt-1 text-xs text-slate-500">{it.interest} — {it.location}</div>
                         </div>
                       </div>
 
-                      <div className="mt-3 text-sm text-slate-700">{it.message}</div>
-                      <div className="mt-2 text-xs text-slate-400">{it.date}</div>
+                      <div className="flex items-center gap-2">
+                        <button onClick={() => toggleOpen(it.id)} className="text-sm text-slate-500">{openIds.includes(it.id) ? 'Hide' : 'View'}</button>
+                        <button onClick={() => toggleResolved(it.id)} className={`rounded-md px-3 py-1 text-sm font-medium ${it.resolved ? 'bg-emerald-50 text-emerald-700' : 'bg-indigo-50 text-indigo-700'}`}>{it.resolved ? 'Resolved' : 'Mark Resolved'}</button>
+                        <button onClick={() => remove(it.id)} className="rounded-md bg-red-50 px-3 py-1 text-sm font-medium text-red-600">Delete</button>
+                      </div>
                     </div>
 
-                    <div className="ml-4 flex flex-col items-end gap-2">
-                      <button onClick={() => toggleResolved(it.id)} className={`rounded-md px-3 py-1 text-sm font-medium ${it.resolved ? 'bg-emerald-50 text-emerald-700' : 'bg-indigo-50 text-indigo-700'}`}>{it.resolved ? 'Resolved' : 'Mark Resolved'}</button>
-                      <button onClick={() => remove(it.id)} className="rounded-md bg-red-50 px-3 py-1 text-sm font-medium text-red-600">Delete</button>
-                    </div>
+                    {openIds.includes(it.id) && (
+                      <div className="mt-3 rounded-md bg-slate-50 p-3 text-sm text-slate-700">
+                        <div>{it.message}</div>
+                        <div className="mt-2 text-xs text-slate-400">{it.date}</div>
+                      </div>
+                    )}
                   </li>
                 ))}
               </ul>

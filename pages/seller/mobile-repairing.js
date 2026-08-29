@@ -1,6 +1,6 @@
 "use client"
 
-import DashboardLayout from '../../../components/DashboardLayout'
+import DashboardLayout from '../../components/DashboardLayout'
 
 const SAMPLE_JOBS = [
   { id: 'r1', service: 'Battery Replacement', customer: 'Suresh', phone: '9988776655', status: 'In Progress' },
