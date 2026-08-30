@@ -13,6 +13,7 @@ import {
   Store,
   ShieldCheck,
   Users,
+  Wrench,
 } from 'lucide-react'
 import LogoutButton from './Auth/LogoutButton'
 
@@ -29,7 +30,7 @@ const SELLER_NAV_ITEMS = [
   },
   {
     name: 'Create Admin',
-    href: '/seller/admin/admins/new',
+    href: '/seller/admins/new',
     icon: Users,
   },
   {
@@ -43,13 +44,18 @@ const SELLER_NAV_ITEMS = [
     icon: ShoppingBag,
   },
   {
-    name: 'Repairing',
+    name: 'Orders',
     href: '/seller/orders',
     icon: ClipboardList,
   },
   {
     name: 'Offers',
     href: '/seller/offers',
+    icon: Tag,
+  },
+  {
+    name: 'Repairing',
+    href: '/admin/repairs',
     icon: Tag,
   },
   {
