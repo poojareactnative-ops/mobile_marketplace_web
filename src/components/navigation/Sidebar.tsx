@@ -28,6 +28,8 @@ export default function Sidebar() {
             <nav className="mt-2 space-y-1 pl-8">
               <Link href="/seller/mobile-accessories" className="block rounded-md px-2 py-1 text-sm text-slate-700 hover:bg-slate-50">Mobile Accessories</Link>
               <Link href="/seller/mobile-repairing" className="block rounded-md px-2 py-1 text-sm text-slate-700 hover:bg-slate-50">Mobile Repairing</Link>
+              <Link href="/seller/admin/repairing/customers" className="block rounded-md px-2 py-1 text-sm text-slate-700 hover:bg-slate-50">Admin: Repair Problems</Link>
+              <Link href="/seller/super-seller/repairing/solutions" className="block rounded-md px-2 py-1 text-sm text-slate-700 hover:bg-slate-50">Super Seller: Review</Link>
             </nav>
           )}
         </div>
