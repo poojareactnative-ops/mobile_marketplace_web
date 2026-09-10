@@ -16,18 +16,22 @@ export default function NewCustomerProblem() {
   function handleSubmit(e) {
     e.preventDefault()
     setSaving(true)
-    const item = repairingService.createProblem({
-      customerName: name,
-      customerPhone: phone,
-      brand,
-      model,
-      problem,
+    // post to API
+    fetch('/api/repairing/problems', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ customerName: name, customerPhone: phone, brand, model, problem }),
     })
-    setTimeout(() => {
-      setSaving(false)
-      setToast('Problem submitted')
-      setTimeout(() => { window.location.href = '/seller/admin/repairing/customers' }, 600)
-    }, 250)
+      .then((r) => r.json())
+      .then(() => {
+        setSaving(false)
+        setToast('Problem submitted')
+        setTimeout(() => { window.location.href = '/seller/admin/repairing/customers' }, 600)
+      })
+      .catch(() => {
+        setSaving(false)
+        setToast('Unable to submit')
+      })
   }
 
   return (

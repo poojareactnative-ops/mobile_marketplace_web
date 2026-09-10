@@ -10,8 +10,10 @@ export default function ProblemDetailPage() {
 
   useEffect(() => {
     if (!id) return
-    const p = repairingService.getProblemById(id)
-    setItem(p)
+    fetch(`/api/repairing/problems/${id}`).then((r) => {
+      if (!r.ok) return setItem(null)
+      return r.json().then((d) => setItem(d))
+    })
   }, [id])
 
   if (!item) return (
@@ -46,10 +48,9 @@ export default function ProblemDetailPage() {
           <div className="flex gap-3">
             <button className="rounded-xl bg-slate-100 px-4 py-2" onClick={() => router.back()}>Back</button>
             <button className="rounded-xl bg-indigo-600 px-4 py-2 text-white" onClick={() => {
-              const all = repairingService.getProblems().map((p) => p.id === item.id ? { ...p, status: 'Accepted by SuperSeller' } : p)
-              localStorage.setItem('repair_problems', JSON.stringify(all))
-              setItem({ ...item, status: 'Accepted by SuperSeller' })
-              alert('Marked acceptable — super seller will review')
+              fetch(`/api/repairing/problems/${item.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: 'Accepted by SuperSeller' }) })
+                .then((r) => r.json())
+                .then((d) => setItem(d))
             }}>Mark Acceptable</button>
           </div>
         </div>

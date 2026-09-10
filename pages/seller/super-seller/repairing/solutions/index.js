@@ -6,8 +6,10 @@ export default function SuperSellerSolutions() {
   const [problems, setProblems] = useState([])
 
   useEffect(() => {
-    // For demo, super seller can view all submitted problems to mark them
-    setProblems(repairingService.getProblems())
+    fetch('/api/repairing/problems')
+      .then((r) => r.json())
+      .then((data) => setProblems(data || []))
+      .catch(() => setProblems([]))
   }, [])
 
   return (

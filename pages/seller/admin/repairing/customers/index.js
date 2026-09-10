@@ -6,7 +6,10 @@ export default function CustomerProblemsList() {
   const [items, setItems] = useState([])
 
   useEffect(() => {
-    setItems(repairingService.getProblems())
+    fetch('/api/repairing/problems')
+      .then((r) => r.json())
+      .then((data) => setItems(data || []))
+      .catch(() => setItems([]))
   }, [])
 
   return (

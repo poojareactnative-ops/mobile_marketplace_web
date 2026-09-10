@@ -10,7 +10,7 @@ export default function ReviewProblem() {
 
   useEffect(() => {
     if (!id) return
-    setItem(repairingService.getProblemById(id))
+    fetch(`/api/repairing/problems/${id}`).then((r) => r.json()).then((d) => setItem(d))
   }, [id])
 
   if (!item) return (
@@ -20,9 +20,9 @@ export default function ReviewProblem() {
   )
 
   function markSoldable() {
-    const all = repairingService.getProblems().map((p) => p.id === item.id ? { ...p, status: 'Sellable' } : p)
-    localStorage.setItem('repair_problems', JSON.stringify(all))
-    setItem({ ...item, status: 'Sellable' })
+    fetch(`/api/repairing/problems/${item.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: 'Sellable' }) })
+      .then((r) => r.json())
+      .then((d) => setItem(d))
   }
 
   return (
