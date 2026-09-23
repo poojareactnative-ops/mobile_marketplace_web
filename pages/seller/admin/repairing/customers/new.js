@@ -1,8 +1,8 @@
 import { useState } from 'react'
-import DashboardLayout from '../../../../../../components/DashboardLayout'
-import InputField from '../../../../../../components/InputField'
-import repairingService from '../../../../../../../services/repairingService'
-import Toast from '../../../../../../../components/Toast'
+import DashboardLayout from '../../../../../components/DashboardLayout'
+import InputField from '../../../../../components/InputField'
+import Toast from '../../../../../components/Toast'
+import apiClient from '../../../../../src/lib/api/client'
 
 export default function NewCustomerProblem() {
   const [name, setName] = useState('')
@@ -13,25 +13,27 @@ export default function NewCustomerProblem() {
   const [saving, setSaving] = useState(false)
   const [toast, setToast] = useState('')
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault()
     setSaving(true)
-    // post to API
-    fetch('/api/repairing/problems', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ customerName: name, customerPhone: phone, brand, model, problem }),
-    })
-      .then((r) => r.json())
-      .then(() => {
-        setSaving(false)
-        setToast('Problem submitted')
-        setTimeout(() => { window.location.href = '/seller/admin/repairing/customers' }, 600)
+
+    try {
+      await apiClient.post('/seller/repair-jobs', {
+        customerName: name,
+        customerPhone: phone,
+        brand: brand || null,
+        model: model || null,
+        problemDescription: problem,
       })
-      .catch(() => {
-        setSaving(false)
-        setToast('Unable to submit')
-      })
+      setSaving(false)
+      setToast('Repair ticket created successfully')
+      setTimeout(() => {
+        window.location.href = '/seller/admin/repairing/customers'
+      }, 600)
+    } catch (err) {
+      setSaving(false)
+      setToast(err.response?.data?.error?.message || 'Unable to submit problem')
+    }
   }
 
   return (
@@ -45,18 +47,29 @@ export default function NewCustomerProblem() {
           <InputField label="Mobile Number" name="phone" value={phone} onChange={(e) => setPhone(e.target.value)} required />
 
           <div className="grid grid-cols-2 gap-4">
-            <InputField label="Brand" name="brand" value={brand} onChange={(e) => setBrand(e.target.value)} />
-            <InputField label="Model" name="model" value={model} onChange={(e) => setModel(e.target.value)} />
+            <InputField label="Brand" name="brand" value={brand} onChange={(e) => setBrand(e.target.value)} placeholder="Apple, Samsung, etc." />
+            <InputField label="Model" name="model" value={model} onChange={(e) => setModel(e.target.value)} placeholder="iPhone 15, S24, etc." />
           </div>
 
           <div>
             <label className="mb-2 block text-sm font-semibold text-slate-700">Problem Description</label>
-            <textarea value={problem} onChange={(e) => setProblem(e.target.value)} className="w-full rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm" rows={4} />
+            <textarea
+              value={problem}
+              onChange={(e) => setProblem(e.target.value)}
+              className="w-full rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm outline-none focus:border-indigo-400 focus:bg-white"
+              rows={4}
+              required
+              placeholder="Describe the issue in detail (e.g. cracked screen, won't turn on, water damage)..."
+            />
           </div>
 
           <div className="flex items-center gap-3">
-            <button type="button" onClick={() => window.history.back()} className="rounded-xl bg-slate-100 px-4 py-2">Cancel</button>
-            <button type="submit" disabled={saving} className="rounded-xl bg-indigo-600 px-4 py-2 text-white">{saving ? 'Saving...' : 'Save Problem'}</button>
+            <button type="button" onClick={() => window.history.back()} className="rounded-xl bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-200">
+              Cancel
+            </button>
+            <button type="submit" disabled={saving} className="rounded-xl bg-indigo-600 px-5 py-2 text-sm font-bold text-white hover:bg-indigo-700 disabled:opacity-75">
+              {saving ? 'Saving...' : 'Save Problem'}
+            </button>
           </div>
         </form>
         <Toast message={toast} />

@@ -1,29 +1,47 @@
-import { useState, useEffect } from 'react'
+import { useEffect } from 'react'
+import apiClient from '../../../lib/api/client'
+import { useAuthStore } from '../../../store/auth.store'
 
 export function useAuth() {
-  const [user, setUser] = useState<any>(null)
+  const { user, shop, accessToken, isLoading, setAuth, logout, fetchMe } = useAuthStore()
 
   useEffect(() => {
-    // demo: read demo token
-    if (typeof window !== 'undefined') {
-      const token = localStorage.getItem('demo_auth')
-      if (token) setUser({ name: 'Demo user' })
+    if (accessToken && !user) {
+      fetchMe()
     }
-  }, [])
+  }, [accessToken, user, fetchMe])
 
-  function loginDemo() {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('demo_auth', '1')
-      setUser({ name: 'Demo user' })
-    }
+  async function login(email: string, password: string) {
+    const res = await apiClient.post('/auth/login', { email, password })
+    const { user: u, shop: s, tokens } = res.data.data
+    setAuth(u, s, tokens.accessToken)
+    return { user: u, shop: s }
   }
 
-  function logout() {
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('demo_auth')
-      setUser(null)
-    }
+  async function register(data: {
+    name: string
+    email: string
+    password: string
+    phone?: string
+    role?: string
+    shopName?: string
+  }) {
+    const res = await apiClient.post('/auth/register', data)
+    const { user: u, shop: s, tokens } = res.data.data
+    setAuth(u, s, tokens.accessToken)
+    return { user: u, shop: s }
   }
 
-  return { user, loginDemo, logout }
+  return {
+    user,
+    shop,
+    isAuthenticated: !!user,
+    isLoading,
+    login,
+    register,
+    logout,
+    refreshUser: fetchMe,
+  }
 }
+
+export default useAuth

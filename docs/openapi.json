@@ -1,0 +1,289 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Hyperlocal Mobile Marketplace & Repair API",
+    "description": "Enterprise-grade Node.js backend specification for dynamic landing page discovery, authenticated multi-tenant seller dashboard, and end-to-end device repair workflow.",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "/api/v1",
+      "description": "Primary API v1 Base Path"
+    }
+  ],
+  "tags": [
+    { "name": "Auth", "description": "Authentication & Session Management" },
+    { "name": "Public Discovery", "description": "Landing page, nearby geospatial shops, and catalog" },
+    { "name": "Seller Dashboard", "description": "Shop metrics, inventory, offers, and enquiries" },
+    { "name": "Repair Workflow", "description": "Device intake, diagnostic quotes, sellability, and audit trail" },
+    { "name": "Platform Admin", "description": "Governance, shop verification, and oversight" }
+  ],
+  "paths": {
+    "/health": {
+      "get": {
+        "summary": "Service health check",
+        "responses": {
+          "200": { "description": "API is online" }
+        }
+      }
+    },
+    "/ready": {
+      "get": {
+        "summary": "Database connectivity readiness probe",
+        "responses": {
+          "200": { "description": "Database connection verified" }
+        }
+      }
+    },
+    "/auth/register": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Register customer or seller account",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name", "email", "password"],
+                "properties": {
+                  "name": { "type": "string" },
+                  "email": { "type": "string", "format": "email" },
+                  "password": { "type": "string", "minLength": 6 },
+                  "phone": { "type": "string" },
+                  "role": { "type": "string", "enum": ["CUSTOMER", "SELLER", "SUPER_SELLER"] },
+                  "shopName": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Account created successfully" },
+          "409": { "description": "Email address already registered" },
+          "422": { "description": "Validation failed" }
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Authenticate user and issue JWT tokens",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email", "password"],
+                "properties": {
+                  "email": { "type": "string", "format": "email" },
+                  "password": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Authentication successful" },
+          "401": { "description": "Invalid email or password" }
+        }
+      }
+    },
+    "/auth/refresh": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Rotate access token using refresh token",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["refreshToken"],
+                "properties": {
+                  "refreshToken": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Tokens refreshed" },
+          "401": { "description": "Invalid or expired refresh token" }
+        }
+      }
+    },
+    "/auth/me": {
+      "get": {
+        "tags": ["Auth"],
+        "summary": "Return current user profile, role, and shop",
+        "security": [{ "BearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Active user identity" },
+          "401": { "description": "Unauthenticated" }
+        }
+      }
+    },
+    "/public/landing-page": {
+      "get": {
+        "tags": ["Public Discovery"],
+        "summary": "Fetch dynamic landing page content, hero, features, categories, and testimonials",
+        "responses": {
+          "200": { "description": "Landing page payload" }
+        }
+      }
+    },
+    "/shops/nearby": {
+      "get": {
+        "tags": ["Public Discovery"],
+        "summary": "Geospatial nearby shops discovery query with Haversine distance",
+        "parameters": [
+          { "name": "lat", "in": "query", "required": true, "schema": { "type": "number" } },
+          { "name": "lng", "in": "query", "required": true, "schema": { "type": "number" } },
+          { "name": "radiusMeters", "in": "query", "required": false, "schema": { "type": "integer", "minimum": 500, "maximum": 20000, "default": 2500 } },
+          { "name": "type", "in": "query", "required": false, "schema": { "type": "string", "enum": ["SUPER_SELLER", "ACCESSORY_SELLER"] } }
+        ],
+        "responses": {
+          "200": { "description": "Array of nearby shops sorted by distance" },
+          "422": { "description": "Invalid coordinates" }
+        }
+      }
+    },
+    "/products/featured": {
+      "get": {
+        "tags": ["Public Discovery"],
+        "summary": "Fetch featured accessory products",
+        "parameters": [
+          { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 8 } }
+        ],
+        "responses": {
+          "200": { "description": "Featured products array" }
+        }
+      }
+    },
+    "/categories": {
+      "get": {
+        "tags": ["Public Discovery"],
+        "summary": "List product & repair categories",
+        "parameters": [
+          { "name": "type", "in": "query", "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Categories array" }
+        }
+      }
+    },
+    "/enquiries": {
+      "post": {
+        "tags": ["Public Discovery"],
+        "summary": "Submit buyer product or repair inquiry",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["customerName", "customerPhone", "message"],
+                "properties": {
+                  "shopId": { "type": "string" },
+                  "productId": { "type": "string" },
+                  "customerName": { "type": "string" },
+                  "customerPhone": { "type": "string" },
+                  "message": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Enquiry registered" }
+        }
+      }
+    },
+    "/seller/dashboard": {
+      "get": {
+        "tags": ["Seller Dashboard"],
+        "summary": "Aggregated dashboard metrics, revenue charts, and inventory KPIs",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          { "name": "period", "in": "query", "schema": { "type": "string", "default": "30d" } }
+        ],
+        "responses": {
+          "200": { "description": "Aggregated seller dashboard summary" }
+        }
+      }
+    },
+    "/seller/products": {
+      "get": {
+        "tags": ["Seller Dashboard"],
+        "summary": "Paginated list of shop products",
+        "security": [{ "BearerAuth": [] }],
+        "responses": { "200": { "description": "Paginated product response" } }
+      },
+      "post": {
+        "tags": ["Seller Dashboard"],
+        "summary": "Create new product in seller store",
+        "security": [{ "BearerAuth": [] }],
+        "responses": { "201": { "description": "Product created" } }
+      }
+    },
+    "/seller/repair-customers": {
+      "get": {
+        "tags": ["Repair Workflow"],
+        "summary": "List customer records associated with the shop's repair jobs",
+        "security": [{ "BearerAuth": [] }],
+        "responses": { "200": { "description": "List of repair customers" } }
+      },
+      "post": {
+        "tags": ["Repair Workflow"],
+        "summary": "Register a new local customer profile for repair workflows",
+        "security": [{ "BearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name", "phone"],
+                "properties": {
+                  "name": { "type": "string" },
+                  "phone": { "type": "string" },
+                  "email": { "type": "string", "format": "email" },
+                  "address": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "201": { "description": "Customer registered" } }
+      }
+    },
+    "/seller/repair-jobs": {
+      "get": {
+        "tags": ["Repair Workflow"],
+        "summary": "List repair tickets scoped to current shop",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          { "name": "status", "in": "query", "schema": { "type": "string" } }
+        ],
+        "responses": { "200": { "description": "List of repair jobs" } }
+      },
+      "post": {
+        "tags": ["Repair Workflow"],
+        "summary": "Create a new repair diagnostic ticket",
+        "security": [{ "BearerAuth": [] }],
+        "responses": { "201": { "description": "Ticket opened" } }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  }
+}

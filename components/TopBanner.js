@@ -15,108 +15,54 @@ import {
   Percent,
 } from 'lucide-react'
 
-const OFFERS = [
-  {
-    id: 'o1',
-    title: '10% OFF',
-    text: 'Screen Protectors',
-    description: 'Get 10% discount on premium tempered glass.',
-    expires: 'Today',
-    shop: 'Pooja Mobile',
-    distance: '0.7 km',
-    rating: 4.8,
-    code: 'GLASS10',
-    color: 'indigo',
-  },
-  {
-    id: 'o2',
-    title: 'BUY 1 GET 1',
-    text: 'USB-C Cables',
-    description: 'Buy one premium USB-C cable and get another free.',
-    expires: '2 days',
-    shop: 'QuickFix Repairs',
-    distance: '1.1 km',
-    rating: 4.7,
-    code: 'CABLEBOGO',
-    color: 'violet',
-  },
-  {
-    id: 'o3',
-    title: 'FREE CHECKUP',
-    text: 'Battery Health',
-    description: 'Get a free battery health check with any service.',
-    expires: 'This week',
-    shop: 'Accessory Hub',
-    distance: '1.4 km',
-    rating: 4.6,
-    code: 'BATTERYFREE',
-    color: 'rose',
-  },
-  {
-    id: 'o4',
-    title: '20% OFF',
-    text: 'Mobile Accessories',
-    description: 'Save 20% on selected mobile accessories.',
-    expires: '3 days',
-    shop: 'Smart Mobile',
-    distance: '1.8 km',
-    rating: 4.9,
-    code: 'SMART20',
-    color: 'cyan',
-  },
-]
+export default function TopBanner({ banner, offers, shops }) {
+  if (banner && banner.isVisible === false) {
+    return null
+  }
 
-const TOP_SHOPS = [
-  {
-    id: 's1',
-    name: 'Pooja Mobile',
-    rating: 4.8,
-    distance: '0.7 km',
-    initials: 'PM',
-  },
-  {
-    id: 's2',
-    name: 'QuickFix Repairs',
-    rating: 4.7,
-    distance: '1.1 km',
-    initials: 'QR',
-  },
-  {
-    id: 's3',
-    name: 'Accessory Hub',
-    rating: 4.6,
-    distance: '1.4 km',
-    initials: 'AH',
-  },
-]
+  const offerList = offers || []
+  const shopList =
+    shops && shops.length > 0
+      ? shops.slice(0, 3).map((s) => ({
+          id: s.id,
+          name: s.name,
+          rating: s.rating || 4.8,
+          distance: s.distanceKm || (s.distanceMeters ? `${(s.distanceMeters / 1000).toFixed(1)} km` : 'Near you'),
+          initials: s.name.slice(0, 2).toUpperCase(),
+        }))
+      : []
 
-export default function TopBanner() {
+  if (offerList.length === 0 && shopList.length === 0) {
+    return null
+  }
+
   const [activeOffer, setActiveOffer] = useState(0)
 
   const nextOffer = () => {
     setActiveOffer((current) =>
-      current === OFFERS.length - 1 ? 0 : current + 1
+      current >= offerList.length - 1 ? 0 : current + 1
     )
   }
 
   const previousOffer = () => {
     setActiveOffer((current) =>
-      current === 0 ? OFFERS.length - 1 : current - 1
+      current === 0 ? offerList.length - 1 : current - 1
     )
   }
 
   // Auto carousel
   useEffect(() => {
+    if (offerList.length <= 1) return
     const timer = setInterval(() => {
       setActiveOffer((current) =>
-        current === OFFERS.length - 1 ? 0 : current + 1
+        current >= offerList.length - 1 ? 0 : current + 1
       )
     }, 5000)
 
     return () => clearInterval(timer)
-  }, [])
+  }, [offerList.length])
 
-  const offer = OFFERS[activeOffer]
+  const offer = offerList[activeOffer] || offerList[0]
 
   return (
     <section className="mb-8">
@@ -155,7 +101,7 @@ export default function TopBanner() {
                   </div>
 
                   <p className="mt-0.5 text-xs text-slate-500">
-                    Exclusive offers from nearby sellers
+                    {banner?.text || 'Exclusive offers from nearby sellers'}
                   </p>
                 </div>
               </div>
@@ -183,29 +129,40 @@ export default function TopBanner() {
             </div>
 
             {/* Carousel */}
-            <div className="relative mt-5 overflow-hidden rounded-2xl">
-              <OfferSlide
-                key={offer.id}
-                offer={offer}
-              />
-            </div>
+            {offer ? (
+              <>
+                <div className="relative mt-5 overflow-hidden rounded-2xl">
+                  <OfferSlide
+                    key={offer.id}
+                    offer={offer}
+                  />
+                </div>
 
-            {/* Carousel dots */}
-            <div className="mt-5 flex items-center justify-center gap-2">
-              {OFFERS.map((item, index) => (
-                <button
-                  key={item.id}
-                  type="button"
-                  onClick={() => setActiveOffer(index)}
-                  aria-label={`Show offer ${index + 1}`}
-                  className={`h-1.5 rounded-full transition-all duration-300 ${
-                    activeOffer === index
-                      ? 'w-7 bg-indigo-600'
-                      : 'w-1.5 bg-slate-300 hover:bg-slate-400'
-                  }`}
-                />
-              ))}
-            </div>
+                {offerList.length > 1 && (
+                  <div className="mt-5 flex items-center justify-center gap-2">
+                    {offerList.map((item, index) => (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => setActiveOffer(index)}
+                        aria-label={`Show offer ${index + 1}`}
+                        className={`h-1.5 rounded-full transition-all duration-300 ${
+                          activeOffer === index
+                            ? 'w-7 bg-indigo-600'
+                            : 'w-1.5 bg-slate-300 hover:bg-slate-400'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="mt-5 flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-slate-50/50 p-8 text-center">
+                <Tag className="h-8 w-8 text-slate-300 mb-2" />
+                <p className="text-xs font-semibold text-slate-600">No active promotional discounts right now</p>
+                <p className="mt-1 text-[11px] text-slate-400">Nearby sellers post limited-time deals and coupons here.</p>
+              </div>
+            )}
           </div>
 
           {/* ================================================= */}
@@ -234,7 +191,7 @@ export default function TopBanner() {
             </div>
 
             <div className="mt-5 space-y-3">
-              {TOP_SHOPS.map((shop, index) => (
+              {shopList.map((shop, index) => (
                 <ShopRow
                   key={shop.id}
                   shop={shop}

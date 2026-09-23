@@ -1,25 +1,37 @@
 "use client"
 
-import { MapPin, Search, MessageSquare, Repeat } from 'lucide-react'
+import { MapPin, Search, MessageSquare, Repeat, Sparkles } from 'lucide-react'
 
-export default function HowItWorks() {
-  const steps = [
-    { id: 1, icon: MapPin, text: 'Customers allow location access or enter their address.' },
-    { id: 2, icon: Search, text: 'The platform finds Super Sellers and Accessory Sellers within your radius.' },
-    { id: 3, icon: MessageSquare, text: 'Customers send enquiries (name, phone, location, product/service interest).' },
-    { id: 4, icon: Repeat, text: 'Shops reply, post offers, and serve nearby customers quickly.' },
-  ]
+export default function HowItWorks({ items }) {
+  if (!items || items.length === 0) return null
+
+  const steps = items.map((it, idx) => ({
+    id: it.id || idx + 1,
+    icon: idx === 0 ? MapPin : idx === 1 ? Search : idx === 2 ? MessageSquare : Sparkles,
+    title: it.title,
+    text: it.description || it.text,
+  }))
 
   return (
     <div>
-      <h3 className="text-xl font-semibold">How it Works</h3>
-      <ol className="mt-3 text-sm text-slate-700 space-y-3">
-        {steps.map((s) => {
+      <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-indigo-600 mb-1">
+        <Sparkles className="h-4 w-4" />
+        <span>Simple Workflow</span>
+      </div>
+      <h3 className="text-xl font-bold text-slate-900">How Hyperlocal Mobile Works</h3>
+      <ol className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {steps.map((s, idx) => {
           const Icon = s.icon
           return (
-            <li key={s.id} className="flex items-start gap-3">
-              <Icon className="h-5 w-5 text-blue-500 mt-0.5" />
-              <span>{s.text}</span>
+            <li key={s.id} className="rounded-2xl border border-slate-100 bg-white/80 p-4 shadow-sm backdrop-blur-sm">
+              <div className="flex items-center gap-3">
+                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
+                  <Icon className="h-4 w-4" />
+                </span>
+                <span className="text-xs font-bold text-slate-400">STEP {idx + 1}</span>
+              </div>
+              <h4 className="mt-3 text-sm font-bold text-slate-900">{s.title || `Step ${idx + 1}`}</h4>
+              <p className="mt-1 text-xs text-slate-600 leading-relaxed">{s.text}</p>
             </li>
           )
         })}

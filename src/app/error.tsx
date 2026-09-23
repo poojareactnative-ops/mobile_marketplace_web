@@ -2,7 +2,13 @@
 
 import Link from 'next/link'
 
-export default function GlobalError({ error, reset }) {
+export default function GlobalError({
+  error,
+  reset,
+}: {
+  error: Error & { digest?: string }
+  reset: () => void
+}) {
   return (
     <main className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-50 to-white p-6">
       <div className="max-w-2xl w-full">

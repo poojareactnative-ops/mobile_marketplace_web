@@ -1,28 +1,29 @@
 "use client"
 
-import { CheckCircle2 } from 'lucide-react'
+import { CheckCircle2, ShieldCheck, Tag, Zap, Star } from 'lucide-react'
 
-export default function Features() {
-  const items = [
-    { id: 1, title: 'Location-based matching', desc: 'find shops within 1–3 km.' },
-    { id: 2, title: 'Customer enquiries', desc: 'name, phone, location, product/service interest.' },
-    { id: 3, title: 'Shop controls', desc: 'list products, repair services, and set service radius.' },
-    { id: 4, title: 'Offers & promotions', desc: 'shops can publish offers visible to nearby customers.' },
-  ]
+export default function Features({ items }) {
+  const list = items || []
+  if (list.length === 0) return null
 
   return (
     <div>
-      <h3 className="text-xl font-semibold">Features</h3>
-      <ul className="mt-3 text-sm text-slate-700 space-y-3">
-        {items.map((it) => (
-          <li key={it.id} className="flex items-start gap-3">
-            <CheckCircle2 className="h-5 w-5 text-blue-500 mt-0.5" />
-            <div>
-              <strong>{it.title}</strong> — {it.desc}
-            </div>
-          </li>
+      <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-indigo-600 mb-1">
+        <ShieldCheck className="h-4 w-4" />
+        <span>Platform Highlights</span>
+      </div>
+      <h3 className="text-xl font-bold text-slate-900">Why Choose Hyperlocal Mobile</h3>
+      <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {list.map((it, idx) => (
+          <div key={it.id || idx} className="rounded-2xl border border-slate-100 bg-white/80 p-5 shadow-sm backdrop-blur-sm">
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 mb-3">
+              <CheckCircle2 className="h-5 w-5" />
+            </span>
+            <h4 className="text-sm font-bold text-slate-900">{it.title}</h4>
+            <p className="mt-1.5 text-xs text-slate-600 leading-relaxed">{it.description || it.desc}</p>
+          </div>
         ))}
-      </ul>
+      </div>
     </div>
   )
 }

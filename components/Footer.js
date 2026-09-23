@@ -158,9 +158,6 @@ const Footer = () => {
               Seller Login
             </FooterLink>
 
-            <FooterLink href="/seller/dashboard">
-              Seller Dashboard
-            </FooterLink>
 
             <FooterLink href="/seller/help">
               Seller Support

@@ -6,10 +6,13 @@ import { useEffect, useState } from 'react'
 import { Menu, X } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
+import { useAuth } from '../../features/auth/hooks/useAuth'
+
 export default function Navbar() {
   const [open, setOpen] = useState(false)
   const [pathname, setPathname] = useState('')
   const router = useRouter()
+  const { user, isAuthenticated, logout } = useAuth()
 
   useEffect(() => {
     setPathname(typeof window !== 'undefined' ? window.location.pathname : '')
@@ -33,9 +36,13 @@ export default function Navbar() {
       return
     }
 
-    // Navigate to home with hash when on other pages
     router.push(`/#${id}`)
   }
+
+  const dashboardHref =
+    user?.role === 'ADMIN' || user?.role === 'PLATFORM_ADMIN'
+      ? '/admin'
+      : '/seller/dashboard'
 
   return (
     <header className="sticky top-0 z-40 backdrop-blur bg-white/60 border-b border-slate-100">
@@ -65,7 +72,28 @@ export default function Navbar() {
 
           <div className="flex items-center gap-3">
             <div className="hidden md:flex md:items-center md:gap-2">
-              <Link href="/register/super-seller" className="text-sm font-semibold text-indigo-600">Login</Link>
+              {isAuthenticated ? (
+
+                <button
+                  onClick={() => logout()}
+                  className="text-xs font-semibold text-rose-600 hover:text-rose-700 px-2 py-1"
+                >
+                  Logout
+                </button>
+
+              ) : (
+                <div className="flex items-center gap-2">
+                  <Link href="/login" className="text-xs font-semibold text-slate-700 hover:text-indigo-600 px-3 py-1.5">
+                    Login
+                  </Link>
+                  <Link
+                    href="/register/super-seller?mode=register"
+                    className="text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 px-3.5 py-1.5 rounded-xl shadow-sm transition"
+                  >
+                    Register
+                  </Link>
+                </div>
+              )}
             </div>
 
             <button
@@ -93,9 +121,28 @@ export default function Navbar() {
               </button>
             ))}
 
-            <div className="mt-2 flex flex-col gap-2">
-              <Link href="/register/super-seller" className="block rounded-md px-3 py-2 text-sm font-semibold text-indigo-600">Register</Link>
-              <Link href="/login" className="block rounded-md border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700">Login</Link>
+            <div className="mt-2 flex flex-col gap-2 border-t border-slate-100 pt-3">
+              {isAuthenticated ? (
+                <>
+                  <Link
+                    href={dashboardHref}
+                    className="block rounded-md px-3 py-2 text-sm font-semibold text-indigo-600"
+                  >
+                    Dashboard ({user?.name})
+                  </Link>
+                  <button
+                    onClick={() => logout()}
+                    className="text-left block rounded-md px-3 py-2 text-sm font-semibold text-rose-600"
+                  >
+                    Logout
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Link href="/register/super-seller?mode=register" className="block rounded-md px-3 py-2 text-sm font-semibold text-indigo-600">Register</Link>
+                  <Link href="/login" className="block rounded-md border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700">Login</Link>
+                </>
+              )}
             </div>
           </div>
         </div>

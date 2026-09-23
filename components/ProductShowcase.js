@@ -1,333 +1,290 @@
 "use client"
 
 import { useState } from 'react'
+import Link from 'next/link'
+import { useQuery } from '@tanstack/react-query'
 import {
   ShoppingCart,
-  Star,
-  Eye,
-  Heart,
-  MapPin,
-  MessageCircle,
-  ChevronRight,
-  Zap,
-  ShieldCheck,
-  ChevronLeft,
-  ChevronRight as ChevronRightIcon,
+  Search,
+  SlidersHorizontal,
+  ArrowRight,
+  Package,
+  X,
+  Sparkles,
 } from 'lucide-react'
-
-const SAMPLE_PRODUCTS = [
- 
-  {
-    id: 'p2',
-    name: 'Fast Charging USB-C Cable',
-    price: 299,
-    oldPrice: 499,
-    discount: 40,
-    rating: 4.8,
-    reviews: 245,
-    distance: '1.3 km',
-    seller: 'Tech World',
-    category: 'Charging',
-    stock: 'In Stock',
-
-    images: [
-      'https://images.unsplash.com/photo-1583863788434-e58a36330cf0?q=80&w=1200&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1625842268584-8f3296236761?q=80&w=1200&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1598327105666-5b89351aff97?q=80&w=1200&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?q=80&w=1200&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1556656793-08538906a9f8?q=80&w=1200&auto=format&fit=crop',
-    ],
-  },
-
-  {
-    id: 'p3',
-    name: 'Premium Wireless Earbuds',
-    price: 1299,
-    oldPrice: 1999,
-    discount: 35,
-    rating: 4.5,
-    reviews: 389,
-    distance: '2.1 km',
-    seller: 'Sound House',
-    category: 'Audio',
-    stock: 'Only 3 left',
-
-    images: [
-      'https://images.unsplash.com/photo-1606220945770-b5b6c2c55bf1?q=80&w=1200&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1590658268037-6bf12165a8df?q=80&w=1200&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1588423771078-cb3a4b7a6c3f?q=80&w=1200&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1572569511254-d8f925fe2cbb?q=80&w=1200&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1606400082777-ef05f3c5cde2?q=80&w=1200&auto=format&fit=crop',
-    ],
-  },
-
-  {
-    id: 'p4',
-    name: '20W Fast Charging Adapter',
-    price: 699,
-    oldPrice: 999,
-    discount: 30,
-    rating: 4.7,
-    reviews: 176,
-    distance: '1.7 km',
-    seller: 'Quick Charge Store',
-    category: 'Chargers',
-    stock: 'In Stock',
-
-    images: [
-      'https://images.unsplash.com/photo-1625842268584-8f3296236761?q=80&w=1200&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1583863788434-e58a36330cf0?q=80&w=1200&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1609592424823-8d0b0c5c0e3d?q=80&w=1200&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1556656793-08538906a9f8?q=80&w=1200&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?q=80&w=1200&auto=format&fit=crop',
-    ],
-  },
-
-  
-
-  {
-    id: 'p6',
-    name: 'Smart Watch Series 8',
-    price: 2499,
-    oldPrice: 3999,
-    discount: 37,
-    rating: 4.6,
-    reviews: 213,
-    distance: '3.2 km',
-    seller: 'Smart Gadgets',
-    category: 'Wearables',
-    stock: 'In Stock',
-
-    images: [
-      'https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=1200&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1546868871-7041f2a55e12?q=80&w=1200&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1508685096489-7aacd43bd3b1?q=80&w=1200&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1551816230-ef5deaed4a26?q=80&w=1200&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1579586337278-3befd40fd17a?q=80&w=1200&auto=format&fit=crop',
-    ],
-  },
-]
+import apiClient from '../src/lib/api/client'
+import ProductCard from './product-showcase/ProductCard'
+import QuickViewModal from './product-showcase/QuickViewModal'
+import InquiryModal from './product-showcase/InquiryModal'
 
 export default function ProductShowcase() {
+  const [selectedCategory, setSelectedCategory] = useState('ALL')
+  const [searchQuery, setSearchQuery] = useState('')
+  const [sortBy, setSortBy] = useState('newest')
+  const [quickViewProduct, setQuickViewProduct] = useState(null)
+  const [inquiryModal, setInquiryModal] = useState(null)
+
+  // 1. Fetch Dynamic Active Categories
+  const { data: categoriesData } = useQuery({
+    queryKey: ['public-categories'],
+    queryFn: async () => {
+      const res = await apiClient.get('/categories')
+      return res.data?.data || []
+    },
+    staleTime: 60000,
+  })
+
+  // 2. Fetch Dynamic Products with filters
+  const {
+    data: apiProducts,
+    isLoading,
+    isFetching,
+  } = useQuery({
+    queryKey: ['featuredProducts', selectedCategory, searchQuery, sortBy],
+    queryFn: async () => {
+      const params = new URLSearchParams()
+      params.append('limit', '12')
+      if (selectedCategory && selectedCategory !== 'ALL') {
+        params.append('categoryId', selectedCategory)
+      }
+      if (searchQuery.trim()) {
+        params.append('q', searchQuery.trim())
+      }
+      if (sortBy) {
+        params.append('sortBy', sortBy)
+      }
+      const res = await apiClient.get(`/products/featured?${params.toString()}`)
+      return res.data?.data || []
+    },
+    staleTime: 30000,
+  })
+
+  const rawProducts = apiProducts || []
+  const products = rawProducts.map((p) => {
+    const isSuperSellerOrAdmin =
+      p.shop?.ownerUser?.role === 'SUPER_SELLER' ||
+      p.shop?.ownerUser?.role === 'ADMIN' ||
+      p.shop?.ownerUser?.role === 'PLATFORM_ADMIN'
+
+    return {
+      id: p.id,
+      name: p.name,
+      price: p.priceFormatted || (p.pricePaise ? p.pricePaise / 100 : 0),
+      oldPrice: p.compareAtPriceFormatted || (p.compareAtPricePaise ? p.compareAtPricePaise / 100 : null),
+      priceFormatted: p.priceFormatted,
+      compareAtPriceFormatted: p.compareAtPriceFormatted,
+      rating: p.rating || 4.8,
+      reviewsCount: p.reviewsCount || 0,
+      seller: p.shop?.name || 'Local Store',
+      shopId: p.shopId,
+      shopAddress: p.shop?.address,
+      shopPhone: p.shop?.phone,
+      category: p.category?.name || p.category || 'Accessories',
+      categoryId: p.categoryId,
+      brand: p.brand || '',
+      condition: p.condition || 'New',
+      warranty: p.warranty || '',
+      images: Array.isArray(p.images)
+        ? p.images.map((img) => (typeof img === 'string' ? img : img.url))
+        : [],
+      discountPercent: p.discountPercent || 0,
+      stock: p.stock ?? 10,
+      features: p.features || '',
+      description: p.description || '',
+      modelCompatibility: p.modelCompatibility || '',
+      isSuperSellerOrAdmin,
+      canReceiveEnquiries: p.canReceiveEnquiries !== undefined ? p.canReceiveEnquiries : isSuperSellerOrAdmin,
+    }
+  })
+
+  const dynamicCategories = categoriesData || []
+  const categoriesList = [
+    { id: 'ALL', name: 'All Accessories' },
+    ...dynamicCategories.map((c) => ({ id: c.id, name: c.name })),
+  ]
+
   return (
-    <section className="py-10">
+    <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-6">
       {/* Header */}
-      <div className="mb-7 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+      <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
-          <div className="mb-2 flex items-center gap-2">
-            <div className="h-2 w-2 rounded-full bg-indigo-600" />
-
-            <span className="text-xs font-bold uppercase tracking-[0.2em] text-indigo-600">
-              Near You
-            </span>
+          <div className="inline-flex items-center gap-2 rounded-full bg-indigo-50 px-3 py-1 text-xs font-bold text-indigo-700">
+            <Sparkles className="h-3.5 w-3.5" />
+            <span>Bangalore Live Verified Inventory</span>
           </div>
-
-          <h2 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
-            Popular Products Nearby
+          <h2 className="mt-2 text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">
+            Genuine Mobile Accessories &amp; Spare Parts
           </h2>
-
-          <p className="mt-2 text-sm text-slate-500">
-            Shop from trusted sellers around your location
+          <p className="mt-1 text-xs text-slate-500 max-w-2xl">
+            Directly listed by nearby certified repair shops. Verified stocks, genuine warranty, and same-day pickup.
           </p>
         </div>
 
-        <a
+        <Link
           href="/products"
-          className="group inline-flex items-center gap-2 text-sm font-semibold text-indigo-600"
+          className="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-600 hover:text-indigo-700 transition"
         >
-          View all products
-
-          <ChevronRight className="h-4 w-4 transition group-hover:translate-x-1" />
-        </a>
+          <span>View All in Store</span>
+          <ArrowRight className="h-3.5 w-3.5" />
+        </Link>
       </div>
 
-      {/* Product Grid */}
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {SAMPLE_PRODUCTS.map((product) => (
-          <ProductCard key={product.id} product={product} />
-        ))}
-      </div>
-    </section>
-  )
-}
-
-function ProductCard({ product }) {
-  const [activeImage, setActiveImage] = useState(0)
-
-  const nextImage = () => {
-    setActiveImage((current) =>
-      current === product.images.length - 1 ? 0 : current + 1
-    )
-  }
-
-  const previousImage = () => {
-    setActiveImage((current) =>
-      current === 0 ? product.images.length - 1 : current - 1
-    )
-  }
-
-  return (
-    <article className="group overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-indigo-100 hover:shadow-2xl hover:shadow-indigo-100/50">
-      {/* Image Gallery */}
-      <div className="relative h-72 overflow-hidden bg-slate-100">
-        <img
-          src={product.images[activeImage]}
-          alt={product.name}
-          className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]"
-        />
-
-        {/* Image Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-black/10" />
-
-        {/* Discount */}
-        <div className="absolute left-4 top-4 rounded-full bg-red-500 px-3 py-1.5 text-xs font-bold text-white shadow-lg">
-          {product.discount}% OFF
+      {/* Filter and Search Bar */}
+      <div className="space-y-3 rounded-3xl border border-slate-200/80 bg-slate-50/70 p-4 shadow-sm">
+        {/* Category Pills */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-2 pt-1 scrollbar-none">
+          {categoriesList.map((cat) => {
+            const isSelected = selectedCategory === cat.id
+            return (
+              <button
+                key={cat.id}
+                type="button"
+                onClick={() => setSelectedCategory(cat.id)}
+                className={`shrink-0 rounded-2xl px-4 py-2 text-xs font-bold transition-all ${
+                  isSelected
+                    ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20 scale-[1.02]'
+                    : 'bg-white text-slate-600 hover:bg-slate-100 hover:text-slate-900 border border-slate-200/60'
+                }`}
+              >
+                {cat.name}
+              </button>
+            )
+          })}
         </div>
 
-        {/* Wishlist */}
-        <button
-          type="button"
-          className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-slate-600 shadow-lg backdrop-blur transition hover:text-red-500"
-        >
-          <Heart className="h-5 w-5" />
-        </button>
-
-        {/* Previous */}
-        <button
-          type="button"
-          onClick={previousImage}
-          className="absolute left-3 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-slate-700 opacity-0 shadow-lg transition group-hover:opacity-100"
-        >
-          <ChevronLeft className="h-5 w-5" />
-        </button>
-
-        {/* Next */}
-        <button
-          type="button"
-          onClick={nextImage}
-          className="absolute right-3 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-slate-700 opacity-0 shadow-lg transition group-hover:opacity-100"
-        >
-          <ChevronRightIcon className="h-5 w-5" />
-        </button>
-
-        {/* Quick View */}
-        <button
-          type="button"
-          className="absolute bottom-4 left-1/2 flex -translate-x-1/2 translate-y-10 items-center gap-2 rounded-full bg-white/95 px-5 py-2.5 text-xs font-bold text-slate-800 opacity-0 shadow-xl transition-all group-hover:translate-y-0 group-hover:opacity-100"
-        >
-          <Eye className="h-4 w-4" />
-          Quick View
-        </button>
-      </div>
-
-      {/* Thumbnails */}
-      <div className="flex gap-2 overflow-x-auto border-b border-slate-100 px-4 py-3 scrollbar-hide">
-        {product.images.map((image, index) => (
-          <button
-            key={image}
-            type="button"
-            onClick={() => setActiveImage(index)}
-            className={`h-12 w-12 shrink-0 overflow-hidden rounded-lg border-2 transition ${
-              activeImage === index
-                ? 'border-indigo-600'
-                : 'border-transparent hover:border-slate-300'
-            }`}
-          >
-            <img
-              src={image}
-              alt=""
-              className="h-full w-full object-cover"
+        {/* Search & Sort Controls */}
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pt-2 border-t border-slate-200/60">
+          <div className="relative flex-1">
+            <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search accessories (e.g. 9H Glass, Fast Charger, ANC Earbuds)..."
+              className="w-full rounded-2xl border border-slate-200 bg-white py-2.5 pl-10 pr-9 text-xs text-slate-800 placeholder-slate-400 outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
             />
-          </button>
-        ))}
-      </div>
-
-      {/* Product Details */}
-      <div className="p-5">
-        <div className="mb-2 flex items-center justify-between">
-          <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-600">
-            {product.category}
-          </span>
-
-          <span
-            className={`text-[11px] font-semibold ${
-              product.stock === 'In Stock'
-                ? 'text-emerald-600'
-                : 'text-orange-500'
-            }`}
-          >
-            {product.stock}
-          </span>
-        </div>
-
-        <h3 className="line-clamp-2 min-h-[48px] text-base font-bold leading-6 text-slate-900">
-          {product.name}
-        </h3>
-
-        {/* Rating */}
-        <div className="mt-3 flex items-center gap-2">
-          <div className="flex items-center gap-1 rounded-lg bg-amber-50 px-2 py-1">
-            <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
-
-            <span className="text-xs font-bold text-amber-700">
-              {product.rating}
-            </span>
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            )}
           </div>
 
-          <span className="text-xs text-slate-400">
-            ({product.reviews} reviews)
-          </span>
+          <div className="flex items-center gap-2">
+            <SlidersHorizontal className="h-3.5 w-3.5 text-slate-400" />
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              className="rounded-xl border border-slate-200 bg-white py-2 px-3 text-xs font-semibold text-slate-700 outline-none transition focus:border-indigo-400"
+            >
+              <option value="newest">Newest Arrivals</option>
+              <option value="price_asc">Price: Low to High</option>
+              <option value="price_desc">Price: High to Low</option>
+              <option value="discount">Highest Discount</option>
+            </select>
+          </div>
         </div>
+      </div>
 
-        {/* Seller */}
-        <div className="mt-4 flex items-center justify-between border-b border-slate-100 pb-4">
-          <div className="flex min-w-0 items-center gap-2">
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-50">
-              <ShieldCheck className="h-4 w-4 text-indigo-600" />
+      {/* Grid or States */}
+      {isLoading ? (
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+            <div
+              key={i}
+              className="animate-pulse rounded-3xl border border-slate-100 bg-slate-50 p-4 space-y-4"
+            >
+              <div className="h-52 w-full rounded-2xl bg-slate-200" />
+              <div className="h-4 w-3/4 rounded bg-slate-200" />
+              <div className="h-4 w-1/2 rounded bg-slate-200" />
+              <div className="h-8 w-full rounded bg-slate-200 mt-2" />
             </div>
+          ))}
+        </div>
+      ) : products.length === 0 ? (
+        <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-slate-200 bg-slate-50/60 p-12 text-center">
+          <Package className="h-12 w-12 text-slate-300 mb-3" />
+          <p className="text-base font-bold text-slate-800">
+            {searchQuery || selectedCategory !== 'ALL'
+              ? 'No accessories match your filters'
+              : 'No featured products published yet'}
+          </p>
+          <p className="mt-1 max-w-sm text-xs text-slate-500">
+            {searchQuery || selectedCategory !== 'ALL'
+              ? 'Try adjusting your search terms or picking another category.'
+              : 'Local store inventories will appear here automatically when verified sellers list items.'}
+          </p>
+          {(searchQuery || selectedCategory !== 'ALL') && (
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedCategory('ALL')
+                setSearchQuery('')
+              }}
+              className="mt-4 rounded-xl bg-indigo-600 px-4 py-2 text-xs font-bold text-white shadow-md hover:bg-indigo-700 transition"
+            >
+              Clear Filters
+            </button>
+          )}
+        </div>
+      ) : (
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          {products.map((product) => (
+            <ProductCard
+              key={product.id}
+              product={product}
+              onOpenQuickView={(p) => setQuickViewProduct(p)}
+              onOpenInquiry={(p) => setInquiryModal(p)}
+            />
+          ))}
+        </div>
+      )}
 
-            <span className="truncate text-xs font-medium text-slate-600">
-              {product.seller}
-            </span>
+      {/* Explore Full Marketplace Bottom Bar */}
+      <div className="mt-6 flex flex-col items-center justify-between gap-4 rounded-2xl border border-indigo-100 bg-gradient-to-r from-indigo-50/70 via-white to-blue-50/70 p-5 sm:flex-row">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-600 text-white shadow-md shadow-indigo-600/20">
+            <ShoppingCart className="h-5 w-5" />
           </div>
-
-          <div className="flex items-center gap-1 text-xs text-slate-400">
-            <MapPin className="h-3.5 w-3.5" />
-            {product.distance}
+          <div>
+            <h4 className="text-sm font-bold text-slate-900">
+              Looking for more parts, models, or screen replacements?
+            </h4>
+            <p className="text-xs text-slate-500">
+              Browse the complete live catalogue across all verified local repair shops in Bangalore.
+            </p>
           </div>
         </div>
 
-        {/* Price */}
-        <div className="mt-4 flex items-end gap-2">
-          <span className="text-2xl font-extrabold text-slate-900">
-            ₹{product.price.toLocaleString('en-IN')}
-          </span>
-
-          <span className="mb-1 text-sm text-slate-400 line-through">
-            ₹{product.oldPrice.toLocaleString('en-IN')}
-          </span>
-        </div>
-
-        {/* Cart */}
-        <div className="mt-5 grid grid-cols-[1fr_auto] gap-2">
-          <button
-            type="button"
-            className="group/cart flex h-8 items-center justify-center gap-2 rounded-xl bg-indigo-600 px-2 text-sm font-bold text-white shadow-lg shadow-indigo-600/20 transition hover:bg-indigo-700 active:scale-[0.98]"
-          >
-            <ShoppingCart className="h-5 w-5 transition group-hover/cart:scale-110" />
-
-            Send Inquiry
-          </button>
-
-          
-        </div>
-
-        <div className="mt-4 flex items-center gap-2 text-[11px] font-medium text-slate-400">
-          <Zap className="h-3.5 w-3.5 text-amber-500" />
-
-          Nearby seller • Quick pickup available
-        </div>
+        <Link
+          href="/products"
+          className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-xs font-bold text-white shadow-md shadow-indigo-600/20 hover:bg-indigo-700 transition active:scale-95"
+        >
+          <span>Explore Full Catalogue</span>
+          <ArrowRight className="h-3.5 w-3.5" />
+        </Link>
       </div>
-    </article>
+
+      {/* Quick View Modal */}
+      {quickViewProduct && (
+        <QuickViewModal
+          product={quickViewProduct}
+          onClose={() => setQuickViewProduct(null)}
+          onEnquire={(p) => {
+            setQuickViewProduct(null)
+            setInquiryModal(p)
+          }}
+        />
+      )}
+
+      {/* Customer Direct Enquiry Modal */}
+      {inquiryModal && (
+        <InquiryModal product={inquiryModal} onClose={() => setInquiryModal(null)} />
+      )}
+    </section>
   )
 }

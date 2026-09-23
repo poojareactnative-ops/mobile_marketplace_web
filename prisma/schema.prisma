@@ -1,0 +1,271 @@
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id           String   @id @default(uuid())
+  name         String
+  email        String   @unique
+  phone        String?
+  passwordHash String
+  role         String   @default("CUSTOMER") // CUSTOMER, SELLER, SELLER_ADMIN, SUPER_SELLER, PLATFORM_ADMIN
+  status       String   @default("ACTIVE")   // ACTIVE, PENDING_VERIFICATION, SUSPENDED
+  shopId       String?
+  shop         Shop?    @relation("ShopStaff", fields: [shopId], references: [id], onDelete: SetNull)
+  createdByUserId String?
+  createdByUser   User?   @relation("CreatedUsers", fields: [createdByUserId], references: [id], onDelete: SetNull)
+  createdUsers    User[]  @relation("CreatedUsers")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  ownedShops      Shop[]          @relation("ShopOwner")
+  enquiries       Enquiry[]
+  orders          Order[]
+  assignedRepairs RepairJob[]     @relation("AssignedRepairs")
+  repairUpdates   RepairUpdate[]
+}
+
+model Shop {
+  id           String   @id @default(uuid())
+  ownerUserId  String
+  ownerUser    User     @relation("ShopOwner", fields: [ownerUserId], references: [id], onDelete: Cascade)
+  name         String
+  type         String   @default("SUPER_SELLER") // SUPER_SELLER, ACCESSORY_SELLER
+  description  String?
+  phone        String?
+  address      String?
+  latitude     Float
+  longitude    Float
+  isActive     Boolean  @default(true)
+  isVerified   Boolean  @default(false)
+  openingHours String?  @default("9:00 AM - 9:00 PM")
+  rating       Float    @default(4.7)
+  reviewCount  Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  products        Product[]
+  offers          Offer[]
+  enquiries       Enquiry[]
+  orders          Order[]
+  repairJobs      RepairJob[]
+  repairCustomers RepairCustomer[]
+  staffUsers      User[]          @relation("ShopStaff")
+
+  @@index([isActive, latitude, longitude])
+}
+
+model Category {
+  id        String    @id @default(uuid())
+  name      String
+  slug      String    @unique
+  type      String    @default("ACCESSORY") // ACCESSORY, REPAIR
+  imageUrl  String?
+  isActive  Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  products  Product[]
+}
+
+model Product {
+  id                  String         @id @default(uuid())
+  shopId              String
+  shop                Shop           @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  categoryId          String?
+  category            Category?      @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  name                String
+  brand               String?
+  sku                 String?
+  modelCompatibility  String?
+  condition           String?        @default("New")
+  warranty            String?
+  pricePaise          Int            // e.g. 19900 = 199.00 INR
+  compareAtPricePaise Int?
+  discountPercent     Int?           @default(0)
+  stock               Int            @default(0)
+  status              String         @default("ACTIVE") // ACTIVE, DRAFT, ARCHIVED
+  features            String?
+  tags                String?
+  description         String?
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
+
+  images              ProductImage[]
+  enquiries           Enquiry[]
+
+  @@index([shopId, status])
+}
+
+model ProductImage {
+  id        String   @id @default(uuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  url       String
+  altText   String?
+  position  Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([productId, position])
+}
+
+model Offer {
+  id            String    @id @default(uuid())
+  shopId        String
+  shop          Shop      @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  title         String
+  text          String?
+  description   String?
+  discountType  String    @default("PERCENT") // PERCENT, FLAT, BOGO
+  discountValue Int       @default(10)
+  code          String?
+  themeColor    String?   @default("indigo")
+  startsAt      DateTime? @default(now())
+  endsAt        DateTime?
+  status        String    @default("ACTIVE") // ACTIVE, EXPIRED, DRAFT
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  enquiries     Enquiry[]
+
+  @@index([shopId, status])
+}
+
+model Enquiry {
+  id             String    @id @default(uuid())
+  shopId         String
+  shop           Shop      @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  customerUserId String?
+  customerUser   User?     @relation(fields: [customerUserId], references: [id], onDelete: SetNull)
+  customerName   String?
+  customerPhone  String?
+  productId      String?
+  product        Product?  @relation(fields: [productId], references: [id], onDelete: SetNull)
+  offerId        String?
+  offer          Offer?    @relation(fields: [offerId], references: [id], onDelete: SetNull)
+  message        String
+  status         String    @default("NEW") // NEW, RESPONDED, CLOSED
+  responseNote   String?
+  respondedAt    DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([shopId, status])
+  @@index([productId])
+  @@index([offerId])
+}
+
+model Order {
+  id             String   @id @default(uuid())
+  shopId         String
+  shop           Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  customerUserId String?
+  customerUser   User?    @relation(fields: [customerUserId], references: [id], onDelete: SetNull)
+  status         String   @default("PENDING") // PENDING, CONFIRMED, IN_PROGRESS, COMPLETED, CANCELLED
+  subtotalPaise  Int
+  totalPaise     Int
+  placedAt       DateTime @default(now())
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([shopId, placedAt])
+}
+
+model RepairCustomer {
+  id        String      @id @default(uuid())
+  shopId    String
+  shop      Shop        @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  name      String
+  phone     String
+  email     String?
+  address   String?
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  repairJobs RepairJob[]
+}
+
+model RepairJob {
+  id                 String          @id @default(uuid())
+  shopId             String
+  shop               Shop            @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  customerId         String?
+  customer           RepairCustomer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  customerName       String?
+  customerPhone      String?
+  deviceId           String?
+  brand              String?
+  model              String?
+  problemDescription String
+  status             String          @default("SUBMITTED") // SUBMITTED, UNDER_REVIEW, QUOTED, APPROVED, IN_PROGRESS, READY, COMPLETED, CANCELLED, NOT_REPAIRABLE
+  estimatedCostPaise Int?
+  isSellable         Boolean         @default(false)
+  assignedToUserId   String?
+  assignedToUser     User?           @relation("AssignedRepairs", fields: [assignedToUserId], references: [id], onDelete: SetNull)
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+
+  updates            RepairUpdate[]
+  payments           RepairPayment[]
+
+  @@index([shopId, status, createdAt])
+}
+
+model RepairUpdate {
+  id                 String    @id @default(uuid())
+  repairJobId        String
+  repairJob          RepairJob @relation(fields: [repairJobId], references: [id], onDelete: Cascade)
+  authorUserId       String?
+  authorUser         User?     @relation(fields: [authorUserId], references: [id], onDelete: SetNull)
+  status             String
+  note               String?
+  estimatedCostPaise Int?
+  createdAt          DateTime  @default(now())
+
+  @@index([repairJobId, createdAt])
+}
+
+model RepairPayment {
+  id          String    @id @default(uuid())
+  repairJobId String
+  repairJob   RepairJob @relation(fields: [repairJobId], references: [id], onDelete: Cascade)
+  amountPaise Int
+  method      String    @default("CASH")
+  status      String    @default("COMPLETED")
+  createdAt   DateTime  @default(now())
+
+  @@index([repairJobId])
+}
+
+model LandingPageSection {
+  id          String   @id @default(uuid())
+  key         String   @unique
+  title       String
+  subtitle    String?
+  body        String?
+  imageUrl    String?
+  ctaLabel    String?
+  ctaUrl      String?
+  isPublished Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Testimonial {
+  id          String   @id @default(uuid())
+  authorName  String
+  role        String?
+  quote       String
+  rating      Int      @default(5)
+  isPublished Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
