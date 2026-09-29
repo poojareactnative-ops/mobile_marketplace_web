@@ -38,8 +38,13 @@ export default function ShopDetailPage() {
     queryKey: ['shop-detail', id],
     queryFn: async () => {
       if (!id) return null
-      const res = await apiClient.get(`/public/shops/${id}`)
-      return res.data?.data
+      try {
+        const res = await apiClient.get(`/shops/${id}`)
+        return res.data?.data
+      } catch (err) {
+        const res = await apiClient.get(`/public/shops/${id}`)
+        return res.data?.data
+      }
     },
     enabled: !!id,
   })

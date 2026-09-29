@@ -6,7 +6,8 @@ export function useAuth() {
   const { user, shop, accessToken, isLoading, setAuth, logout, fetchMe } = useAuthStore()
 
   useEffect(() => {
-    if (accessToken && !user) {
+    const token = accessToken || (typeof window !== 'undefined' ? localStorage.getItem('auth_access_token') : null)
+    if (token && !user) {
       fetchMe()
     }
   }, [accessToken, user, fetchMe])

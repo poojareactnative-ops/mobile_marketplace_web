@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import DashboardLayout from '../../../components/DashboardLayout'
 import { useAuth } from '../../../src/features/auth/hooks/useAuth'
 import apiClient from '../../../src/lib/api/client'
-import { ArrowLeft, CheckCircle2 } from 'lucide-react'
+import { ArrowLeft, CheckCircle2, AlertCircle } from 'lucide-react'
 import ProductFormCard from '../../../components/seller/ProductFormCard'
 import AddCategoryModal from '../../../components/seller/AddCategoryModal'
 
@@ -164,8 +164,6 @@ export default function NewProductPage() {
         return setErrorMsg('Original MRP must be a valid non-negative number.')
       if (oldPrice < price) return setErrorMsg('MRP cannot be less than selling price.')
     }
-    if (!form.images || form.images.length === 0)
-      return setErrorMsg('At least one product image is required.')
 
     createMutation.mutate({ ...form, name, stock })
   }
@@ -200,6 +198,21 @@ export default function NewProductPage() {
             </p>
           </div>
         </div>
+
+        {user?.role === 'CUSTOMER' && (
+          <div className="flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 shadow-sm">
+            <AlertCircle className="h-5 w-5 shrink-0 text-amber-600 mt-0.5" />
+            <div>
+              <p className="font-semibold text-amber-900">Customer Account Detected</p>
+              <p className="text-xs text-amber-700 mt-0.5">
+                You are currently signed in with a Customer profile. To publish inventory, please{' '}
+                <Link href="/register/super-seller" className="font-bold underline text-amber-900 hover:text-amber-950">
+                  switch to or register a Super Seller store
+                </Link>.
+              </p>
+            </div>
+          </div>
+        )}
 
         <ProductFormCard
           form={form}

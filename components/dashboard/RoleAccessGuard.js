@@ -72,9 +72,6 @@ export function CustomerBlockedGuard({ user }) {
           <Store className="h-7 w-7" />
         </div>
         <h2 className="text-xl font-bold text-slate-900">Super Seller & Admin Area</h2>
-        <p className="mt-2 text-sm text-slate-500">
-          You are signed in as a normal Customer ({user?.name}). This dashboard is reserved for verified Super Sellers and Admins.
-        </p>
         <div className="mt-6 flex flex-col gap-2.5">
           <Link
             href="/products"

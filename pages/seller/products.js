@@ -307,8 +307,6 @@ export default function SellerProducts() {
         return setFormError('Original MRP must be a valid non-negative number.')
       if (oldPrice < price) return setFormError('MRP cannot be less than selling price.')
     }
-    if (!form.images || form.images.length === 0)
-      return setFormError('At least one product image is required.')
 
     if (editing) {
       updateMutation.mutate({ id: editing, payload: { ...form, name, stock } })

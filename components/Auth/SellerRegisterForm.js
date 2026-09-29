@@ -17,24 +17,12 @@ export default function SellerRegisterForm({
           <button
             type="button"
             onClick={() => setAccountType('SUPER_SELLER')}
-            className={`rounded-xl px-3 py-1.5 text-xs font-bold transition ${
-              accountType === 'SUPER_SELLER'
+            className={`rounded-xl px-3 py-1.5 text-xs font-bold transition ${accountType === 'SUPER_SELLER'
                 ? 'bg-indigo-600 text-white shadow-sm'
                 : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-            }`}
+              }`}
           >
             Super Seller
-          </button>
-          <button
-            type="button"
-            onClick={() => setAccountType('CUSTOMER')}
-            className={`rounded-xl px-3 py-1.5 text-xs font-bold transition ${
-              accountType === 'CUSTOMER'
-                ? 'bg-indigo-600 text-white shadow-sm'
-                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-            }`}
-          >
-            Normal Customer
           </button>
         </div>
 

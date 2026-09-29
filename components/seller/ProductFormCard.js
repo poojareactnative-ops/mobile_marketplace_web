@@ -232,7 +232,7 @@ export default function ProductFormCard({
       {/* IMAGES */}
       <FormSection
         icon={ImagePlus}
-        title="Product Images *"
+        title="Product Images"
         description="Upload photos or link web images for your product listing."
       >
         <ProductImageUploader

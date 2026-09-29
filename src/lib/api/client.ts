@@ -28,10 +28,13 @@ apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
     if (error.response?.status === 401 && typeof window !== 'undefined') {
-      // Don't auto-redirect if checking /auth/me or logging in
+      // Don't clear token if checking /auth/me or logging in or registering
       const url = error.config?.url || ''
-      if (!url.includes('/auth/login') && !url.includes('/auth/register')) {
-        // clear invalid token
+      if (
+        !url.includes('/auth/login') &&
+        !url.includes('/auth/register') &&
+        !url.includes('/auth/me')
+      ) {
         localStorage.removeItem('auth_access_token')
       }
     }

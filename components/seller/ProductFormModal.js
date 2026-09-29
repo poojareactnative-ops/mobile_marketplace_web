@@ -275,7 +275,7 @@ export default function ProductFormModal({
           {/* IMAGES */}
           <FormSection
             icon={ImagePlus}
-            title="Product Images *"
+            title="Product Images"
             description="Upload photos or paste an image URL."
           >
             <ProductImageUploader

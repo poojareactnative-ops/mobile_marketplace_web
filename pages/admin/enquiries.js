@@ -1,1 +1,1 @@
-export { default } from '../seller/admin/enquiries'
+export { default } from '../seller/enquiries'

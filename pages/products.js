@@ -71,10 +71,19 @@ export default function ProductsPage() {
         params.append('lat', String(userLocation.lat))
         params.append('lng', String(userLocation.lng))
       }
-      const res = await apiClient.get(`/public/products?${params.toString()}`)
-      return res.data?.data || []
+      try {
+        const res = await apiClient.get(`/public/products?${params.toString()}`)
+        return res.data?.data || []
+      } catch (err) {
+        try {
+          const res = await apiClient.get(`/products?${params.toString()}`)
+          return res.data?.data || []
+        } catch (e2) {
+          const res = await apiClient.get(`/products/featured?${params.toString()}`)
+          return res.data?.data || []
+        }
+      }
     },
-    enabled: locationStatus !== 'requesting',
   })
 
   const categories = categoriesData || []
@@ -198,7 +207,7 @@ export default function ProductsPage() {
 
       {/* Product Grid */}
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-        {isLoading || locationStatus === 'requesting' ? (
+        {isLoading ? (
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
               <div key={i} className="animate-pulse rounded-3xl border border-slate-200 bg-white p-5">

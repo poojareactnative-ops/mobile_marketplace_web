@@ -34,8 +34,13 @@ export default function OfferDetailPage() {
     queryKey: ['offer-detail', id],
     queryFn: async () => {
       if (!id) return null
-      const res = await apiClient.get(`/public/offers/${id}`)
-      return res.data?.data
+      try {
+        const res = await apiClient.get(`/offers/${id}`)
+        return res.data?.data
+      } catch (err) {
+        const res = await apiClient.get(`/public/offers/${id}`)
+        return res.data?.data
+      }
     },
     enabled: !!id,
   })

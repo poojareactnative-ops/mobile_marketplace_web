@@ -9,6 +9,87 @@ import {
 } from 'lucide-react'
 import apiClient from '../../src/lib/api/client'
 
+/**
+ * Optimizes and compresses images in the browser before uploading.
+ * Resizes large camera photos (e.g. 4000x3000 down to max 1600px)
+ * and compresses to JPEG, shrinking file size by 90%+ (e.g. 8MB -> ~250KB).
+ */
+async function optimizeImageForUpload(file, maxDimension = 1600, quality = 0.85) {
+  if (file.type === 'image/svg+xml' || file.type === 'image/gif') {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = () => {
+        if (typeof reader.result === 'string') {
+          resolve({
+            dataUrl: reader.result,
+            mimeType: file.type,
+            fileSize: file.size,
+            filename: file.name,
+          })
+        } else {
+          reject(new Error('Failed to read file.'))
+        }
+      }
+      reader.onerror = () => reject(new Error('Failed to read file.'))
+      reader.readAsDataURL(file)
+    })
+  }
+
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      const img = new Image()
+      img.onload = () => {
+        let width = img.width
+        let height = img.height
+
+        if (width > maxDimension || height > maxDimension) {
+          if (width > height) {
+            height = Math.round((height * maxDimension) / width)
+            width = maxDimension
+          } else {
+            width = Math.round((width * maxDimension) / height)
+            height = maxDimension
+          }
+        }
+
+        const canvas = document.createElement('canvas')
+        canvas.width = width
+        canvas.height = height
+        const ctx = canvas.getContext('2d')
+        if (!ctx) {
+          return resolve({
+            dataUrl: e.target.result,
+            mimeType: file.type || 'image/jpeg',
+            fileSize: file.size,
+            filename: file.name,
+          })
+        }
+
+        ctx.fillStyle = '#ffffff'
+        ctx.fillRect(0, 0, width, height)
+        ctx.drawImage(img, 0, 0, width, height)
+
+        const outputMime = 'image/jpeg'
+        const dataUrl = canvas.toDataURL(outputMime, quality)
+        const approxSize = Math.round((dataUrl.length * 3) / 4)
+        const baseName = file.name.replace(/\.[^.]+$/, '')
+
+        resolve({
+          dataUrl,
+          mimeType: outputMime,
+          fileSize: approxSize,
+          filename: `${baseName}.jpg`,
+        })
+      }
+      img.onerror = () => reject(new Error('Failed to process image file.'))
+      img.src = e.target.result
+    }
+    reader.onerror = () => reject(new Error('Failed to read file.'))
+    reader.readAsDataURL(file)
+  })
+}
+
 export default function ProductImageUploader({
   images = [],
   setImages,
@@ -35,39 +116,39 @@ export default function ProductImageUploader({
           continue
         }
 
-        if (file.size > 10 * 1024 * 1024) {
-          setErrorMsg(`"${file.name}" exceeds the 10MB limit.`)
-          continue
+        // Compress and optimize image to ensure ultra-fast upload & no 413 body size errors
+        const optimized = await optimizeImageForUpload(file)
+
+        let uploadedUrl = null
+        try {
+          // Try /uploads/presign as specified in docs/NODE_BACKEND_DYNAMIC_PAGES.md
+          const presignRes = await apiClient.post('/uploads/presign', {
+            filename: optimized.filename,
+            contentType: optimized.mimeType,
+            fileSize: optimized.fileSize,
+          })
+          const { uploadUrl, fileUrl, publicUrl } = presignRes.data?.data || {}
+          if (uploadUrl) {
+            const blob = await fetch(optimized.dataUrl).then((r) => r.blob())
+            await fetch(uploadUrl, {
+              method: 'PUT',
+              headers: { 'Content-Type': optimized.mimeType },
+              body: blob,
+            })
+            uploadedUrl = publicUrl || fileUrl || uploadUrl.split('?')[0]
+          }
+        } catch (presignErr) {
+          // Fallback to direct /uploads endpoint
+          const uploadRes = await apiClient.post('/uploads', {
+            file: optimized.dataUrl,
+            filename: optimized.filename,
+            contentType: optimized.mimeType,
+            fileSize: optimized.fileSize,
+          })
+          uploadedUrl =
+            uploadRes.data?.data?.url ||
+            uploadRes.data?.data?.publicUrl
         }
-
-        const base64Data = await new Promise((resolve, reject) => {
-          const reader = new FileReader()
-
-          reader.onload = () => {
-            if (typeof reader.result === 'string') {
-              resolve(reader.result)
-            } else {
-              reject(new Error('Failed to read image file.'))
-            }
-          }
-
-          reader.onerror = () => {
-            reject(new Error('Failed to read image file.'))
-          }
-
-          reader.readAsDataURL(file)
-        })
-
-        const uploadRes = await apiClient.post('/uploads', {
-          file: base64Data,
-          filename: file.name,
-          contentType: file.type || 'image/jpeg',
-          fileSize: file.size,
-        })
-
-        const uploadedUrl =
-          uploadRes.data?.data?.url ||
-          uploadRes.data?.data?.publicUrl
 
         if (uploadedUrl && typeof uploadedUrl === 'string') {
           setImages((currentImages) => [
@@ -210,7 +291,7 @@ export default function ProductImageUploader({
           </p>
 
           <p className="mt-1 text-xs text-slate-400">
-            PNG, JPG, WEBP or GIF · Max 10MB each
+            PNG, JPG, WEBP or GIF · Auto-compressed & optimized for high speed
           </p>
 
           <input
@@ -238,6 +319,11 @@ export default function ProductImageUploader({
               onChange={(event) =>
                 setImageUrlInput(event.target.value)
               }
+              onBlur={() => {
+                if (imageUrlInput.trim()) {
+                  handleAddImageUrl()
+                }
+              }}
               onKeyDown={handleImageUrlKeyDown}
               placeholder="https://example.com/photos/case.jpg"
               className="flex-1 rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-xs outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-50"
@@ -331,8 +417,8 @@ export default function ProductImageUploader({
           </div>
         </div>
       ) : (
-        <div className="rounded-xl border border-dashed border-amber-300 bg-amber-50/60 p-3.5 text-center text-xs font-semibold text-amber-800">
-          ⚠️ At least 1 product image is required.
+        <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-3.5 text-center text-xs font-medium text-slate-500">
+          📷 Optional: Upload product photos or paste an image URL above. A clean placeholder icon will be used if none is uploaded.
         </div>
       )}
     </div>

@@ -5,37 +5,29 @@
   "scripts": {
     "dev": "next dev -p 3000",
     "build": "next build",
-    "start": "next start -p 3000"
+    "start": "next start -p 3000",
+    "postinstall": "node -e \"const p = './node_modules/react-dom/package.json'; const fs = require('fs'); if (fs.existsSync(p)) { const j = JSON.parse(fs.readFileSync(p, 'utf8')); if (!j.exports['./server.edge']) { j.exports['./server.edge'] = './server.browser.js'; fs.writeFileSync(p, JSON.stringify(j, null, 2)); } }\""
   },
   "dependencies": {
-    "@prisma/client": "^5.22.0",
     "@tanstack/react-query": "^4.34.0",
     "axios": "^1.4.0",
-    "bcryptjs": "^3.0.3",
     "date-fns": "^2.30.0",
-    "jsonwebtoken": "^9.0.3",
     "lucide-react": "^1.31.0",
-    "mysql2": "^3.24.4",
     "next": "13.4.7",
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "react-hook-form": "^7.45.0",
     "recharts": "^2.6.2",
     "sonner": "^0.6.2",
-    "supports-color": "^8.1.1",
     "zod": "^3.23.2",
     "zustand": "^4.4.0"
   },
   "devDependencies": {
-    "@types/bcryptjs": "^2.4.6",
-    "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^20.4.2",
     "@types/react": "^18.2.28",
     "autoprefixer": "^10.4.14",
     "postcss": "^8.5.26",
-    "prisma": "^5.22.0",
     "tailwindcss": "^3.4.19",
-    "tsx": "^4.23.13",
     "typescript": "^5.4.2"
   }
 }

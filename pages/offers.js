@@ -60,8 +60,13 @@ export default function PublicOffersPage() {
         params.append('lat', String(userLocation.lat))
         params.append('lng', String(userLocation.lng))
       }
-      const res = await apiClient.get(`/public/offers/running?${params.toString()}`)
-      return res.data?.data || []
+      try {
+        const res = await apiClient.get(`/public/offers/running?${params.toString()}`)
+        return res.data?.data || []
+      } catch (err) {
+        const res = await apiClient.get(`/offers?${params.toString()}`)
+        return res.data?.data || []
+      }
     },
     enabled: locationStatus !== 'requesting',
     staleTime: 10000,

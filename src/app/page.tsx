@@ -2,7 +2,6 @@
 
 import './globals.css'
 import React, { useState } from 'react'
-import Link from 'next/link'
 import { useQuery } from '@tanstack/react-query'
 import {
   MapPin,
@@ -14,8 +13,6 @@ import {
   Sparkles,
   AlertCircle,
   Loader2,
-  ArrowRight,
-  Clock,
   Compass,
 } from 'lucide-react'
 import TopBanner from '../../components/TopBanner'
@@ -27,11 +24,8 @@ import Features from '../../components/Features'
 import Testimonials from '../../components/Testimonials'
 import Footer from '../../components/Footer'
 import apiClient from '../lib/api/client'
-import { useAuth } from '../features/auth/hooks/useAuth'
 
 export default function Page() {
-  const { user, shop, isAuthenticated } = useAuth()
-
   // Geolocation & Radius search state
   const [radiusMeters, setRadiusMeters] = useState(2500)
   const [selectedType, setSelectedType] = useState<string>('ALL')
@@ -115,32 +109,6 @@ export default function Page() {
       <Navbar />
 
       <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-        {/* Logged in notification banner */}
-        {isAuthenticated && (
-          <div className="mb-6 flex flex-col gap-2 rounded-2xl border border-indigo-200 bg-indigo-50/80 p-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-center gap-3">
-              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-600 text-white font-bold">
-                {user?.name?.charAt(0) || 'S'}
-              </span>
-              <div>
-                <p className="text-sm font-bold text-slate-900">
-                  Welcome back, {user?.name}! ({shop?.name || 'Seller'})
-                </p>
-                <p className="text-xs text-indigo-700">
-                  You are logged into your seller portal.
-                </p>
-              </div>
-            </div>
-            <Link
-              href="/seller/dashboard"
-              className="inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2 text-xs font-bold text-white shadow-md hover:bg-indigo-700 transition"
-            >
-              <span>Open Seller Dashboard</span>
-              <ArrowRight className="h-3.5 w-3.5" />
-            </Link>
-          </div>
-        )}
-
         <TopBanner
           banner={landingData?.topBanner}
           offers={landingData?.featuredOffers}
@@ -200,33 +168,30 @@ export default function Page() {
                 <button
                   type="button"
                   onClick={() => setSelectedType('ALL')}
-                  className={`rounded-xl px-3 py-1.5 text-xs font-bold transition ${
-                    selectedType === 'ALL'
-                      ? 'bg-indigo-600 text-white shadow-md'
-                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                  }`}
+                  className={`rounded-xl px-3 py-1.5 text-xs font-bold transition ${selectedType === 'ALL'
+                    ? 'bg-indigo-600 text-white shadow-md'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    }`}
                 >
                   All Shops
                 </button>
                 <button
                   type="button"
                   onClick={() => setSelectedType('SUPER_SELLER')}
-                  className={`rounded-xl px-3 py-1.5 text-xs font-bold transition ${
-                    selectedType === 'SUPER_SELLER'
-                      ? 'bg-indigo-600 text-white shadow-md'
-                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                  }`}
+                  className={`rounded-xl px-3 py-1.5 text-xs font-bold transition ${selectedType === 'SUPER_SELLER'
+                    ? 'bg-indigo-600 text-white shadow-md'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    }`}
                 >
                   Super Sellers (Repairs + Parts)
                 </button>
                 <button
                   type="button"
                   onClick={() => setSelectedType('ACCESSORY_SELLER')}
-                  className={`rounded-xl px-3 py-1.5 text-xs font-bold transition ${
-                    selectedType === 'ACCESSORY_SELLER'
-                      ? 'bg-indigo-600 text-white shadow-md'
-                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                  }`}
+                  className={`rounded-xl px-3 py-1.5 text-xs font-bold transition ${selectedType === 'ACCESSORY_SELLER'
+                    ? 'bg-indigo-600 text-white shadow-md'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    }`}
                 >
                   Accessory Sellers
                 </button>
