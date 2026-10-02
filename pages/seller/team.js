@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import DashboardLayout from '../../components/DashboardLayout'
-import apiClient from '../../src/lib/api/client'
+import superSellerService from '../../src/lib/api/superSeller.service'
 import useAuth from '../../src/features/auth/hooks/useAuth'
 import {
   Users,
@@ -19,6 +19,8 @@ import {
   Calendar,
   Sparkles,
   Key,
+  Trash2,
+  Power,
 } from 'lucide-react'
 
 export default function SuperSellerTeam() {
@@ -36,20 +38,19 @@ export default function SuperSellerTeam() {
     role: 'SELLER_ADMIN',
   })
 
-  // 1. Fetch sellers created by this Super Seller
+  // 1. Fetch store admins created by this Super Seller
   const { data: sellers = [], isLoading, refetch } = useQuery({
     queryKey: ['super-seller-team'],
     queryFn: async () => {
-      const res = await apiClient.get('/super-seller/sellers')
-      return res.data?.data || []
+      const data = await superSellerService.getStoreAdmins()
+      return data || []
     },
   })
 
-  // 2. Create Seller Mutation
+  // 2. Create Seller / Admin Mutation
   const createSellerMutation = useMutation({
     mutationFn: async (payload) => {
-      const res = await apiClient.post('/super-seller/sellers', payload)
-      return res.data
+      return superSellerService.createStoreAdmin(payload)
     },
     onSuccess: (data) => {
       setSuccessMsg(data?.message || 'Seller created successfully!')
@@ -69,6 +70,32 @@ export default function SuperSellerTeam() {
     },
     onError: (err) => {
       setErrorMsg(err.response?.data?.error?.message || err.message || 'Failed to create seller')
+    },
+  })
+
+  // 3. Suspend / Reactivate Admin Mutation
+  const toggleStatusMutation = useMutation({
+    mutationFn: async ({ adminId, status }) => {
+      return superSellerService.updateStoreAdminStatus(adminId, status)
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['super-seller-team'])
+    },
+    onError: (err) => {
+      alert(err.response?.data?.error?.message || 'Failed to update admin status')
+    },
+  })
+
+  // 4. Delete Admin Mutation
+  const deleteAdminMutation = useMutation({
+    mutationFn: async (adminId) => {
+      return superSellerService.deleteStoreAdmin(adminId)
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['super-seller-team'])
+    },
+    onError: (err) => {
+      alert(err.response?.data?.error?.message || 'Failed to remove admin')
     },
   })
 
@@ -174,6 +201,7 @@ export default function SuperSellerTeam() {
                     <th className="px-6 py-3.5">Store Assignment</th>
                     <th className="px-6 py-3.5">Status</th>
                     <th className="px-6 py-3.5">Created Date</th>
+                    <th className="px-6 py-3.5 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 text-xs">
@@ -227,7 +255,13 @@ export default function SuperSellerTeam() {
                       </td>
 
                       <td className="px-6 py-4">
-                        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-[11px] font-bold text-emerald-700">
+                        <span
+                          className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-bold ${
+                            s.status === 'ACTIVE'
+                              ? 'bg-emerald-50 text-emerald-700'
+                              : 'bg-amber-50 text-amber-700'
+                          }`}
+                        >
                           <CheckCircle2 className="h-3 w-3" />
                           <span>{s.status}</span>
                         </span>
@@ -235,6 +269,36 @@ export default function SuperSellerTeam() {
 
                       <td className="px-6 py-4 text-slate-500 font-mono text-[11px]">
                         {s.createdAt ? new Date(s.createdAt).toLocaleDateString('en-IN', { dateStyle: 'medium' }) : '—'}
+                      </td>
+
+                      <td className="px-6 py-4 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => {
+                              const newStatus = s.status === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE'
+                              toggleStatusMutation.mutate({ adminId: s.id, status: newStatus })
+                            }}
+                            title={s.status === 'ACTIVE' ? 'Suspend admin' : 'Reactivate admin'}
+                            className={`rounded-lg p-1.5 transition ${
+                              s.status === 'ACTIVE'
+                                ? 'bg-amber-50 text-amber-700 hover:bg-amber-100'
+                                : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+                            }`}
+                          >
+                            <Power className="h-3.5 w-3.5" />
+                          </button>
+                          <button
+                            onClick={() => {
+                              if (confirm(`Remove admin "${s.name}" from your shop?`)) {
+                                deleteAdminMutation.mutate(s.id)
+                              }
+                            }}
+                            title="Remove admin"
+                            className="rounded-lg p-1.5 text-rose-600 hover:bg-rose-50 transition"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}

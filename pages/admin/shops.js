@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import apiClient from '../../src/lib/api/client'
+import systemService from '../../src/lib/api/system.service'
 import DashboardLayout from '../../components/DashboardLayout'
 import { Store, Search, CheckCircle2, Clock, MapPin, PhoneCall, ShieldCheck, Power } from 'lucide-react'
 
@@ -12,15 +12,14 @@ export default function AdminShopsPage() {
   const { data: shopsData, isLoading } = useQuery({
     queryKey: ['admin-all-shops', searchTerm],
     queryFn: async () => {
-      const param = searchTerm ? `?search=${encodeURIComponent(searchTerm)}` : ''
-      const res = await apiClient.get(`/admin/shops${param}`)
-      return res.data?.data || []
+      const res = await systemService.getSystemShops({ search: searchTerm || undefined })
+      return res.items || []
     },
   })
 
   const verifyMutation = useMutation({
     mutationFn: async ({ shopId, isVerified }) => {
-      return apiClient.patch(`/admin/shops/${shopId}/verify`, { isVerified })
+      return systemService.updateSystemShop(shopId, { isVerified })
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-all-shops'] })
@@ -30,7 +29,7 @@ export default function AdminShopsPage() {
 
   const activeMutation = useMutation({
     mutationFn: async ({ shopId, isActive }) => {
-      return apiClient.patch(`/admin/shops/${shopId}/active`, { isActive })
+      return systemService.updateSystemShop(shopId, { isActive })
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-all-shops'] })

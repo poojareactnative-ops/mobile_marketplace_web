@@ -1,64 +1,201 @@
 import { create } from 'zustand'
-import apiClient from '../lib/api/client'
+import {
+  authService,
+  UserProfile,
+  ShopProfile,
+  SuperSellerRegistrationPayload,
+  LoginPayload,
+} from '../lib/api/auth.service'
+import {
+  getAccessToken,
+  getRefreshToken,
+  setAuthTokens,
+  clearAuthTokens,
+} from '../lib/api/client'
 
-export interface UserProfile {
-  id: string
-  name: string
-  email: string
-  phone?: string | null
-  role: string
-  status: string
-}
-
-export interface ShopProfile {
-  id: string
-  name: string
-  type: string
-  isActive: boolean
-  isVerified: boolean
-}
+export type { UserProfile, ShopProfile }
 
 interface AuthState {
   user: UserProfile | null
   shop: ShopProfile | null
   accessToken: string | null
+  refreshToken: string | null
   isLoading: boolean
-  setAuth: (user: UserProfile, shop: ShopProfile | null, accessToken: string) => void
-  logout: () => void
+  isInitialized: boolean
+
+  // Actions
+  setAuth: (
+    user: UserProfile,
+    shop: ShopProfile | null,
+    accessToken: string,
+    refreshToken?: string | null
+  ) => void
+  logout: () => Promise<void>
   fetchMe: () => Promise<UserProfile | null>
+  login: (credentials: LoginPayload) => Promise<{ user: UserProfile; shop?: ShopProfile | null }>
+  registerSuperSeller: (payload: SuperSellerRegistrationPayload) => Promise<any>
+  registerSeller: (payload: SuperSellerRegistrationPayload) => Promise<any>
+  forgotPassword: (email: string) => Promise<any>
+  resetPassword: (token: string, newPassword: string) => Promise<any>
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
+const getInitialToken = () => {
+  if (typeof window === 'undefined') return null
+  return getAccessToken()
+}
+
+const initialToken = getInitialToken()
+
+export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   shop: null,
-  accessToken: typeof window !== 'undefined' ? localStorage.getItem('auth_access_token') : null,
-  isLoading: true,
+  accessToken: initialToken,
+  refreshToken: typeof window !== 'undefined' ? getRefreshToken() : null,
+  // If there is NO stored token, we are already initialized and not loading!
+  isLoading: !!initialToken,
+  isInitialized: !initialToken,
 
-  setAuth: (user, shop, accessToken) => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('auth_access_token', accessToken)
-    }
-    set({ user, shop, accessToken, isLoading: false })
+  setAuth: (user, shop, accessToken, refreshToken) => {
+    setAuthTokens(accessToken, refreshToken)
+    set({
+      user,
+      shop: shop || null,
+      accessToken,
+      refreshToken: refreshToken || get().refreshToken,
+      isLoading: false,
+      isInitialized: true,
+    })
   },
 
-  logout: () => {
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('auth_access_token')
+  logout: async () => {
+    try {
+      await authService.logout()
+    } catch {
+      // ignore network errors on logout
+    } finally {
+      clearAuthTokens()
+      set({
+        user: null,
+        shop: null,
+        accessToken: null,
+        refreshToken: null,
+        isLoading: false,
+        isInitialized: true,
+      })
     }
-    set({ user: null, shop: null, accessToken: null, isLoading: false })
   },
 
   fetchMe: async () => {
-    try {
-      set({ isLoading: true })
-      const res = await apiClient.get('/auth/me')
-      const { user, shop } = res.data.data
-      set({ user, shop, isLoading: false })
-      return user
-    } catch {
-      set({ user: null, shop: null, isLoading: false })
+    const token = getAccessToken()
+    if (!token) {
+      set({
+        user: null,
+        shop: null,
+        accessToken: null,
+        refreshToken: null,
+        isLoading: false,
+        isInitialized: true,
+      })
       return null
     }
+
+    try {
+      set({ isLoading: true })
+      const { user, shop } = await authService.getMe()
+      set({
+        user,
+        shop: shop || null,
+        accessToken: token,
+        isLoading: false,
+        isInitialized: true,
+      })
+      return user
+    } catch {
+      // If fetching me fails, token is invalid or expired
+      clearAuthTokens()
+      set({
+        user: null,
+        shop: null,
+        accessToken: null,
+        refreshToken: null,
+        isLoading: false,
+        isInitialized: true,
+      })
+      return null
+    }
+  },
+
+  login: async (credentials: LoginPayload) => {
+    set({ isLoading: true })
+    try {
+      const res = await authService.login(credentials)
+      const user =
+        res.data?.user || (res.user as UserProfile) || (res.data as unknown as UserProfile)
+      const shop = res.data?.shop || res.shop || null
+
+      const accessToken =
+        res.data?.tokens?.accessToken ||
+        res.data?.accessToken ||
+        res.tokens?.accessToken ||
+        ''
+      const refreshToken =
+        res.data?.tokens?.refreshToken ||
+        res.data?.refreshToken ||
+        res.tokens?.refreshToken ||
+        ''
+
+      if (user && accessToken) {
+        get().setAuth(user, shop, accessToken, refreshToken)
+      } else if (user) {
+        set({ user, shop, isLoading: false, isInitialized: true })
+      }
+
+      return { user, shop }
+    } finally {
+      set({ isLoading: false, isInitialized: true })
+    }
+  },
+
+  registerSuperSeller: async (payload: SuperSellerRegistrationPayload) => {
+    set({ isLoading: true })
+    try {
+      const res = await authService.registerSuperSeller(payload)
+      const user = res.data?.user || res.user
+      const shop = res.data?.shop || res.shop
+      const tokens = res.data?.tokens || res.tokens
+
+      if (user && tokens?.accessToken) {
+        get().setAuth(user, shop, tokens.accessToken, tokens.refreshToken)
+      }
+      return res
+    } finally {
+      set({ isLoading: false, isInitialized: true })
+    }
+  },
+
+  registerSeller: async (payload: SuperSellerRegistrationPayload) => {
+    set({ isLoading: true })
+    try {
+      const res = await authService.registerSeller(payload)
+      const user = res.data?.user || res.user
+      const shop = res.data?.shop || res.shop
+      const tokens = res.data?.tokens || res.tokens
+
+      if (user && tokens?.accessToken) {
+        get().setAuth(user, shop, tokens.accessToken, tokens.refreshToken)
+      }
+      return res
+    } finally {
+      set({ isLoading: false, isInitialized: true })
+    }
+  },
+
+  forgotPassword: async (email: string) => {
+    return await authService.forgotPassword(email)
+  },
+
+  resetPassword: async (token: string, newPassword: string) => {
+    return await authService.resetPassword({ token, newPassword })
   },
 }))
 

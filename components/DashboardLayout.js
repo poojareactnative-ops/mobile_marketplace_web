@@ -12,6 +12,9 @@ import {
   Store,
   Users,
   Wrench,
+  Clock,
+  CreditCard,
+  TrendingUp,
 } from 'lucide-react'
 import useAuth from '../src/features/auth/hooks/useAuth'
 import {
@@ -42,7 +45,7 @@ export default function DashboardLayout({ children }) {
   const isAdminPath = router.pathname?.startsWith('/admin')
   const isSellerPath = router.pathname?.startsWith('/seller')
 
-  if (isAdminPath && role !== 'ADMIN' && role !== 'PLATFORM_ADMIN') {
+  if (isAdminPath && role !== 'ADMIN' && role !== 'PLATFORM_ADMIN' && role !== 'SUPER_ADMIN') {
     return <AdminOnlyGuard />
   }
 
@@ -54,17 +57,18 @@ export default function DashboardLayout({ children }) {
   let dashboardHref = '/seller/dashboard'
   let roleLabel = 'Store Seller'
 
-  if (role === 'ADMIN' || role === 'PLATFORM_ADMIN') {
-    roleLabel = 'Platform Administrator'
+  if (role === 'SUPER_ADMIN' || role === 'ADMIN' || role === 'PLATFORM_ADMIN') {
+    roleLabel = 'Super Admin (Platform Owner)'
     dashboardHref = '/admin'
     navItems = [
-      { name: 'Platform Overview', href: '/admin', icon: LayoutDashboard },
+      { name: 'Command Center', href: '/admin', icon: LayoutDashboard },
+      { name: 'Onboarding Requests', href: '/admin?tab=requests', icon: Clock },
+      { name: 'Subscription Plans', href: '/admin?tab=plans', icon: CreditCard },
+      { name: 'Platform Analytics', href: '/admin?tab=analytics', icon: TrendingUp },
       { name: 'Manage Shops', href: '/admin/shops', icon: Store },
-      { name: 'Products', href: '/admin/products', icon: ShoppingBag },
-      { name: 'Categories', href: '/admin/categories', icon: Tag },
-      { name: 'Platform Repairs', href: '/admin/repairs', icon: Wrench },
       { name: 'User Accounts', href: '/admin/users', icon: Users },
-      { name: 'Browse Public Site', href: '/', icon: Store },
+      { name: 'Platform Repairs', href: '/admin/repairs', icon: Wrench },
+      { name: 'Browse Products', href: '/products', icon: ShoppingBag },
     ]
   } else if (role === 'SUPER_SELLER') {
     roleLabel = 'Super Seller (Sales & Repairs)'
@@ -79,6 +83,7 @@ export default function DashboardLayout({ children }) {
       { name: 'Enquiries', href: '/seller/enquiries', icon: MessageCircle },
       { name: 'Repair Center', href: '/seller/mobile-repairing', icon: Wrench },
       { name: 'Repair Customers', href: '/seller/admin/repairing/customers', icon: Users },
+      { name: 'Local Customers', href: '/seller/admin/customers', icon: Users },
       { name: 'Shop Profile', href: '/seller/profile', icon: Store },
     ]
   } else if (role === 'CUSTOMER') {
@@ -92,10 +97,12 @@ export default function DashboardLayout({ children }) {
       { name: 'Home', href: '/', icon: LayoutDashboard },
     ]
   } else {
-    roleLabel = 'Store Seller'
+    roleLabel = 'Store Staff / Seller Admin'
     dashboardHref = '/seller/dashboard'
     navItems = [
       { name: 'Dashboard', href: '/seller/dashboard', icon: LayoutDashboard },
+      { name: 'Repair Center', href: '/seller/mobile-repairing', icon: Wrench },
+      { name: 'Local Customers', href: '/seller/admin/customers', icon: Users },
       { name: 'Products', href: '/seller/products', icon: ShoppingBag },
       { name: 'Orders', href: '/seller/orders', icon: ClipboardList },
       { name: 'Offers', href: '/seller/offers', icon: Tag },
@@ -118,6 +125,7 @@ export default function DashboardLayout({ children }) {
           navItems={navItems}
           pathname={pathname}
           role={role}
+          status={user?.status}
         />
         <main className="min-w-0 flex-1">
           <div className="px-4 py-6 sm:px-6 lg:px-8">{children}</div>

@@ -30,6 +30,11 @@ export default function Navbar() {
   function handleClickSection(id: string) {
     setOpen(false)
 
+    if (id === 'hero' && isAuthenticated) {
+      router.push(dashboardHref)
+      return
+    }
+
     if (pathname === '/' || pathname === '') {
       const el = document.getElementById(id)
       if (el) el.scrollIntoView({ behavior: 'smooth' })
@@ -40,16 +45,18 @@ export default function Navbar() {
   }
 
   const dashboardHref =
-    user?.role === 'ADMIN' || user?.role === 'PLATFORM_ADMIN'
+    user?.role === 'ADMIN' || user?.role === 'PLATFORM_ADMIN' || user?.role === 'SUPER_ADMIN'
       ? '/admin'
       : '/seller/dashboard'
+
+  const homeHref = isAuthenticated ? dashboardHref : '/'
 
   return (
     <header className="sticky top-0 z-40 backdrop-blur bg-white/60 border-b border-slate-100">
       <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Link href="/" className="flex items-center gap-3">
+            <Link href={homeHref} className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-600 text-white font-bold">HM</div>
               <div>
                 <div className="text-sm font-bold text-slate-900">Hyperlocal Mobile</div>
@@ -73,14 +80,20 @@ export default function Navbar() {
           <div className="flex items-center gap-3">
             <div className="hidden md:flex md:items-center md:gap-2">
               {isAuthenticated ? (
-
-                <button
-                  onClick={() => logout()}
-                  className="text-xs font-semibold text-rose-600 hover:text-rose-700 px-2 py-1"
-                >
-                  Logout
-                </button>
-
+                <div className="flex items-center gap-2">
+                  <Link
+                    href={dashboardHref}
+                    className="text-xs font-bold text-indigo-600 hover:text-indigo-700 bg-indigo-50 px-3 py-1.5 rounded-lg transition"
+                  >
+                    Dashboard ({user?.name?.split(' ')[0] || 'Account'})
+                  </Link>
+                  <button
+                    onClick={() => logout()}
+                    className="text-xs font-semibold text-rose-600 hover:text-rose-700 px-2 py-1"
+                  >
+                    Logout
+                  </button>
+                </div>
               ) : (
                 <div className="flex items-center gap-2">
                   <Link href="/login" className="text-xs font-semibold text-slate-700 hover:text-indigo-600 px-3 py-1.5">

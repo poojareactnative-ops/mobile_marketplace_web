@@ -1,5 +1,18 @@
 import InputField from '../InputField'
-import { User, Mail, Lock, Phone, Store, MapPin, Navigation, ArrowRight } from 'lucide-react'
+import {
+  User,
+  Mail,
+  Lock,
+  Phone,
+  Store,
+  MapPin,
+  Navigation,
+  ArrowRight,
+  Clock,
+  MessageSquare,
+  Sparkles,
+  FileText,
+} from 'lucide-react'
 
 export default function SellerRegisterForm({
   form,
@@ -17,10 +30,11 @@ export default function SellerRegisterForm({
           <button
             type="button"
             onClick={() => setAccountType('SUPER_SELLER')}
-            className={`rounded-xl px-3 py-1.5 text-xs font-bold transition ${accountType === 'SUPER_SELLER'
+            className={`rounded-xl px-3 py-1.5 text-xs font-bold transition ${
+              accountType === 'SUPER_SELLER'
                 ? 'bg-indigo-600 text-white shadow-sm'
                 : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-              }`}
+            }`}
           >
             Super Seller
           </button>
@@ -32,7 +46,7 @@ export default function SellerRegisterForm({
 
         <p className="mt-1.5 text-sm text-slate-500">
           {accountType === 'SUPER_SELLER'
-            ? 'List mobile accessories, take repair tickets, and reach nearby buyers.'
+            ? 'Register your store for Super Admin approval. List mobile accessories, manage repair tickets, and reach nearby buyers.'
             : 'Explore genuine local accessories and send verified enquiries.'}
         </p>
 
@@ -80,7 +94,7 @@ export default function SellerRegisterForm({
           label="Phone number"
           name="phone"
           type="tel"
-          placeholder="+91 98765 43210"
+          placeholder="+91 98450 12345"
           value={form.phone}
           onChange={handleChange}
           icon={<Phone className="h-5 w-5" />}
@@ -92,7 +106,7 @@ export default function SellerRegisterForm({
             <InputField
               label="Shop name"
               name="shopName"
-              placeholder="e.g. Pooja Mobile Store"
+              placeholder="e.g. Pooja Mobile Hub"
               value={form.shopName}
               onChange={handleChange}
               icon={<Store className="h-5 w-5" />}
@@ -102,11 +116,64 @@ export default function SellerRegisterForm({
             <InputField
               label="Shop address"
               name="address"
-              placeholder="Enter complete shop address"
+              placeholder="e.g. 12/4 Brigade Road, Bangalore"
               value={form.address}
               onChange={handleChange}
               icon={<MapPin className="h-5 w-5" />}
               required
+            />
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <InputField
+                label="WhatsApp Number (Customer Enquiry)"
+                name="whatsappNumber"
+                type="tel"
+                placeholder="919845012345"
+                value={form.whatsappNumber || ''}
+                onChange={handleChange}
+                icon={<MessageSquare className="h-5 w-5" />}
+              />
+
+              <InputField
+                label="Opening Hours"
+                name="openingHours"
+                placeholder="9:00 AM - 9:00 PM"
+                value={form.openingHours || ''}
+                onChange={handleChange}
+                icon={<Clock className="h-5 w-5" />}
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="planType"
+                className="mb-2 block text-sm font-semibold text-slate-700"
+              >
+                Onboarding Plan
+              </label>
+              <div className="relative">
+                <Sparkles className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+                <select
+                  id="planType"
+                  name="planType"
+                  value={form.planType || 'STARTER_MONTHLY'}
+                  onChange={handleChange}
+                  className="w-full appearance-none rounded-xl border border-slate-200 bg-slate-50 py-3.5 pl-11 pr-8 text-sm font-medium text-slate-900 outline-none transition hover:border-slate-300 focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-500/10"
+                >
+                  <option value="STARTER_MONTHLY">Starter Monthly (Standard)</option>
+                  <option value="GROWTH_PRO">Growth Pro (Multi-Admin)</option>
+                  <option value="ENTERPRISE">Enterprise Platinum</option>
+                </select>
+              </div>
+            </div>
+
+            <InputField
+              label="Business Document URL (Optional GST/Certificate)"
+              name="businessDocUrl"
+              placeholder="https://example.com/gst-cert.pdf"
+              value={form.businessDocUrl || ''}
+              onChange={handleChange}
+              icon={<FileText className="h-5 w-5" />}
             />
 
             <div className="pt-1">
@@ -114,7 +181,7 @@ export default function SellerRegisterForm({
                 <div>
                   <h3 className="text-xs font-bold text-slate-900">Store GPS Coordinates</h3>
                   <p className="text-[11px] text-slate-500">
-                    Used to calculate proximity for nearby customer inquiries.
+                    Used for hyper-local customer proximity search radius.
                   </p>
                 </div>
                 <Navigation className="h-4 w-4 text-indigo-500" />
@@ -151,12 +218,14 @@ export default function SellerRegisterForm({
           disabled={loginSubmitted}
           className="group mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 px-5 py-3.5 text-sm font-semibold text-white shadow-lg shadow-slate-900/10 transition duration-200 hover:bg-indigo-600 hover:shadow-indigo-600/20 focus:outline-none focus:ring-4 focus:ring-indigo-100 disabled:opacity-75"
         >
-          {accountType === 'SUPER_SELLER' ? 'Register as Super Seller' : 'Create Customer Account'}
+          {accountType === 'SUPER_SELLER'
+            ? 'Submit Super Seller Registration'
+            : 'Create Customer Account'}
           <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
         </button>
 
         <p className="text-center text-xs leading-5 text-slate-400">
-          By registering, you agree to our seller terms and conditions.
+          Requests are reviewed by Super Admin. No payment gateway involved.
         </p>
       </form>
     </>

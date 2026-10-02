@@ -43,26 +43,40 @@ export default function AdminLoginPage() {
         password,
       })
 
-      const { user, shop, tokens } = res.data.data
+      const responseData = res.data?.data || res.data
+      const user = responseData.user
+      const shop = responseData.shop
+      const tokens = responseData.tokens
 
-      // STRICT ADMIN ROLE VERIFICATION
-      if (user.role !== 'ADMIN' && user.role !== 'PLATFORM_ADMIN') {
-        // Clear tokens from storage if any
+      // STRICT SUPER ADMIN ROLE VERIFICATION
+      const isSuperAdmin = user?.role === 'SUPER_ADMIN'
+
+      if (!isSuperAdmin) {
         if (typeof window !== 'undefined') {
           localStorage.removeItem('auth_access_token')
+          localStorage.removeItem('auth_refresh_token')
         }
         setError(
-          'Access Denied: This portal is exclusively for Platform Administrators. Super Sellers should use the Seller Portal.'
+          'Access Denied: Only Super Admins (Platform Owners) are permitted to sign in to this governance console. Super Sellers and Customers should use their respective portals.'
         )
         setSubmitting(false)
         return
       }
 
-      useAuthStore.getState().setAuth(user, shop, tokens.accessToken)
-      router.push('/admin')
+      useAuthStore
+        .getState()
+        .setAuth(user, shop, tokens?.accessToken || responseData.accessToken, tokens?.refreshToken || responseData.refreshToken)
+
+      const redirect = router.query.redirect
+      if (redirect && typeof redirect === 'string' && redirect.startsWith('/admin')) {
+        router.push(redirect)
+      } else {
+        router.push('/admin')
+      }
     } catch (err) {
       setError(
-        err.response?.data?.error?.message ||
+        err.response?.data?.message ||
+          err.response?.data?.error?.message ||
           'Authentication failed. Please check your admin credentials.'
       )
     } finally {

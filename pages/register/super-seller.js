@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import Link from 'next/link'
 import { Sparkles, ArrowLeft } from 'lucide-react'
-import apiClient from '../../src/lib/api/client'
 import { useAuthStore } from '../../src/store/auth.store'
+import authService from '../../src/lib/api/auth.service'
 
 import SellerLoginPanel from '../../components/auth/SellerLoginPanel'
 import SellerRegisterForm from '../../components/auth/SellerRegisterForm'
@@ -28,6 +28,10 @@ export default function SuperSellerRegister() {
     address: '',
     lat: '12.9716',
     lng: '77.5946',
+    whatsappNumber: '',
+    openingHours: '9:00 AM - 9:00 PM',
+    planType: 'STARTER_MONTHLY',
+    businessDocUrl: '',
   })
 
   const [loginForm, setLoginForm] = useState({
@@ -68,24 +72,43 @@ export default function SuperSellerRegister() {
     }
 
     try {
-      const res = await apiClient.post('/auth/register', {
-        name: form.name,
-        email: form.email,
+      const payload = {
+        name: form.name.trim(),
+        email: form.email.trim(),
         password: form.password,
-        phone: form.phone,
-        shopName: accountType === 'SUPER_SELLER' ? form.shopName || form.name : undefined,
-        address: accountType === 'SUPER_SELLER' ? form.address : undefined,
-        latitude: accountType === 'SUPER_SELLER' && form.lat ? parseFloat(form.lat) : undefined,
-        longitude: accountType === 'SUPER_SELLER' && form.lng ? parseFloat(form.lng) : undefined,
-        role: accountType,
-      })
-      const { user, shop, tokens } = res.data.data
-      useAuthStore.getState().setAuth(user, shop, tokens.accessToken)
+        phone: form.phone.trim(),
+        shopName: form.shopName.trim() || form.name.trim(),
+        shopType: 'SUPER_SELLER',
+        address: form.address.trim(),
+        latitude: form.lat ? parseFloat(form.lat) : 12.9716,
+        longitude: form.lng ? parseFloat(form.lng) : 77.5946,
+        whatsappNumber: form.whatsappNumber?.trim() || form.phone.trim(),
+        businessDocUrl: form.businessDocUrl?.trim() || undefined,
+        openingHours: form.openingHours?.trim() || '9:00 AM - 9:00 PM',
+        planType: form.planType || 'STARTER_MONTHLY',
+      }
+
+      const res = await authService.registerSuperSeller(payload)
+
+      // If tokens or user profile returned, store them
+      const user = res?.data?.user || res?.user
+      const shop = res?.data?.shop || res?.shop
+      const tokens = res?.data?.tokens || res?.tokens
+      if (user && tokens?.accessToken) {
+        useAuthStore.getState().setAuth(user, shop, tokens.accessToken, tokens.refreshToken)
+      }
+
       setSubmitted(true)
     } catch (err) {
-      setRegError(
-        err.response?.data?.error?.message || 'Registration failed. Please check your details.'
-      )
+      if (err.response?.status === 409) {
+        setRegError('Email already registered. Please login or use a different email.')
+      } else {
+        setRegError(
+          err.response?.data?.message ||
+            err.response?.data?.error?.message ||
+            'Registration failed. Please check your details.'
+        )
+      }
     } finally {
       setLoginSubmitted(false)
     }
@@ -103,18 +126,36 @@ export default function SuperSellerRegister() {
     }
 
     try {
-      const res = await apiClient.post('/auth/login', loginForm)
-      const { user, shop, tokens } = res.data.data
-      useAuthStore.getState().setAuth(user, shop, tokens.accessToken)
-      if (user.role === 'ADMIN' || user.role === 'PLATFORM_ADMIN') {
+      const { user } = await useAuthStore.getState().login({
+        email: loginForm.email.trim(),
+        password: loginForm.password,
+      })
+
+      const redirect = router.query.redirect
+      if (redirect && typeof redirect === 'string' && redirect.startsWith('/')) {
+        router.push(redirect)
+      } else if (user?.role === 'ADMIN' || user?.role === 'PLATFORM_ADMIN' || user?.role === 'SUPER_ADMIN') {
         router.push('/admin')
-      } else if (user.role === 'CUSTOMER') {
+      } else if (user?.role === 'CUSTOMER') {
         router.push('/products')
       } else {
         router.push('/seller/dashboard')
       }
     } catch (err) {
-      setLoginError(err.response?.data?.error?.message || 'Invalid email or password.')
+      if (err.response?.status === 401) {
+        setLoginError('Invalid email or password.')
+      } else if (err.response?.status === 403) {
+        setLoginError(
+          err.response?.data?.message ||
+            'Your account is pending Super Admin approval or has been suspended.'
+        )
+      } else {
+        setLoginError(
+          err.response?.data?.message ||
+            err.response?.data?.error?.message ||
+            'Login failed. Please check your credentials.'
+        )
+      }
     } finally {
       setLoginSubmitted(false)
     }

@@ -8,6 +8,7 @@ export default function DashboardSidebar({
   navItems,
   pathname,
   role,
+  status,
 }) {
   return (
     <aside className="sticky top-16 hidden h-[calc(100vh-4rem)] w-64 shrink-0 border-r border-slate-200 bg-white lg:block">
@@ -23,10 +24,24 @@ export default function DashboardSidebar({
               <p className="mt-0.5 truncate text-xs text-slate-400">{roleLabel}</p>
             </div>
           </div>
-          <div className="mt-4 flex items-center gap-2 rounded-lg bg-emerald-50 px-3 py-2">
-            <span className="h-2 w-2 rounded-full bg-emerald-500" />
-            <span className="text-xs font-semibold text-emerald-700">Shop Active</span>
-          </div>
+          {status === 'PENDING_APPROVAL' ? (
+            <div className="mt-4 flex items-center gap-2 rounded-lg bg-amber-50 px-3 py-2 border border-amber-200/60">
+              <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
+              <span className="text-xs font-semibold text-amber-800">Pending Approval</span>
+            </div>
+          ) : status === 'SUSPENDED' || status === 'REJECTED' ? (
+            <div className="mt-4 flex items-center gap-2 rounded-lg bg-rose-50 px-3 py-2 border border-rose-200/60">
+              <span className="h-2 w-2 rounded-full bg-rose-500" />
+              <span className="text-xs font-semibold text-rose-700">Account Suspended</span>
+            </div>
+          ) : (
+            <div className="mt-4 flex items-center gap-2 rounded-lg bg-emerald-50 px-3 py-2">
+              <span className="h-2 w-2 rounded-full bg-emerald-500" />
+              <span className="text-xs font-semibold text-emerald-700">
+                {role === 'SUPER_ADMIN' || role === 'ADMIN' ? 'Platform Active' : 'Shop Active'}
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Navigation */}

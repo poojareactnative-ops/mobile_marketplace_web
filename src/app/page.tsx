@@ -1,7 +1,8 @@
 "use client"
 
 import './globals.css'
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
 import {
   MapPin,
@@ -23,9 +24,22 @@ import HowItWorks from '../../components/HowItWorks'
 import Features from '../../components/Features'
 import Testimonials from '../../components/Testimonials'
 import Footer from '../../components/Footer'
-import apiClient from '../lib/api/client'
+import apiClient, { getAccessToken } from '../lib/api/client'
+import { useAuth } from '../features/auth/hooks/useAuth'
+import { getDashboardRedirect } from '../config/routes.config'
 
 export default function Page() {
+  const router = useRouter()
+  const { user, isAuthenticated, isLoading } = useAuth()
+  const hasToken = typeof window !== 'undefined' ? !!getAccessToken() : false
+
+  // Restrict authenticated users from landing page
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      router.replace(getDashboardRedirect(user.role))
+    }
+  }, [isAuthenticated, user, router])
+
   // Geolocation & Radius search state
   const [radiusMeters, setRadiusMeters] = useState(2500)
   const [selectedType, setSelectedType] = useState<string>('ALL')
@@ -103,6 +117,21 @@ export default function Page() {
     radiusMeters >= 1000
       ? `${(radiusMeters / 1000).toFixed(1)} km`
       : `${radiusMeters} m`
+
+  // Prevent landing page from rendering for authenticated users
+  if (hasToken && (isLoading || isAuthenticated)) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-slate-950 px-4 text-white">
+        <div className="relative flex h-16 w-16 items-center justify-center rounded-2xl bg-indigo-600/20 border border-indigo-500/30">
+          <div className="absolute inset-0 rounded-2xl bg-indigo-500/10 blur-xl animate-pulse" />
+          <Loader2 className="h-8 w-8 animate-spin text-indigo-400" />
+        </div>
+        <p className="mt-4 text-sm font-semibold tracking-wide text-slate-300">
+          Redirecting to your dashboard...
+        </p>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50/40 text-slate-800">
