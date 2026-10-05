@@ -16,9 +16,7 @@ import {
 } from 'lucide-react'
 
 export default function TopBanner({ banner, offers, shops }) {
-  if (banner && banner.isVisible === false) {
-    return null
-  }
+  const [activeOffer, setActiveOffer] = useState(0)
 
   const offerList = offers || []
   const shopList =
@@ -31,12 +29,6 @@ export default function TopBanner({ banner, offers, shops }) {
           initials: s.name.slice(0, 2).toUpperCase(),
         }))
       : []
-
-  if (offerList.length === 0 && shopList.length === 0) {
-    return null
-  }
-
-  const [activeOffer, setActiveOffer] = useState(0)
 
   const nextOffer = () => {
     setActiveOffer((current) =>
@@ -61,6 +53,14 @@ export default function TopBanner({ banner, offers, shops }) {
 
     return () => clearInterval(timer)
   }, [offerList.length])
+
+  if (banner && banner.isVisible === false) {
+    return null
+  }
+
+  if (offerList.length === 0 && shopList.length === 0) {
+    return null
+  }
 
   const offer = offerList[activeOffer] || offerList[0]
 
@@ -222,6 +222,8 @@ export default function TopBanner({ banner, offers, shops }) {
 /* ================================================= */
 
 function OfferSlide({ offer }) {
+  if (!offer) return null
+
   const theme = {
     indigo: {
       background: 'from-indigo-50 via-white to-indigo-100/70',
@@ -260,7 +262,46 @@ function OfferSlide({ offer }) {
     },
   }
 
-  const styles = theme[offer.color]
+  const styles = (offer.color && theme[offer.color]) || theme.indigo
+
+  const isPercentage = offer.discountType === 'PERCENT' || offer.discountType === 'PERCENTAGE'
+  const discountLabel = offer.discountValue
+    ? isPercentage
+      ? `${offer.discountValue}% OFF`
+      : `₹${offer.discountValue} OFF`
+    : 'Special Promo'
+
+  const tagText = offer.text || discountLabel
+  const expiresText =
+    offer.expires ||
+    (offer.endsAt
+      ? new Date(offer.endsAt).toLocaleDateString('en-IN', {
+          day: 'numeric',
+          month: 'short',
+        })
+      : 'Limited time')
+
+  const descriptionText =
+    offer.description ||
+    (offer.discountValue
+      ? `Save ${discountLabel} on mobile devices, accessories, and repairs at our verified store.`
+      : 'Exclusive promotional offer available for local customers.')
+
+  const shopName =
+    typeof offer.shop === 'object' && offer.shop !== null
+      ? offer.shop.name
+      : offer.shop || 'Verified Partner Shop'
+
+  const shopRating =
+    offer.rating ||
+    (typeof offer.shop === 'object' && offer.shop !== null ? offer.shop.rating : null) ||
+    '4.8'
+
+  const shopDistance =
+    offer.distance ||
+    (typeof offer.shop === 'object' && offer.shop?.address
+      ? offer.shop.address.split(',')[0]
+      : 'Near you')
 
   return (
     <div
@@ -289,7 +330,7 @@ function OfferSlide({ offer }) {
 
             <span className="flex items-center gap-1 rounded-full bg-white/80 px-3 py-1 text-[10px] font-semibold text-slate-500">
               <Clock className="h-3 w-3" />
-              Ends {offer.expires}
+              Ends {expiresText}
             </span>
           </div>
 
@@ -297,15 +338,15 @@ function OfferSlide({ offer }) {
             <p
               className={`text-xs font-bold uppercase tracking-[0.2em] ${styles.text}`}
             >
-              {offer.text}
+              {tagText}
             </p>
 
-            <h3 className="mt-1 text-3xl font-black tracking-tight text-slate-900 sm:text-4xl">
+            <h3 className="mt-1 text-3xl font-black tracking-tight text-slate-900 sm:text-4xl capitalize">
               {offer.title}
             </h3>
 
             <p className="mt-2 max-w-lg text-sm leading-6 text-slate-500">
-              {offer.description}
+              {descriptionText}
             </p>
           </div>
 
@@ -318,44 +359,48 @@ function OfferSlide({ offer }) {
 
               <div>
                 <p className="text-xs font-bold text-slate-800">
-                  {offer.shop}
+                  {shopName}
                 </p>
 
                 <div className="flex items-center gap-2 text-[11px] text-slate-400">
                   <span className="flex items-center gap-1">
                     <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
-                    {offer.rating}
+                    {shopRating}
                   </span>
 
                   <span>•</span>
 
                   <span className="flex items-center gap-1">
                     <MapPin className="h-3 w-3" />
-                    {offer.distance}
+                    {shopDistance}
                   </span>
                 </div>
               </div>
             </div>
 
-            <div className="h-5 w-px bg-slate-200" />
+            {offer.code && (
+              <>
+                <div className="h-5 w-px bg-slate-200" />
 
-            {/* Coupon */}
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
-                Code
-              </span>
+                {/* Coupon */}
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+                    Code
+                  </span>
 
-              <span className="rounded-lg border border-dashed border-slate-300 bg-white px-3 py-1.5 font-mono text-xs font-bold text-slate-700">
-                {offer.code}
-              </span>
-            </div>
+                  <span className="rounded-lg border border-dashed border-slate-300 bg-white px-3 py-1.5 font-mono text-xs font-bold text-slate-700">
+                    {offer.code}
+                  </span>
+                </div>
+              </>
+            )}
           </div>
         </div>
 
         {/* CTA */}
         <div className="relative">
           <a
-            href={`/offers/${offer.id}`}
+            href={offer.id ? `/offers/${offer.id}` : '#offers'}
             className={`group flex min-w-[160px] items-center justify-center gap-2 rounded-xl px-5 py-3.5 text-sm font-bold text-white shadow-lg transition ${styles.button}`}
           >
             Grab This Deal

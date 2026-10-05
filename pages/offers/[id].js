@@ -2,6 +2,7 @@ import { useRouter } from 'next/router'
 import Link from 'next/link'
 import { useQuery } from '@tanstack/react-query'
 import apiClient from '../../src/lib/api/client'
+import offerService from '../../src/lib/api/offer.service'
 import {
   Tag,
   ArrowLeft,
@@ -12,6 +13,8 @@ import {
   CheckCircle2,
   Sparkles,
   MessageSquare,
+  MessageCircle,
+  Calendar,
   X,
   Loader2,
 } from 'lucide-react'
@@ -23,6 +26,7 @@ export default function OfferDetailPage() {
   const [copied, setCopied] = useState(false)
   const [showEnquiryModal, setShowEnquiryModal] = useState(false)
   const [enquirySuccess, setEnquirySuccess] = useState(false)
+  const [whatsappUrl, setWhatsappUrl] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [enquiryForm, setEnquiryForm] = useState({
     name: '',
@@ -34,13 +38,7 @@ export default function OfferDetailPage() {
     queryKey: ['offer-detail', id],
     queryFn: async () => {
       if (!id) return null
-      try {
-        const res = await apiClient.get(`/offers/${id}`)
-        return res.data?.data
-      } catch (err) {
-        const res = await apiClient.get(`/public/offers/${id}`)
-        return res.data?.data
-      }
+      return offerService.getOfferById(id)
     },
     enabled: !!id,
   })
@@ -57,23 +55,16 @@ export default function OfferDetailPage() {
     if (!offer) return
     setIsSubmitting(true)
     try {
-      await apiClient.post('/enquiries', {
+      const res = await apiClient.post('/enquiries', {
         offerId: offer.id,
-        shopId: offer.shop?.id,
+        shopId: offer.shop?.id || offer.shopId,
         customerName: enquiryForm.name,
         customerPhone: enquiryForm.phone,
         message: enquiryForm.message,
       })
+      const waUrl = res.data?.data?.whatsappUrl || res.data?.whatsappUrl
+      if (waUrl) setWhatsappUrl(waUrl)
       setEnquirySuccess(true)
-      setTimeout(() => {
-        setEnquirySuccess(false)
-        setShowEnquiryModal(false)
-        setEnquiryForm({
-          name: '',
-          phone: '',
-          message: 'Hello, I would like to inquire about this running offer and how to redeem it.',
-        })
-      }, 2500)
     } catch (err) {
       alert('Failed to send enquiry: ' + (err.response?.data?.error?.message || err.message))
     } finally {
@@ -116,11 +107,30 @@ export default function OfferDetailPage() {
           </Link>
 
           <div className="mt-6">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-white/20 px-3 py-1 text-xs font-black uppercase tracking-wider backdrop-blur-md">
-              <Sparkles className="h-3.5 w-3.5 text-amber-300" />
-              {offer.discountType === 'PERCENT' ? `${offer.discountValue}% DISCOUNT` : 'PROMOTIONAL DEAL'}
-            </span>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-white/20 px-3 py-1 text-xs font-black uppercase tracking-wider backdrop-blur-md">
+                <Sparkles className="h-3.5 w-3.5 text-amber-300" />
+                {offer.discountType === 'PERCENT' || offer.discountType === 'PERCENTAGE'
+                  ? `${offer.discountValue}% OFF`
+                  : `₹${offer.discountValue} OFF`}
+              </span>
+              <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-bold uppercase ${
+                offer.status === 'ACTIVE'
+                  ? 'bg-emerald-400/20 text-emerald-200'
+                  : 'bg-rose-400/20 text-rose-200'
+              }`}>
+                {offer.status || 'ACTIVE'}
+              </span>
+            </div>
             <h1 className="mt-3 text-3xl font-black sm:text-4xl">{offer.title}</h1>
+            {offer.startsAt || offer.endsAt ? (
+              <div className="mt-2 flex items-center gap-1 text-xs font-medium text-indigo-100">
+                <Calendar className="h-3.5 w-3.5 opacity-80" />
+                <span>
+                  Valid: {offer.startsAt ? new Date(offer.startsAt).toLocaleDateString() : 'Now'} - {offer.endsAt ? new Date(offer.endsAt).toLocaleDateString() : 'Ongoing'}
+                </span>
+              </div>
+            ) : null}
             {offer.text ? <p className="mt-2 text-sm text-indigo-100 leading-relaxed">{offer.text}</p> : null}
           </div>
         </div>
@@ -211,10 +221,38 @@ export default function OfferDetailPage() {
             </div>
 
             {enquirySuccess ? (
-              <div className="my-6 rounded-2xl bg-emerald-50 p-6 text-center">
-                <CheckCircle2 className="mx-auto h-10 w-10 text-emerald-600" />
-                <p className="mt-2 font-bold text-emerald-900">Offer Enquiry Sent Successfully!</p>
-                <p className="text-xs text-emerald-700">The store will contact you shortly.</p>
+              <div className="my-6 rounded-2xl bg-emerald-50 p-6 text-center space-y-4">
+                <CheckCircle2 className="mx-auto h-12 w-12 text-emerald-600 animate-in zoom-in-75 duration-200" />
+                <div>
+                  <p className="font-bold text-emerald-950 text-base">Offer Enquiry Sent to Store!</p>
+                  <p className="text-xs text-emerald-700 mt-1">
+                    Your enquiry has been dynamically sent to {offer.shop?.name || 'the seller'}. You can also connect directly on WhatsApp right now:
+                  </p>
+                </div>
+
+                <div className="flex flex-col gap-2 pt-2">
+                  {whatsappUrl ? (
+                    <a
+                      href={whatsappUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-xs font-bold text-white shadow-md hover:bg-emerald-700 transition"
+                    >
+                      <MessageCircle className="h-4 w-4" />
+                      <span>Chat Directly on WhatsApp</span>
+                    </a>
+                  ) : null}
+
+                  <button
+                    onClick={() => {
+                      setShowEnquiryModal(false)
+                      setEnquirySuccess(false)
+                    }}
+                    className="rounded-xl border border-emerald-200 bg-white px-4 py-2 text-xs font-semibold text-emerald-800 hover:bg-emerald-100/50"
+                  >
+                    Done
+                  </button>
+                </div>
               </div>
             ) : (
               <form onSubmit={handleSendEnquiry} className="mt-4 space-y-3">

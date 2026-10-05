@@ -2,12 +2,14 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useQuery } from '@tanstack/react-query'
 import apiClient from '../src/lib/api/client'
+import offerService from '../src/lib/api/offer.service'
 import {
   Tag,
   Percent,
   Sparkles,
   Store,
   MessageSquare,
+  MessageCircle,
   Copy,
   Check,
   CheckCircle2,
@@ -25,6 +27,7 @@ export default function PublicOffersPage() {
   const [copiedCode, setCopiedCode] = useState(null)
   const [enquiryOffer, setEnquiryOffer] = useState(null)
   const [enquirySuccess, setEnquirySuccess] = useState(false)
+  const [whatsappUrl, setWhatsappUrl] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [enquiryForm, setEnquiryForm] = useState({
     name: '',
@@ -55,18 +58,7 @@ export default function PublicOffersPage() {
   const { data: offersData, isLoading } = useQuery({
     queryKey: ['running-offers', userLocation],
     queryFn: async () => {
-      const params = new URLSearchParams()
-      if (userLocation) {
-        params.append('lat', String(userLocation.lat))
-        params.append('lng', String(userLocation.lng))
-      }
-      try {
-        const res = await apiClient.get(`/public/offers/running?${params.toString()}`)
-        return res.data?.data || []
-      } catch (err) {
-        const res = await apiClient.get(`/offers?${params.toString()}`)
-        return res.data?.data || []
-      }
+      return offerService.getRunningOffers(userLocation || undefined)
     },
     enabled: locationStatus !== 'requesting',
     staleTime: 10000,
@@ -86,23 +78,16 @@ export default function PublicOffersPage() {
     if (!enquiryOffer) return
     setIsSubmitting(true)
     try {
-      await apiClient.post('/enquiries', {
+      const res = await apiClient.post('/enquiries', {
         offerId: enquiryOffer.id,
-        shopId: enquiryOffer.shop?.id,
+        shopId: enquiryOffer.shopId || enquiryOffer.shop?.id,
         customerName: enquiryForm.name,
         customerPhone: enquiryForm.phone,
         message: enquiryForm.message,
       })
+      const waUrl = res.data?.data?.whatsappUrl || res.data?.whatsappUrl
+      if (waUrl) setWhatsappUrl(waUrl)
       setEnquirySuccess(true)
-      setTimeout(() => {
-        setEnquirySuccess(false)
-        setEnquiryOffer(null)
-        setEnquiryForm({
-          name: '',
-          phone: '',
-          message: 'Hello, I would like to inquire about this running offer and how to redeem it.',
-        })
-      }, 2500)
     } catch (err) {
       alert('Failed to send enquiry: ' + (err.response?.data?.error?.message || err.message))
     } finally {
@@ -201,11 +186,9 @@ export default function PublicOffersPage() {
                     <div className="flex items-center justify-between gap-2">
                       <span className="inline-flex items-center gap-1 rounded-full bg-indigo-50 px-2.5 py-1 text-[11px] font-black uppercase text-indigo-700">
                         <Sparkles className="h-3 w-3 text-indigo-500" />
-                        {offer.discountType === 'PERCENT'
+                        {offer.discountType === 'PERCENT' || offer.discountType === 'PERCENTAGE'
                           ? `${offer.discountValue}% OFF`
-                          : offer.discountType === 'FLAT'
-                          ? `₹${offer.discountValue} FLAT OFF`
-                          : 'BUY 1 GET 1'}
+                          : `₹${offer.discountValue} OFF`}
                       </span>
                       {isSuperSeller && (
                         <span className="inline-flex items-center gap-1 rounded-md border border-amber-200/60 bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-700">
@@ -335,10 +318,38 @@ export default function PublicOffersPage() {
             </div>
 
             {enquirySuccess ? (
-              <div className="my-6 rounded-2xl bg-emerald-50 p-6 text-center">
-                <CheckCircle2 className="mx-auto h-10 w-10 text-emerald-600" />
-                <p className="mt-2 font-bold text-emerald-900">Offer Enquiry Sent!</p>
-                <p className="text-xs text-emerald-700">The store will contact you with details.</p>
+              <div className="my-6 rounded-2xl bg-emerald-50 p-6 text-center space-y-4">
+                <CheckCircle2 className="mx-auto h-12 w-12 text-emerald-600 animate-in zoom-in-75 duration-200" />
+                <div>
+                  <p className="font-bold text-emerald-950 text-base">Offer Enquiry Sent to Store!</p>
+                  <p className="text-xs text-emerald-700 mt-1">
+                    Your enquiry has been dynamically sent to {enquiryOffer?.shop?.name || 'the seller'}. You can also chat directly on WhatsApp right now:
+                  </p>
+                </div>
+
+                <div className="flex flex-col gap-2 pt-2">
+                  {whatsappUrl ? (
+                    <a
+                      href={whatsappUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-xs font-bold text-white shadow-md hover:bg-emerald-700 transition"
+                    >
+                      <MessageCircle className="h-4 w-4" />
+                      <span>Chat Directly on WhatsApp</span>
+                    </a>
+                  ) : null}
+
+                  <button
+                    onClick={() => {
+                      setEnquiryOffer(null)
+                      setEnquirySuccess(false)
+                    }}
+                    className="rounded-xl border border-emerald-200 bg-white px-4 py-2 text-xs font-semibold text-emerald-800 hover:bg-emerald-100/50"
+                  >
+                    Done
+                  </button>
+                </div>
               </div>
             ) : (
               <form onSubmit={handleSendEnquiry} className="space-y-3">

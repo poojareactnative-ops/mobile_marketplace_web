@@ -1,14 +1,14 @@
 import Link from 'next/link'
 import { useQuery } from '@tanstack/react-query'
-import apiClient from '../src/lib/api/client'
+import categoryService from '../src/lib/api/category.service'
 import { Tag, ArrowRight, Sparkles, Layers, ShieldCheck, Wrench } from 'lucide-react'
 
 export default function CategoriesPage() {
   const { data: categoriesData, isLoading } = useQuery({
     queryKey: ['categories-all'],
     queryFn: async () => {
-      const res = await apiClient.get('/categories')
-      return res.data?.data || []
+      const data = await categoryService.getCategories({ isActive: true })
+      return data || []
     },
   })
 

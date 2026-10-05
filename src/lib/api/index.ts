@@ -24,3 +24,11 @@ export { default as superSellerService } from './superSeller.service'
 
 export * from './system.service'
 export { default as systemService } from './system.service'
+
+export * from './category.service'
+export { default as categoryService } from './category.service'
+
+export * from './offer.service'
+export { default as offerService } from './offer.service'
+
+export * from '../supabaseClient'

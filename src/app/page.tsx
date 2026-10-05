@@ -19,6 +19,7 @@ import {
 import TopBanner from '../../components/TopBanner'
 import Navbar from '../components/navigation/Navbar'
 import Hero from '../../components/Hero'
+import ActiveOffersSection from '../../components/ActiveOffersSection'
 import ProductShowcase from '../../components/ProductShowcase'
 import HowItWorks from '../../components/HowItWorks'
 import Features from '../../components/Features'
@@ -140,7 +141,7 @@ export default function Page() {
       <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
         <TopBanner
           banner={landingData?.topBanner}
-          offers={landingData?.featuredOffers}
+          offers={landingData?.offers || landingData?.featuredOffers}
           shops={nearbyShops}
         />
 
@@ -368,6 +369,9 @@ export default function Page() {
             )}
           </div>
         </section>
+
+        {/* Active Deals & Running Offers */}
+        <ActiveOffersSection offers={landingData?.offers || []} />
 
         {/* Featured Products */}
         <section

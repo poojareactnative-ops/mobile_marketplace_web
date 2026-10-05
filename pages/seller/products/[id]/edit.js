@@ -5,6 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import DashboardLayout from '../../../../components/DashboardLayout'
 import { useAuth } from '../../../../src/features/auth/hooks/useAuth'
 import apiClient from '../../../../src/lib/api/client'
+import categoryService from '../../../../src/lib/api/category.service'
 import { ArrowLeft, Loader2, CheckCircle2 } from 'lucide-react'
 import ProductFormCard from '../../../../components/seller/ProductFormCard'
 import AddCategoryModal from '../../../../components/seller/AddCategoryModal'
@@ -47,16 +48,15 @@ export default function EditProductPage() {
   const { data: dbCategories = [] } = useQuery({
     queryKey: ['categories-all'],
     queryFn: async () => {
-      const res = await apiClient.get('/categories')
-      return res.data?.data || []
+      const data = await categoryService.getCategories()
+      return data || []
     },
     staleTime: 30000,
   })
 
   const createCategoryMutation = useMutation({
     mutationFn: async ({ name, type }) => {
-      const res = await apiClient.post('/categories', { name, type })
-      return res.data?.data
+      return categoryService.createCategory({ name, type })
     },
     onSuccess: (newCat) => {
       queryClient.invalidateQueries({ queryKey: ['categories-all'] })

@@ -58,32 +58,25 @@ export default function DashboardLayout({ children }) {
   let roleLabel = 'Store Seller'
 
   if (role === 'SUPER_ADMIN' || role === 'ADMIN' || role === 'PLATFORM_ADMIN') {
-    roleLabel = 'Super Admin (Platform Owner)'
+    roleLabel = 'Platform Owner (Super Admin)'
     dashboardHref = '/admin'
     navItems = [
-      { name: 'Command Center', href: '/admin', icon: LayoutDashboard },
-      { name: 'Onboarding Requests', href: '/admin?tab=requests', icon: Clock },
-      { name: 'Subscription Plans', href: '/admin?tab=plans', icon: CreditCard },
-      { name: 'Platform Analytics', href: '/admin?tab=analytics', icon: TrendingUp },
-      { name: 'Manage Shops', href: '/admin/shops', icon: Store },
-      { name: 'User Accounts', href: '/admin/users', icon: Users },
-      { name: 'Platform Repairs', href: '/admin/repairs', icon: Wrench },
-      { name: 'Browse Products', href: '/products', icon: ShoppingBag },
+      { name: 'Onboarding Request', href: '/admin?tab=requests', tabKey: 'requests', icon: Clock },
+      { name: 'Subscription Plan', href: '/admin?tab=plans', tabKey: 'plans', icon: CreditCard },
+      { name: 'Users Account', href: '/admin/users', tabKey: 'users', icon: Users },
     ]
   } else if (role === 'SUPER_SELLER') {
-    roleLabel = 'Super Seller (Sales & Repairs)'
+    roleLabel = 'Super Seller (Shop Owner)'
     dashboardHref = '/seller/dashboard'
     navItems = [
       { name: 'Dashboard', href: '/seller/dashboard', icon: LayoutDashboard },
-      { name: 'Manage Sellers (Admins)', href: '/seller/team', icon: Users },
-      { name: 'Products', href: '/seller/products', icon: ShoppingBag },
+      { name: 'Repair Center', href: '/seller/repair-jobs', icon: Wrench },
+      { name: 'Products Catalog', href: '/seller/products', icon: ShoppingBag },
       { name: 'Categories', href: '/seller/categories', icon: Tag },
       { name: 'Orders', href: '/seller/orders', icon: ClipboardList },
-      { name: 'Offers', href: '/seller/offers', icon: Tag },
-      { name: 'Enquiries', href: '/seller/enquiries', icon: MessageCircle },
-      { name: 'Repair Center', href: '/seller/mobile-repairing', icon: Wrench },
-      { name: 'Repair Customers', href: '/seller/admin/repairing/customers', icon: Users },
-      { name: 'Local Customers', href: '/seller/admin/customers', icon: Users },
+      { name: 'Offers & Deals', href: '/seller/offers', icon: Tag },
+      { name: 'WhatsApp Leads', href: '/seller/enquiries', icon: MessageCircle },
+      { name: 'Manage Store Staff', href: '/seller/team', icon: Users },
       { name: 'Shop Profile', href: '/seller/profile', icon: Store },
     ]
   } else if (role === 'CUSTOMER') {
@@ -97,16 +90,17 @@ export default function DashboardLayout({ children }) {
       { name: 'Home', href: '/', icon: LayoutDashboard },
     ]
   } else {
-    roleLabel = 'Store Staff / Seller Admin'
+    // SELLER_ADMIN (Store Staff / Technician)
+    roleLabel = 'Store Staff / Technician'
     dashboardHref = '/seller/dashboard'
     navItems = [
-      { name: 'Dashboard', href: '/seller/dashboard', icon: LayoutDashboard },
-      { name: 'Repair Center', href: '/seller/mobile-repairing', icon: Wrench },
+      { name: 'Staff Dashboard', href: '/seller/dashboard', icon: LayoutDashboard },
+      { name: 'Repair Center', href: '/seller/repair-jobs', icon: Wrench },
       { name: 'Local Customers', href: '/seller/admin/customers', icon: Users },
-      { name: 'Products', href: '/seller/products', icon: ShoppingBag },
-      { name: 'Orders', href: '/seller/orders', icon: ClipboardList },
+      { name: 'Products & Stock', href: '/seller/products', icon: ShoppingBag },
+      { name: 'Store Orders', href: '/seller/orders', icon: ClipboardList },
       { name: 'Offers', href: '/seller/offers', icon: Tag },
-      { name: 'Enquiries', href: '/seller/enquiries', icon: MessageCircle },
+      { name: 'WhatsApp Enquiries', href: '/seller/enquiries', icon: MessageCircle },
       { name: 'Shop Profile', href: '/seller/profile', icon: Store },
     ]
   }
@@ -124,6 +118,7 @@ export default function DashboardLayout({ children }) {
           roleLabel={roleLabel}
           navItems={navItems}
           pathname={pathname}
+          queryTab={router.query?.tab}
           role={role}
           status={user?.status}
         />
@@ -131,7 +126,11 @@ export default function DashboardLayout({ children }) {
           <div className="px-4 py-6 sm:px-6 lg:px-8">{children}</div>
         </main>
       </div>
-      <DashboardMobileNav navItems={navItems} pathname={pathname} />
+      <DashboardMobileNav
+        navItems={navItems}
+        pathname={pathname}
+        queryTab={router.query?.tab}
+      />
     </div>
   )
 }

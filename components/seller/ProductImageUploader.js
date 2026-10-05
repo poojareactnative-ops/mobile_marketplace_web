@@ -8,6 +8,10 @@ import {
   Trash2,
 } from 'lucide-react'
 import apiClient from '../../src/lib/api/client'
+import {
+  uploadImageToSupabase,
+  isSupabaseConfigured,
+} from '../../src/lib/supabaseClient'
 
 /**
  * Optimizes and compresses images in the browser before uploading.
@@ -120,34 +124,50 @@ export default function ProductImageUploader({
         const optimized = await optimizeImageForUpload(file)
 
         let uploadedUrl = null
-        try {
-          // Try /uploads/presign as specified in docs/NODE_BACKEND_DYNAMIC_PAGES.md
-          const presignRes = await apiClient.post('/uploads/presign', {
-            filename: optimized.filename,
-            contentType: optimized.mimeType,
-            fileSize: optimized.fileSize,
-          })
-          const { uploadUrl, fileUrl, publicUrl } = presignRes.data?.data || {}
-          if (uploadUrl) {
-            const blob = await fetch(optimized.dataUrl).then((r) => r.blob())
-            await fetch(uploadUrl, {
-              method: 'PUT',
-              headers: { 'Content-Type': optimized.mimeType },
-              body: blob,
+
+        // 1. Primary: Direct upload to Supabase Storage
+        if (isSupabaseConfigured()) {
+          try {
+            const uploadResult = await uploadImageToSupabase(optimized.dataUrl, {
+              filename: optimized.filename,
+              contentType: optimized.mimeType,
+              folder: 'products',
             })
-            uploadedUrl = publicUrl || fileUrl || uploadUrl.split('?')[0]
+            uploadedUrl = uploadResult.publicUrl
+          } catch (supabaseErr) {
+            console.error('Supabase upload error:', supabaseErr)
+            throw supabaseErr
           }
-        } catch (presignErr) {
-          // Fallback to direct /uploads endpoint
-          const uploadRes = await apiClient.post('/uploads', {
-            file: optimized.dataUrl,
-            filename: optimized.filename,
-            contentType: optimized.mimeType,
-            fileSize: optimized.fileSize,
-          })
-          uploadedUrl =
-            uploadRes.data?.data?.url ||
-            uploadRes.data?.data?.publicUrl
+        } else {
+          // 2. Fallback: Backend /uploads/presign or direct /uploads
+          try {
+            const presignRes = await apiClient.post('/uploads/presign', {
+              filename: optimized.filename,
+              contentType: optimized.mimeType,
+              fileSize: optimized.fileSize,
+            })
+            const { uploadUrl, fileUrl, publicUrl } = presignRes.data?.data || {}
+            if (uploadUrl) {
+              const blob = await fetch(optimized.dataUrl).then((r) => r.blob())
+              await fetch(uploadUrl, {
+                method: 'PUT',
+                headers: { 'Content-Type': optimized.mimeType },
+                body: blob,
+              })
+              uploadedUrl = publicUrl || fileUrl || uploadUrl.split('?')[0]
+            }
+          } catch (presignErr) {
+            // Fallback to direct /uploads endpoint
+            const uploadRes = await apiClient.post('/uploads', {
+              file: optimized.dataUrl,
+              filename: optimized.filename,
+              contentType: optimized.mimeType,
+              fileSize: optimized.fileSize,
+            })
+            uploadedUrl =
+              uploadRes.data?.data?.url ||
+              uploadRes.data?.data?.publicUrl
+          }
         }
 
         if (uploadedUrl && typeof uploadedUrl === 'string') {
@@ -291,7 +311,9 @@ export default function ProductImageUploader({
           </p>
 
           <p className="mt-1 text-xs text-slate-400">
-            PNG, JPG, WEBP or GIF · Auto-compressed & optimized for high speed
+            {isSupabaseConfigured()
+              ? 'Supabase Storage connected · Auto-compressed & direct upload'
+              : 'PNG, JPG, WEBP or GIF · Auto-compressed & optimized for high speed'}
           </p>
 
           <input

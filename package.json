@@ -9,6 +9,7 @@
     "postinstall": "node -e \"const p = './node_modules/react-dom/package.json'; const fs = require('fs'); if (fs.existsSync(p)) { const j = JSON.parse(fs.readFileSync(p, 'utf8')); if (!j.exports['./server.edge']) { j.exports['./server.edge'] = './server.browser.js'; fs.writeFileSync(p, JSON.stringify(j, null, 2)); } }\""
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.117.2",
     "@tanstack/react-query": "^4.34.0",
     "axios": "^1.4.0",
     "date-fns": "^2.30.0",

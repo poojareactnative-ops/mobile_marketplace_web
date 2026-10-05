@@ -5,6 +5,7 @@ import DashboardLayout from '../../components/DashboardLayout'
 import { useAuth } from '../../src/features/auth/hooks/useAuth'
 import { Plus, CheckCircle2, ShoppingBag } from 'lucide-react'
 import apiClient from '../../src/lib/api/client'
+import categoryService from '../../src/lib/api/category.service'
 
 import ProductStatCards from '../../components/seller/ProductStatCards'
 import ProductFilterBar from '../../components/seller/ProductFilterBar'
@@ -56,8 +57,8 @@ export default function SellerProducts() {
   const { data: dbCategories = [] } = useQuery({
     queryKey: ['categories-all'],
     queryFn: async () => {
-      const res = await apiClient.get('/categories')
-      return res.data?.data || []
+      const data = await categoryService.getCategories()
+      return data || []
     },
     staleTime: 30000,
   })
@@ -69,8 +70,7 @@ export default function SellerProducts() {
 
   const createCategoryMutation = useMutation({
     mutationFn: async ({ name, type }) => {
-      const res = await apiClient.post('/categories', { name, type })
-      return res.data?.data
+      return categoryService.createCategory({ name, type })
     },
     onSuccess: (newCat) => {
       queryClient.invalidateQueries({ queryKey: ['categories-all'] })

@@ -20,6 +20,7 @@ export default function Navbar() {
 
   const navItems = [
     { id: 'hero', label: 'Home' },
+    { id: 'offers', label: 'Offers' },
     { id: 'products', label: 'Products' },
     { id: 'how', label: 'How it works' },
     { id: 'features', label: 'Features' },

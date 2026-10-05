@@ -10,7 +10,7 @@ export default function OrdersIndex() {
     <DashboardLayout>
       <div className="space-y-6">
        
-        <MobileRepairingOrders/>
+        <MobileRepairingOrders hideLayout={true} />
       </div>
     </DashboardLayout>
   )

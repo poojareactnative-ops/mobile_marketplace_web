@@ -4,11 +4,15 @@ import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { ArrowLeft, UserPlus, Phone, Mail, MapPin, FileText, Loader2, CheckCircle2 } from 'lucide-react'
 
-import DashboardLayout from '../../../../../components/DashboardLayout'
-import customersService from '../../../../../src/lib/api/customers.service'
+import DashboardLayout from '../../../../components/DashboardLayout'
+import customersService from '../../../../src/lib/api/customers.service'
+import useAuth from '../../../../src/features/auth/hooks/useAuth'
 
 export default function NewLocalCustomerPage() {
   const router = useRouter()
+  const { user } = useAuth()
+  const isSuperSeller = user?.role === 'SUPER_SELLER'
+
   const [form, setForm] = useState({
     name: '',
     phone: '',
@@ -40,6 +44,30 @@ export default function NewLocalCustomerPage() {
     } finally {
       setSaving(false)
     }
+  }
+
+  if (isSuperSeller) {
+    return (
+      <DashboardLayout>
+        <div className="flex min-h-[450px] flex-col items-center justify-center p-8 text-center">
+          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-50 text-amber-600">
+            <UserPlus className="h-8 w-8" />
+          </div>
+          <h2 className="mt-4 text-xl font-black text-slate-900">
+            Local Customers are Handled by Seller Admin
+          </h2>
+          <p className="mt-2 max-w-md text-sm text-slate-500">
+            Walk-in and counter local customer records are exclusively handled by Seller Admin (Store Staff).
+          </p>
+          <Link
+            href="/seller/dashboard"
+            className="mt-6 inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-xs font-bold text-white shadow-md shadow-indigo-600/20 hover:bg-indigo-700 transition"
+          >
+            Return to Dashboard
+          </Link>
+        </div>
+      </DashboardLayout>
+    )
   }
 
   return (

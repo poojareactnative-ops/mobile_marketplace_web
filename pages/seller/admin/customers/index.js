@@ -26,8 +26,9 @@ import {
   ArrowRight,
 } from 'lucide-react'
 
-import DashboardLayout from '../../../../../components/DashboardLayout'
-import customersService from '../../../../../src/lib/api/customers.service'
+import DashboardLayout from '../../../../components/DashboardLayout'
+import customersService from '../../../../src/lib/api/customers.service'
+import useAuth from '../../../../src/features/auth/hooks/useAuth'
 
 function formatPaise(paise) {
   if (paise == null) return '₹0.00'
@@ -39,6 +40,8 @@ function formatPaise(paise) {
 }
 
 export default function LocalCustomersPage() {
+  const { user } = useAuth()
+  const isSuperSeller = user?.role === 'SUPER_SELLER'
   const queryClient = useQueryClient()
   const [searchQuery, setSearchQuery] = useState('')
 
@@ -84,6 +87,7 @@ export default function LocalCustomersPage() {
   } = useQuery({
     queryKey: ['localCustomers', searchQuery],
     queryFn: () => customersService.getLocalCustomers({ search: searchQuery || undefined }),
+    enabled: !isSuperSeller,
     staleTime: 10000,
   })
 
@@ -201,6 +205,30 @@ export default function LocalCustomersPage() {
     if (confirm(`Are you sure you want to delete customer record for "${cust.name}"?`)) {
       deleteCustomerMutation.mutate(cust.id)
     }
+  }
+
+  if (isSuperSeller) {
+    return (
+      <DashboardLayout>
+        <div className="flex min-h-[450px] flex-col items-center justify-center p-8 text-center">
+          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-50 text-amber-600">
+            <Users className="h-8 w-8" />
+          </div>
+          <h2 className="mt-4 text-xl font-black text-slate-900">
+            Local Customers are Handled by Seller Admin
+          </h2>
+          <p className="mt-2 max-w-md text-sm text-slate-500">
+            Super Sellers oversee shop administration, product catalogs, repair quotes, and orders. Walk-in and counter local customer records are exclusively handled by Seller Admin (Store Staff).
+          </p>
+          <Link
+            href="/seller/dashboard"
+            className="mt-6 inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-xs font-bold text-white shadow-md shadow-indigo-600/20 hover:bg-indigo-700 transition"
+          >
+            Return to Dashboard
+          </Link>
+        </div>
+      </DashboardLayout>
+    )
   }
 
   return (
