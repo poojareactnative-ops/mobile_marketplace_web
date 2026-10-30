@@ -1,0 +1,490 @@
+/**
+ * Supabase Live Service Layer
+ * Fully dynamic — communicates directly with Supabase PostgreSQL
+ */
+
+import { supabase, supabaseRest, SUPABASE_URL, SUPABASE_ANON_KEY } from '../lib/supabase.js';
+
+export const supabaseService = {
+  // 1. Fetch Repair Jobs
+  async getRepairJobs(filter = {}) {
+    let endpoint = 'repair_jobs?select=*&order=created_at.desc';
+    if (filter.adminId) endpoint += `&admin_id=eq.${filter.adminId}`;
+    if (filter.sellerId) endpoint += `&seller_id=eq.${filter.sellerId}`;
+    if (filter.status) endpoint += `&status=eq.${filter.status}`;
+
+    try {
+      const data = await supabaseRest(endpoint);
+      return Array.isArray(data) ? data : [];
+    } catch (e) {
+      console.error('Supabase getRepairJobs error:', e.message);
+      return [];
+    }
+  },
+
+  // 2. Create Repair Referral by Seller
+  async createRepairReferral(referralData) {
+    // Generate sequential or random ticket code
+    const ticketCode = `REP-${Math.floor(1000 + Math.random() * 9000)}`;
+
+    const newJob = {
+      ticket_id: ticketCode,
+      admin_id: referralData.adminId || null,
+      shop_id: referralData.shopId || null,
+      seller_id: referralData.sellerId || null,
+      seller_name: referralData.sellerName || null,
+      customer_name: referralData.customerName,
+      customer_phone: referralData.customerPhone,
+      device_brand: referralData.deviceBrand,
+      device_model: referralData.deviceModel,
+      problem_description: referralData.problemDescription,
+      status: 'PENDING_APPROVAL',
+      estimated_cost: Number(referralData.estimatedCost || 0),
+      final_amount: 0,
+      seller_commission_percent: 2.0,
+      seller_commission_amount: 0,
+      admin_remaining_amount: 0,
+      commission_status: 'NOT_APPLICABLE',
+      notes: null,
+    };
+
+    const res = await supabaseRest('repair_jobs', {
+      method: 'POST',
+      body: newJob,
+    });
+
+    return Array.isArray(res) && res[0] ? res[0] : newJob;
+  },
+
+  // 3. Admin updates repair status
+  async updateRepairStatus(jobId, status) {
+    const res = await supabaseRest(`repair_jobs?id=eq.${jobId}`, {
+      method: 'PATCH',
+      body: { status, updated_at: new Date().toISOString() },
+    });
+    return Array.isArray(res) && res[0] ? res[0] : { id: jobId, status };
+  },
+
+  // 4. Admin completes repair & calculates 2% commission
+  async completeRepairJob(jobId, finalAmount, notes = '') {
+    const amount = Number(finalAmount);
+    const sellerCommission = Math.round(amount * 0.02);
+    const adminRemaining = amount - sellerCommission;
+
+    // 1. Fetch current job to get seller & shop info
+    let currentJob = null;
+    try {
+      const existing = await supabaseRest(`repair_jobs?id=eq.${jobId}&select=*`);
+      if (Array.isArray(existing) && existing[0]) {
+        currentJob = existing[0];
+      }
+    } catch (e) {
+      // ignore
+    }
+
+    const updates = {
+      final_amount: amount,
+      seller_commission_amount: sellerCommission,
+      admin_remaining_amount: adminRemaining,
+      status: 'COMPLETED',
+      commission_status: (currentJob && currentJob.seller_id) ? 'PENDING' : 'NOT_APPLICABLE',
+      notes,
+      updated_at: new Date().toISOString(),
+    };
+
+    // 2. Update repair job in Supabase
+    await supabaseRest(`repair_jobs?id=eq.${jobId}`, {
+      method: 'PATCH',
+      body: updates,
+    });
+
+    // 3. Insert into repair_commissions ledger if job was referred by a seller
+    if (currentJob && currentJob.seller_id) {
+      try {
+        await supabaseRest('repair_commissions', {
+          method: 'POST',
+          body: {
+            repair_job_id: jobId,
+            ticket_id: currentJob.ticket_id,
+            shop_id: currentJob.shop_id || null,
+            admin_id: currentJob.admin_id || null,
+            seller_id: currentJob.seller_id,
+            seller_name: currentJob.seller_name || 'Seller',
+            final_repair_amount: amount,
+            commission_percent: 2.0,
+            commission_amount: sellerCommission,
+            status: 'PENDING',
+          },
+        });
+      } catch (err) {
+        console.warn('Commission ledger insert notice:', err.message);
+      }
+    }
+
+    return { jobId, finalAmount: amount, sellerCommission, adminRemaining };
+  },
+
+  // 5. Admin pays 2% commission to Seller
+  async paySellerCommission(commissionId, paymentReference) {
+    const updates = {
+      status: 'PAID',
+      payment_reference: paymentReference || `UPI-${Math.floor(100000 + Math.random() * 900000)}`,
+      paid_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+
+    const res = await supabaseRest(`repair_commissions?id=eq.${commissionId}`, {
+      method: 'PATCH',
+      body: updates,
+    });
+
+    // Also update associated repair_job commission_status to PAID
+    if (Array.isArray(res) && res[0] && res[0].repair_job_id) {
+      try {
+        await supabaseRest(`repair_jobs?id=eq.${res[0].repair_job_id}`, {
+          method: 'PATCH',
+          body: { commission_status: 'PAID', paid_at: updates.paid_at },
+        });
+      } catch (e) {
+        // ignore
+      }
+    }
+
+    return Array.isArray(res) && res[0] ? res[0] : updates;
+  },
+
+  // 6. Get Commissions Ledger & Summaries
+  async getCommissions(filter = {}) {
+    let endpoint = 'repair_commissions?select=*&order=created_at.desc';
+    if (filter.adminId) endpoint += `&admin_id=eq.${filter.adminId}`;
+    if (filter.sellerId) endpoint += `&seller_id=eq.${filter.sellerId}`;
+
+    let list = [];
+    try {
+      const data = await supabaseRest(endpoint);
+      list = Array.isArray(data) ? data : [];
+    } catch (e) {
+      console.error('Supabase getCommissions error:', e.message);
+      list = [];
+    }
+
+    const totalCommission = list.reduce((acc, c) => acc + Number(c.commission_amount || 0), 0);
+    const paidCommission = list.filter(c => c.status === 'PAID').reduce((acc, c) => acc + Number(c.commission_amount || 0), 0);
+    const pendingCommission = list.filter(c => c.status === 'PENDING').reduce((acc, c) => acc + Number(c.commission_amount || 0), 0);
+
+    return {
+      data: list,
+      summary: {
+        totalCommission,
+        paidCommission,
+        pendingCommission,
+        totalJobs: list.length,
+      },
+    };
+  },
+
+  // 7. Track Repair by Ticket ID (Public / Customer)
+  async trackRepair(ticketId) {
+    const cleanId = String(ticketId).trim().toUpperCase();
+    const data = await supabaseRest(`repair_jobs?ticket_id=eq.${cleanId}&select=*`);
+    if (Array.isArray(data) && data[0]) return data[0];
+    throw new Error(`No repair ticket found matching '${ticketId}'`);
+  },
+
+  // 8. Super Admin Platform Overview
+  async getPlatformOverview() {
+    try {
+      const [shops, profiles, jobs, commissions] = await Promise.all([
+        supabaseRest('shops?select=id'),
+        supabaseRest('profiles?select=id,role'),
+        supabaseRest('repair_jobs?select=id,status,final_amount'),
+        supabaseRest('repair_commissions?select=id,status,commission_amount'),
+      ]);
+
+      const shopsList = Array.isArray(shops) ? shops : [];
+      const profilesList = Array.isArray(profiles) ? profiles : [];
+      const jobsList = Array.isArray(jobs) ? jobs : [];
+      const commList = Array.isArray(commissions) ? commissions : [];
+
+      const totalRepairVolume = jobsList
+        .filter(j => j.status === 'COMPLETED')
+        .reduce((acc, j) => acc + Number(j.final_amount || 0), 0);
+
+      const totalCommissionPaid = commList
+        .filter(c => c.status === 'PAID')
+        .reduce((acc, c) => acc + Number(c.commission_amount || 0), 0);
+
+      const totalCommissionPending = commList
+        .filter(c => c.status === 'PENDING')
+        .reduce((acc, c) => acc + Number(c.commission_amount || 0), 0);
+
+      return {
+        stats: {
+          totalShops: shopsList.length,
+          totalSellers: profilesList.filter(p => p.role === 'SELLER').length,
+          totalAdmins: profilesList.filter(p => p.role === 'ADMIN').length,
+          totalRepairJobs: jobsList.length,
+          completedRepairs: jobsList.filter(j => j.status === 'COMPLETED').length,
+          totalRepairVolume,
+          totalCommissionPaid,
+          totalCommissionPending,
+        },
+        supabaseUrl: SUPABASE_URL,
+      };
+    } catch (e) {
+      return {
+        stats: {
+          totalShops: 0,
+          totalSellers: 0,
+          totalAdmins: 0,
+          totalRepairJobs: 0,
+          completedRepairs: 0,
+          totalRepairVolume: 0,
+          totalCommissionPaid: 0,
+          totalCommissionPending: 0,
+        },
+        supabaseUrl: SUPABASE_URL,
+      };
+    }
+  },
+
+  // 9. Authentication: Login
+  async login(email, password) {
+    const cleanEmail = String(email || '').trim().toLowerCase();
+    
+    // Query Supabase profiles table
+    const data = await supabaseRest(`profiles?email=eq.${encodeURIComponent(cleanEmail)}&select=*`);
+    if (Array.isArray(data) && data[0]) {
+      const user = data[0];
+      
+      let shopName = user.shop_name || '';
+      let shopId = user.shop_id || null;
+
+      // If ADMIN, fetch their owned repair shop
+      if (user.role === 'ADMIN') {
+        try {
+          const ownedShops = await supabaseRest(`shops?owner_id=eq.${user.id}&select=id,name`);
+          if (Array.isArray(ownedShops) && ownedShops[0]) {
+            shopId = ownedShops[0].id;
+            shopName = ownedShops[0].name;
+          }
+        } catch (e) {
+          // ignore
+        }
+      }
+
+      // If SELLER, fetch their assigned partner repair shop name
+      if (user.role === 'SELLER' && user.admin_id) {
+        try {
+          const adminShop = await supabaseRest(`shops?owner_id=eq.${user.admin_id}&select=id,name`);
+          if (Array.isArray(adminShop) && adminShop[0]) {
+            shopId = adminShop[0].id;
+            shopName = adminShop[0].name;
+          }
+        } catch (e) {
+          // ignore
+        }
+      }
+
+      return {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        phone: user.phone,
+        shopName,
+        shopId,
+        adminId: user.admin_id || null,
+      };
+    }
+
+    throw new Error('Account not found with this email. Please register first or contact your shop Admin.');
+  },
+
+  // 10. Public Authentication: Register (Admins & Customers only)
+  async register(userData) {
+    const cleanEmail = String(userData.email || '').trim().toLowerCase();
+    
+    // Business Rule: Sellers cannot self-register directly
+    if (userData.role === 'SELLER') {
+      throw new Error('Accessory Sellers cannot self-register. A registered Repair Shop Admin must onboard you to partner with their shop.');
+    }
+
+    // Check if user already exists
+    try {
+      const existing = await supabaseRest(`profiles?email=eq.${encodeURIComponent(cleanEmail)}&select=id`);
+      if (Array.isArray(existing) && existing.length > 0) {
+        throw new Error('An account with this email already exists. Please log in.');
+      }
+    } catch (e) {
+      if (e.message && e.message.includes('already exists')) throw e;
+    }
+
+    const newUser = {
+      email: cleanEmail,
+      name: userData.name || cleanEmail.split('@')[0],
+      phone: userData.phone || '',
+      role: userData.role === 'ADMIN' ? 'ADMIN' : 'CUSTOMER',
+      status: 'ACTIVE',
+    };
+
+    const res = await supabaseRest('profiles', {
+      method: 'POST',
+      body: newUser,
+    });
+
+    const createdUser = Array.isArray(res) && res[0] ? res[0] : newUser;
+
+    // If role is ADMIN and shop name provided, create shop record in Supabase
+    if (createdUser.role === 'ADMIN' && userData.shopName) {
+      try {
+        const shopRes = await supabaseRest('shops', {
+          method: 'POST',
+          body: {
+            owner_id: createdUser.id,
+            name: userData.shopName,
+            address: userData.shopAddress || 'Local Address',
+            phone: createdUser.phone || '',
+            is_verified: true,
+          },
+        });
+        if (Array.isArray(shopRes) && shopRes[0]) {
+          createdUser.shopId = shopRes[0].id;
+          createdUser.shopName = shopRes[0].name;
+          // Update profile with shop_id
+          await supabaseRest(`profiles?id=eq.${createdUser.id}`, {
+            method: 'PATCH',
+            body: { shop_id: shopRes[0].id },
+          });
+        }
+      } catch (err) {
+        console.warn('Shop creation notice:', err.message);
+      }
+    }
+
+    return createdUser;
+  },
+
+  // 11. Admin Onboard Seller Partner
+  async onboardSeller(sellerData, adminUser) {
+    if (!adminUser || (adminUser.role !== 'ADMIN' && adminUser.role !== 'SUPER_ADMIN')) {
+      throw new Error('Only registered Repair Shop Admins can onboard partner sellers.');
+    }
+
+    const cleanEmail = String(sellerData.email || '').trim().toLowerCase();
+    if (!cleanEmail) {
+      throw new Error('Seller login email is required.');
+    }
+
+    // Check if seller already exists
+    const existing = await supabaseRest(`profiles?email=eq.${encodeURIComponent(cleanEmail)}&select=id`);
+    if (Array.isArray(existing) && existing.length > 0) {
+      throw new Error(`A user with email "${cleanEmail}" is already registered on the platform.`);
+    }
+
+    const newSeller = {
+      email: cleanEmail,
+      name: sellerData.name?.trim() || cleanEmail.split('@')[0],
+      phone: sellerData.phone || '',
+      role: 'SELLER',
+      admin_id: adminUser.id,
+      shop_id: adminUser.shopId || null,
+      status: 'ACTIVE',
+    };
+
+    const res = await supabaseRest('profiles', {
+      method: 'POST',
+      body: newSeller,
+    });
+
+    const created = Array.isArray(res) && res[0] ? res[0] : newSeller;
+    created.shopName = sellerData.shopName || `${created.name} Accessories`;
+    return created;
+  },
+
+  // 12. Fetch All Affiliated Sellers for an Admin
+  async getAffiliatedSellers(adminId) {
+    if (!adminId) return [];
+    try {
+      const sellers = await supabaseRest(`profiles?role=eq.SELLER&admin_id=eq.${adminId}&select=*&order=created_at.desc`);
+      return Array.isArray(sellers) ? sellers : [];
+    } catch (e) {
+      console.warn('getAffiliatedSellers notice:', e.message);
+      return [];
+    }
+  },
+
+  // 11. Products Management
+  async getProducts(filter = {}) {
+    let endpoint = 'products?select=*&order=created_at.desc';
+    if (filter.category && filter.category !== 'All') {
+      endpoint += `&category=eq.${encodeURIComponent(filter.category)}`;
+    }
+    try {
+      const data = await supabaseRest(endpoint);
+      return Array.isArray(data) ? data : [];
+    } catch (e) {
+      console.error('Supabase getProducts error:', e.message);
+      return [];
+    }
+  },
+
+  async addProduct(productData) {
+    const newProduct = {
+      name: productData.name,
+      brand: productData.brand || '',
+      category: productData.category || 'Accessories',
+      price: Number(productData.price || 0),
+      stock: Number(productData.stock || 0),
+      seller_id: productData.sellerId || null,
+      shop_id: productData.shopId || null,
+    };
+
+    const res = await supabaseRest('products', {
+      method: 'POST',
+      body: newProduct,
+    });
+
+    return Array.isArray(res) && res[0] ? res[0] : newProduct;
+  },
+
+  async deleteProduct(productId) {
+    await supabaseRest(`products?id=eq.${productId}`, { method: 'DELETE' });
+    return true;
+  },
+
+  // 12. Offers Management
+  async getOffers() {
+    try {
+      const data = await supabaseRest('offers?select=*&order=created_at.desc');
+      return Array.isArray(data) ? data : [];
+    } catch (e) {
+      console.error('Supabase getOffers error:', e.message);
+      return [];
+    }
+  },
+
+  async addOffer(offerData) {
+    const newOffer = {
+      title: offerData.title,
+      description: offerData.description || '',
+      discount_percent: Number(offerData.discountPercent || 10),
+      shop_id: offerData.shopId || null,
+      valid_until: offerData.validUntil || new Date(Date.now() + 30 * 86400000).toISOString(),
+    };
+
+    const res = await supabaseRest('offers', {
+      method: 'POST',
+      body: newOffer,
+    });
+
+    return Array.isArray(res) && res[0] ? res[0] : newOffer;
+  },
+
+  async deleteOffer(offerId) {
+    await supabaseRest(`offers?id=eq.${offerId}`, { method: 'DELETE' });
+    return true;
+  },
+};
+
+export default supabaseService;
