@@ -71,6 +71,13 @@ export default function Navbar() {
               <ShoppingBag className="w-3.5 h-3.5" />
               <span>Products &amp; Offers</span>
             </Link>
+            <Link
+              href="/aboutme"
+              className={`px-3 py-2 rounded-xl transition flex items-center gap-1.5 ${pathname === '/aboutme' ? 'bg-emerald-950/40 text-emerald-400 font-bold border border-emerald-800/40' : 'hover:text-emerald-400 hover:bg-slate-900/60'}`}
+            >
+              <ShoppingBag className="w-3.5 h-3.5" />
+              <span>About Me</span>
+            </Link>
 
             {/* Dashboard ONLY visible when authenticated as shop staff */}
             {isAuthenticated && (
