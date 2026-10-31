@@ -45,6 +45,8 @@ CREATE TABLE shops (
     name TEXT NOT NULL,
     address TEXT NOT NULL,
     phone TEXT NOT NULL,
+    latitude NUMERIC(10, 7),
+    longitude NUMERIC(10, 7),
     is_verified BOOLEAN NOT NULL DEFAULT true,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now()

@@ -6,7 +6,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { 
   Wrench, ShieldCheck, Store, User, Database, LogOut, 
   LogIn, UserPlus, ChevronDown, ShoppingBag, LayoutDashboard, 
-  Search, Sparkles
+  Search, Sparkles, MapPin, Compass
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -86,6 +86,13 @@ export default function Navbar() {
               className={`px-3 py-2 rounded-xl transition ${pathname === '/' ? 'bg-slate-900 text-amber-400 font-bold border border-slate-800' : 'hover:text-white hover:bg-slate-900/60'}`}
             >
               Home
+            </Link>
+            <Link 
+              href="/#nearby" 
+              className="px-3 py-2 rounded-xl transition flex items-center gap-1.5 text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 font-bold"
+            >
+              <Compass className="w-3.5 h-3.5" />
+              <span>Nearby Deals (1–2 km)</span>
             </Link>
             <Link 
               href="/dashboard" 

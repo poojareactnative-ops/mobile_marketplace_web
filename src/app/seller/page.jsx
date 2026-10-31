@@ -7,7 +7,7 @@ import SellerReferralModal from '../../components/SellerReferralModal';
 import RoleGuard from '../../components/RoleGuard';
 import { supabaseService } from '../../services/supabaseService';
 import { useAuth } from '../../context/AuthContext';
-import { Plus, Store, Clock, CheckCircle2, TrendingUp, Banknote, Smartphone, Wrench } from 'lucide-react';
+import { Plus, Store, Clock, CheckCircle2, TrendingUp, Banknote, Smartphone, Wrench, Search, AlertCircle } from 'lucide-react';
 
 export default function SellerPage() {
   const { user } = useAuth();
@@ -15,6 +15,12 @@ export default function SellerPage() {
   const [commissions, setCommissions] = useState({ data: [], summary: {} });
   const [loading, setLoading] = useState(true);
   const [isReferralOpen, setIsReferralOpen] = useState(false);
+
+  // Dedicated Ticket tracker state
+  const [ticketInput, setTicketInput] = useState('');
+  const [trackedJob, setTrackedJob] = useState(null);
+  const [trackingError, setTrackingError] = useState('');
+  const [trackingLoading, setTrackingLoading] = useState(false);
 
   const loadData = async () => {
     try {
@@ -47,6 +53,24 @@ export default function SellerPage() {
       shopId: user?.shopId || null,
     });
     await loadData();
+  };
+
+  const handleTrackTicket = async (targetTicketId) => {
+    const idToSearch = (targetTicketId || ticketInput).trim();
+    if (!idToSearch) return;
+
+    try {
+      setTrackingLoading(true);
+      setTrackingError('');
+      const res = await supabaseService.trackRepair(idToSearch);
+      setTrackedJob(res);
+      setTicketInput(idToSearch);
+    } catch (err) {
+      setTrackedJob(null);
+      setTrackingError(err.message || 'Ticket not found in database');
+    } finally {
+      setTrackingLoading(false);
+    }
   };
 
   const completedJobsCount = jobs.filter((j) => j.status === 'COMPLETED').length;
@@ -131,6 +155,100 @@ export default function SellerPage() {
 
           </div>
 
+          {/* Dedicated Walk-in Customer Ticket Tracker for Seller */}
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl space-y-5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-800">
+              <div>
+                <div className="flex items-center space-x-2">
+                  <Search className="w-4 h-4 text-blue-400" />
+                  <h3 className="text-sm font-extrabold text-white">Track Customer Repair Ticket</h3>
+                </div>
+                <p className="text-[11px] text-slate-400 mt-0.5">
+                  Instant lookup for walk-in customer status inquiries on referred devices.
+                </p>
+              </div>
+              {trackedJob && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setTrackedJob(null);
+                    setTicketInput('');
+                  }}
+                  className="text-xs text-slate-400 hover:text-white"
+                >
+                  Clear Lookup
+                </button>
+              )}
+            </div>
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleTrackTicket(ticketInput);
+              }}
+              className="flex flex-col sm:flex-row gap-3"
+            >
+              <div className="relative flex-1">
+                <Search className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-500" />
+                <input
+                  type="text"
+                  value={ticketInput}
+                  onChange={(e) => setTicketInput(e.target.value)}
+                  placeholder="Enter Ticket ID (e.g. REP-1048)"
+                  className="w-full pl-10 pr-4 py-2.5 bg-slate-950 border border-slate-700/80 rounded-2xl text-xs font-mono font-bold text-white uppercase focus:outline-none focus:border-blue-500"
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={trackingLoading}
+                className="px-6 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-2xl text-xs shadow-lg transition flex items-center justify-center gap-1.5 shrink-0"
+              >
+                <Search className="w-4 h-4" />
+                <span>{trackingLoading ? 'Checking...' : 'Lookup Ticket'}</span>
+              </button>
+            </form>
+
+            {trackingError && (
+              <div className="bg-rose-950/60 border border-rose-800 text-rose-300 p-3 rounded-2xl text-xs flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+                <span>{trackingError}</span>
+              </div>
+            )}
+
+            {trackedJob && (
+              <div className="bg-slate-950 border border-slate-800 rounded-2xl p-5 space-y-4 animate-in fade-in">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-slate-800 gap-2">
+                  <div>
+                    <span className="font-mono text-xs text-amber-400 font-extrabold">{trackedJob.ticket_id}</span>
+                    <h4 className="text-base font-bold text-white mt-0.5">{trackedJob.device_brand} {trackedJob.device_model}</h4>
+                    <div className="text-xs text-slate-400">Customer: {trackedJob.customer_name} ({trackedJob.customer_phone})</div>
+                  </div>
+                  <div className="text-right">
+                    <span className="px-3 py-1 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-full text-xs font-black uppercase">
+                      {trackedJob.status}
+                    </span>
+                    <div className="text-xs font-bold text-emerald-400 mt-1">
+                      {trackedJob.seller_commission_amount > 0 ? `Your 2%: ₹${trackedJob.seller_commission_amount} (${trackedJob.commission_status})` : '2% on completion'}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                  <div className="bg-slate-900 p-3 rounded-xl border border-slate-800">
+                    <div className="text-slate-400">Problem Description</div>
+                    <div className="text-white font-semibold mt-1">{trackedJob.problem_description}</div>
+                  </div>
+                  <div className="bg-slate-900 p-3 rounded-xl border border-slate-800">
+                    <div className="text-slate-400">Final Bill Amount</div>
+                    <div className="text-white font-bold text-base mt-0.5">
+                      {trackedJob.final_amount > 0 ? `₹${trackedJob.final_amount.toLocaleString('en-IN')}` : `Est. ₹${trackedJob.estimated_cost}`}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
           {/* Referral Jobs Table */}
           <div className="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl">
             <div className="px-6 py-4 border-b border-slate-800 flex items-center justify-between">
@@ -165,6 +283,7 @@ export default function SellerPage() {
                       <th className="py-3 px-4">Status</th>
                       <th className="py-3 px-4">Final Bill</th>
                       <th className="py-3 px-4 font-bold text-emerald-400">My 2% Commission</th>
+                      <th className="py-3 px-4 text-right">Action</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-800 font-medium">
@@ -205,6 +324,15 @@ export default function SellerPage() {
                           ) : (
                             <span className="text-slate-500 text-[11px] font-normal">2% upon completion</span>
                           )}
+                        </td>
+                        <td className="py-3.5 px-4 text-right">
+                          <button
+                            type="button"
+                            onClick={() => handleTrackTicket(job.ticket_id)}
+                            className="px-2.5 py-1 bg-blue-600/20 hover:bg-blue-600 text-blue-300 hover:text-white rounded-lg text-[11px] font-bold border border-blue-500/30 transition shadow"
+                          >
+                            Inspect
+                          </button>
                         </td>
                       </tr>
                     ))}

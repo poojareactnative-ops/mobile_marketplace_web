@@ -11,10 +11,11 @@ import SellerReferralModal from '../../components/SellerReferralModal';
 import RoleGuard from '../../components/RoleGuard';
 import { supabaseService } from '../../services/supabaseService';
 import { useAuth } from '../../context/AuthContext';
-import { 
-  Wrench, Store, ShieldCheck, User, Plus, Search, 
-  CheckCircle2, Clock, AlertCircle, ArrowLeft, RefreshCw, 
-  LogIn, UserPlus, ShieldAlert
+import {
+  Wrench, Store, ShieldCheck, User, Plus, Search,
+  CheckCircle2, Clock, AlertCircle, ArrowLeft, RefreshCw,
+  LogIn, UserPlus, ShieldAlert, Phone, MapPin, Check,
+  Layers, ArrowRight, DollarSign, FileText, ChevronRight, Sparkles, Filter
 } from 'lucide-react';
 
 function DashboardContent() {
@@ -28,13 +29,16 @@ function DashboardContent() {
   const [platformStats, setPlatformStats] = useState({});
   const [sellers, setSellers] = useState([]);
 
+  // Active Tab inside Workbench (distinct SaaS app layout)
+  const [activeTab, setActiveTab] = useState('MAIN'); // 'MAIN' | 'TRACKER' | 'COMMISSIONS' | 'SELLERS'
+
   // Modals state
   const [completingJob, setCompletingJob] = useState(null);
   const [payingCommission, setPayingCommission] = useState(null);
   const [isReferralOpen, setIsReferralOpen] = useState(false);
   const [isOnboardOpen, setIsOnboardOpen] = useState(false);
 
-  // Customer tracking state
+  // Dedicated Ticket tracking state (for Seller & Admin)
   const [ticketInput, setTicketInput] = useState('');
   const [trackedJob, setTrackedJob] = useState(null);
   const [trackingError, setTrackingError] = useState('');
@@ -128,18 +132,20 @@ function DashboardContent() {
     return created;
   };
 
-  // Handle Customer track
-  const handleTrackTicket = async (e) => {
-    if (e) e.preventDefault();
-    if (!ticketInput.trim()) return;
+  // Handle Ticket Lookup (Used in Seller & Admin tracker)
+  const handleTrackTicket = async (targetTicketId) => {
+    const idToSearch = (targetTicketId || ticketInput).trim();
+    if (!idToSearch) return;
+
     try {
       setTrackingLoading(true);
       setTrackingError('');
-      const res = await supabaseService.trackRepair(ticketInput.trim());
+      const res = await supabaseService.trackRepair(idToSearch);
       setTrackedJob(res);
+      setTicketInput(idToSearch);
     } catch (err) {
       setTrackedJob(null);
-      setTrackingError(err.message || 'Ticket not found');
+      setTrackingError(err.message || 'Ticket not found in database');
     } finally {
       setTrackingLoading(false);
     }
@@ -159,12 +165,12 @@ function DashboardContent() {
       <div className="flex-1 flex flex-col bg-slate-950 text-slate-100 min-h-screen">
         <Navbar />
         <main className="max-w-md mx-auto my-auto px-4 py-16 text-center space-y-5">
-          <div className="w-14 h-14 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center mx-auto border border-amber-500/30">
+          <div className="w-14 h-14 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center mx-auto border border-amber-500/30 shadow-xl">
             <Wrench className="w-7 h-7" />
           </div>
-          <h1 className="text-2xl font-black text-white">Sign In to View Dashboard</h1>
+          <h1 className="text-2xl font-black text-white">Private Operations Workbench</h1>
           <p className="text-xs text-slate-400 leading-relaxed">
-            Please log in with your account to access your role-based workbench, repair queue, and 2% referral commission tracker.
+            The Dashboard is an authenticated partner workbench for Repair Admins, Accessory Sellers, and Super Admins. Please sign in to access your repair queues and 2% commission ledger.
           </p>
           <div className="flex items-center justify-center gap-3 pt-2">
             <Link
@@ -172,14 +178,14 @@ function DashboardContent() {
               className="px-5 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-xl text-xs shadow-lg transition flex items-center gap-1.5"
             >
               <LogIn className="w-4 h-4" />
-              <span>Sign In</span>
+              <span>Partner Sign In</span>
             </Link>
             <Link
               href="/register"
-              className="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl text-xs border border-slate-700 transition flex items-center gap-1.5"
+              className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-slate-200 font-bold rounded-xl text-xs border border-slate-700 transition flex items-center gap-1.5"
             >
               <UserPlus className="w-4 h-4" />
-              <span>Register</span>
+              <span>Register Repair Shop</span>
             </Link>
           </div>
         </main>
@@ -187,139 +193,567 @@ function DashboardContent() {
     );
   }
 
+  const roleMeta = {
+    ADMIN: {
+      title: 'Repair Center Operations Workbench',
+      badge: '🛠️ Admin Console',
+      badgeClass: 'bg-amber-500/15 text-amber-400 border-amber-500/30',
+      description: 'Receive walk-in referrals from affiliated sellers, complete repairs, record bills, and settle 2% commission.',
+    },
+    SELLER: {
+      title: 'Accessory Store Referral & Earnings Portal',
+      badge: '🏪 Seller Partner (2%)',
+      badgeClass: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
+      description: 'Refer walk-in mobile repair customers to your partner shop, track real-time repair tickets, and earn guaranteed 2% commission.',
+    },
+    SUPER_ADMIN: {
+      title: 'Global Platform Governance & Audit',
+      badge: '🛡️ Super Admin Audit',
+      badgeClass: 'bg-purple-500/15 text-purple-400 border-purple-500/30',
+      description: 'Platform owner oversight: real-time shop registry, platform repair volume, and tamper-proof commission ledger.',
+    },
+    CUSTOMER: {
+      title: 'Customer Ticket Center',
+      badge: '📱 Customer View',
+      badgeClass: 'bg-blue-500/15 text-blue-400 border-blue-500/30',
+      description: 'Review your device repair diagnostics, assigned workshop, and billing.',
+    },
+  }[role] || {
+    title: 'Operations Dashboard',
+    badge: role,
+    badgeClass: 'bg-slate-800 text-slate-300',
+    description: '',
+  };
+
   return (
-    <div className="flex-1 flex flex-col bg-slate-950 text-slate-100 min-h-screen">
+    <div className="flex-1 flex flex-col bg-slate-950 text-slate-100 min-h-screen font-sans selection:bg-amber-500 selection:text-slate-950">
+
       {/* Top Navbar */}
       <Navbar />
 
-      {/* Subheader / Role Context Navigation */}
-      <div className="bg-slate-900 border-b border-slate-800 px-4 py-3">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+      {/* DISTINCT SAAS WORKBENCH APP BAR */}
+      <div className="bg-slate-900/90 border-b border-slate-800 backdrop-blur-md sticky top-16 z-30 px-4 sm:px-6 lg:px-8 py-3">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4">
+
+          {/* Identity & Breadcrumb */}
           <div className="flex items-center space-x-3">
             <Link
               href="/"
-              className="flex items-center space-x-1 text-xs text-slate-400 hover:text-white transition px-2 py-1 rounded-lg hover:bg-slate-800"
+              className="flex items-center space-x-1.5 text-xs text-slate-400 hover:text-white transition px-2.5 py-1 rounded-lg bg-slate-950 border border-slate-800 hover:border-slate-700"
+              title="Return to Public Storefront"
             >
-              <ArrowLeft className="w-3.5 h-3.5" />
-              <span>Back to Home</span>
+              <ArrowLeft className="w-3.5 h-3.5 text-amber-400" />
+              <span>Public Site</span>
             </Link>
 
-            <span className="text-slate-700">|</span>
+            <span className="text-slate-700 font-bold">/</span>
 
             <div className="flex items-center space-x-2">
-              <span className="text-xs font-bold text-slate-300">Logged in as:</span>
-              <span className="text-xs font-bold text-white">{user.name}</span>
-              <span className={`text-[10px] px-2.5 py-0.5 rounded-full font-bold uppercase ${
-                role === 'ADMIN' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' :
-                role === 'SELLER' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' :
-                role === 'SUPER_ADMIN' ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30' :
-                'bg-blue-500/20 text-blue-400 border border-blue-500/30'
-              }`}>
-                {role}
+              <span className={`text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full border ${roleMeta.badgeClass}`}>
+                {roleMeta.badge}
               </span>
+              <span className="text-xs font-black text-white">
+                {user.shopName || user.name}
+              </span>
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" title="Supabase Connected" />
             </div>
           </div>
 
-          <div className="flex items-center space-x-2">
+          {/* Quick Action Commands */}
+          <div className="flex items-center space-x-2.5">
+            {role === 'SELLER' && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setIsReferralOpen(true)}
+                  className="px-3.5 py-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-xl text-xs font-bold shadow-lg shadow-emerald-600/20 flex items-center space-x-1.5 transition transform hover:-translate-y-0.5"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>+ Refer Customer</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveTab('TRACKER');
+                    setTicketInput('');
+                  }}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition flex items-center gap-1.5 ${activeTab === 'TRACKER'
+                    ? 'bg-blue-600 text-white border-blue-500 shadow'
+                    : 'bg-slate-950 text-blue-400 border-slate-800 hover:border-blue-500/50'
+                    }`}
+                >
+                  <Search className="w-3.5 h-3.5" />
+                  <span>Track Ticket</span>
+                </button>
+              </>
+            )}
+
+            {role === 'ADMIN' && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setIsOnboardOpen(true)}
+                  className="px-3.5 py-1.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 rounded-xl text-xs font-black shadow-lg shadow-amber-500/20 flex items-center space-x-1.5 transition transform hover:-translate-y-0.5"
+                >
+                  <UserPlus className="w-3.5 h-3.5" />
+                  <span>+ Onboard Seller</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveTab('TRACKER');
+                    setTicketInput('');
+                  }}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition flex items-center gap-1.5 ${activeTab === 'TRACKER'
+                    ? 'bg-blue-600 text-white border-blue-500 shadow'
+                    : 'bg-slate-950 text-blue-400 border-slate-800 hover:border-blue-500/50'
+                    }`}
+                >
+                  <Search className="w-3.5 h-3.5" />
+                  <span>Inspect Ticket</span>
+                </button>
+              </>
+            )}
+
             <button
+              type="button"
               onClick={loadData}
-              className="p-1.5 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-300 transition text-xs flex items-center gap-1.5 font-medium"
-              title="Refresh Data"
+              className="p-1.5 rounded-xl border border-slate-800 bg-slate-950 hover:bg-slate-800 text-slate-300 transition text-xs flex items-center gap-1.5 font-medium"
+              title="Sync Supabase Database"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
-              <span>Sync Supabase</span>
+              <span className="hidden sm:inline">Sync</span>
             </button>
           </div>
+
         </div>
       </div>
 
       {/* Main Workspace Body */}
-      <main className="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 flex-1">
-        
-        {/* Interactive 2% Commission Formula Calculator */}
-        <CommissionCalculator initialAmount={2000} />
+      <main className="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 flex-1">
 
-        {/* ============================================================ */}
-        {/* ROLE 1: ADMIN (REPAIR SHOP OWNER) VIEW                      */}
-        {/* ============================================================ */}
-        {role === 'ADMIN' && (
-          <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-4 border-b border-slate-800 gap-2">
-              <div>
-                <div className="flex items-center space-x-2">
-                  <h1 className="text-xl font-black text-white">Repair Shop Owner Workbench</h1>
-                  <span className="text-xs bg-amber-500/20 text-amber-400 px-2.5 py-0.5 rounded-full font-bold border border-amber-500/30">
-                    {user.shopName || 'Mobile Repair Shop'}
-                  </span>
-                </div>
-                <p className="text-xs text-slate-400 mt-0.5">
-                  Receive repair referrals from affiliated accessory sellers, perform repairs, enter final bills (auto 2% commission split), and settle payouts.
-                </p>
-              </div>
+        {/* Workspace Title & Purpose */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+              {roleMeta.title}
+            </h1>
+            <p className="text-xs text-slate-400 mt-1 max-w-2xl leading-relaxed">
+              {roleMeta.description}
+            </p>
+          </div>
 
-              {/* Status Pills & Onboard Action */}
-              <div className="flex flex-wrap items-center gap-2">
-                <button
-                  onClick={() => setIsOnboardOpen(true)}
-                  className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-lg shadow-emerald-600/25 transition"
-                >
-                  <UserPlus className="w-4 h-4" />
-                  <span>+ Onboard Seller Partner</span>
-                </button>
-                <span className="text-xs text-slate-400">Total Referrals: <strong className="text-white">{jobs.length}</strong></span>
-                <span className="text-xs text-rose-400 bg-rose-950/50 px-2.5 py-1 rounded-xl border border-rose-900 font-bold">
-                  ₹{commissions.summary?.pendingCommission || 0} Owed (2%)
-                </span>
-              </div>
+          {/* Quick tab switcher for Seller */}
+          {role === 'SELLER' && (
+            <div className="flex items-center space-x-1 bg-slate-900 p-1 rounded-2xl border border-slate-800 self-start sm:self-auto text-xs">
+              <button
+                type="button"
+                onClick={() => setActiveTab('MAIN')}
+                className={`px-3 py-1.5 rounded-xl font-bold transition flex items-center gap-1.5 ${activeTab === 'MAIN'
+                  ? 'bg-emerald-600 text-white shadow'
+                  : 'text-slate-400 hover:text-white'
+                  }`}
+              >
+                <span>Referral Queue</span>
+                <span className="px-1.5 py-0.2 bg-black/30 rounded-full text-[10px] font-black">{jobs.length}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveTab('TRACKER')}
+                className={`px-3 py-1.5 rounded-xl font-bold transition flex items-center gap-1.5 ${activeTab === 'TRACKER'
+                  ? 'bg-blue-600 text-white shadow'
+                  : 'text-slate-400 hover:text-white'
+                  }`}
+              >
+                <Search className="w-3.5 h-3.5" />
+                <span>Track Repair Ticket</span>
+              </button>
             </div>
+          )}
 
-            {/* KPI Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-              <div className="bg-slate-900 border border-slate-800 p-4 rounded-2xl">
-                <div className="text-slate-400 text-xs font-medium">Referred Jobs</div>
-                <div className="text-2xl font-black text-white mt-1">{jobs.length}</div>
-                <div className="text-[11px] text-slate-500 mt-1">From partner sellers</div>
-              </div>
-              <div className="bg-slate-900 border border-slate-800 p-4 rounded-2xl">
-                <div className="text-slate-400 text-xs font-medium">Active Workbench</div>
-                <div className="text-2xl font-black text-amber-400 mt-1">
-                  {jobs.filter(j => ['ACCEPTED', 'IN_PROGRESS'].includes(j.status)).length}
+          {/* Quick tab switcher for Admin */}
+          {role === 'ADMIN' && (
+            <div className="flex items-center space-x-1 bg-slate-900 p-1 rounded-2xl border border-slate-800 self-start sm:self-auto text-xs">
+              <button
+                type="button"
+                onClick={() => setActiveTab('MAIN')}
+                className={`px-3 py-1.5 rounded-xl font-bold transition flex items-center gap-1.5 ${activeTab === 'MAIN'
+                  ? 'bg-amber-500 text-slate-950 font-black shadow'
+                  : 'text-slate-400 hover:text-white'
+                  }`}
+              >
+                <span>Repair Queue</span>
+                <span className="px-1.5 py-0.2 bg-black/30 rounded-full text-[10px] font-black">{jobs.length}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveTab('TRACKER')}
+                className={`px-3 py-1.5 rounded-xl font-bold transition flex items-center gap-1.5 ${activeTab === 'TRACKER'
+                  ? 'bg-blue-600 text-white shadow'
+                  : 'text-slate-400 hover:text-white'
+                  }`}
+              >
+                <Search className="w-3.5 h-3.5" />
+                <span>Ticket Inspector</span>
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* ============================================================ */}
+        {/* ROLE 1: SELLER WORKBENCH (WITH INTEGRATED TICKET TRACKER)   */}
+        {/* ============================================================ */}
+        {role === 'SELLER' && (
+          <div className="space-y-8">
+
+            {/* KPI Cards for Seller */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="bg-slate-900/90 border border-slate-800/90 p-5 rounded-3xl shadow-xl relative overflow-hidden group">
+                <div className="absolute top-0 right-0 w-20 h-20 bg-blue-500/10 rounded-bl-full pointer-events-none" />
+                <div className="text-slate-400 text-xs font-semibold flex items-center justify-between">
+                  <span>Referred Walk-ins</span>
+                  <Store className="w-4 h-4 text-blue-400" />
                 </div>
-                <div className="text-[11px] text-amber-400/80 mt-1">Under repair</div>
+                <div className="text-3xl font-black text-white mt-2">{jobs.length}</div>
+                <div className="text-[11px] text-slate-400 mt-1">Referred to partner repair shop</div>
               </div>
-              <div className="bg-slate-900 border border-slate-800 p-4 rounded-2xl">
-                <div className="text-slate-400 text-xs font-medium">Pending 2% Commissions Owed</div>
-                <div className="text-2xl font-black text-rose-400 mt-1">
+
+              <div className="bg-slate-900/90 border border-slate-800/90 p-5 rounded-3xl shadow-xl relative overflow-hidden group">
+                <div className="absolute top-0 right-0 w-20 h-20 bg-amber-500/10 rounded-bl-full pointer-events-none" />
+                <div className="text-slate-400 text-xs font-semibold flex items-center justify-between">
+                  <span>Pending 2% Commissions</span>
+                  <Clock className="w-4 h-4 text-amber-400" />
+                </div>
+                <div className="text-3xl font-black text-amber-400 mt-2">
                   ₹{(commissions.summary?.pendingCommission || 0).toLocaleString('en-IN')}
                 </div>
-                <div className="text-[11px] text-rose-400/80 mt-1">Ready for settlement</div>
+                <div className="text-[11px] text-amber-400/80 mt-1">Completed repairs awaiting payout</div>
               </div>
-              <div className="bg-slate-900 border border-slate-800 p-4 rounded-2xl">
-                <div className="text-slate-400 text-xs font-medium">Paid Commissions</div>
-                <div className="text-2xl font-black text-emerald-400 mt-1">
+
+              <div className="bg-slate-900/90 border border-slate-800/90 p-5 rounded-3xl shadow-xl relative overflow-hidden group">
+                <div className="absolute top-0 right-0 w-20 h-20 bg-emerald-500/10 rounded-bl-full pointer-events-none" />
+                <div className="text-slate-400 text-xs font-semibold flex items-center justify-between">
+                  <span>Total 2% Received (Paid)</span>
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                </div>
+                <div className="text-3xl font-black text-emerald-400 mt-2">
                   ₹{(commissions.summary?.paidCommission || 0).toLocaleString('en-IN')}
                 </div>
-                <div className="text-[11px] text-emerald-400/80 mt-1">Settled via UPI</div>
+                <div className="text-[11px] text-emerald-400/80 mt-1">Directly settled by admin via UPI</div>
               </div>
             </div>
 
-            {/* Affiliated Partner Sellers (2% Referral Partners) */}
-            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl">
+            {/* DEDICATED SELLER TICKET TRACKER TOOL */}
+            <div className="bg-slate-900/90 border border-slate-800 rounded-3xl p-6 shadow-2xl space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 border-b border-slate-800">
+                <div>
+                  <div className="flex items-center space-x-2">
+                    <Search className="w-5 h-5 text-blue-400" />
+                    <h2 className="text-base font-extrabold text-white">
+                      Track Customer Repair Ticket
+                    </h2>
+                  </div>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    When a walk-in customer inquires about their phone, enter their Ticket ID to verify diagnostic status, repair progress, and bill.
+                  </p>
+                </div>
+                {trackedJob && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTrackedJob(null);
+                      setTicketInput('');
+                    }}
+                    className="text-xs text-slate-400 hover:text-white"
+                  >
+                    Clear Lookup
+                  </button>
+                )}
+              </div>
+
+              {/* Ticket Search Form */}
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleTrackTicket(ticketInput);
+                }}
+                className="flex flex-col sm:flex-row gap-3"
+              >
+                <div className="relative flex-1">
+                  <Search className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-500" />
+                  <input
+                    type="text"
+                    value={ticketInput}
+                    onChange={(e) => setTicketInput(e.target.value)}
+                    placeholder="Enter Ticket ID (e.g. REP-1048)"
+                    className="w-full pl-10 pr-4 py-2.5 bg-slate-950 border border-slate-700/80 rounded-2xl text-xs font-mono font-bold text-white uppercase focus:outline-none focus:border-blue-500 transition shadow-inner"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={trackingLoading}
+                  className="px-6 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-2xl text-xs shadow-lg transition flex items-center justify-center gap-1.5 shrink-0 disabled:opacity-50"
+                >
+                  <Search className="w-4 h-4" />
+                  <span>{trackingLoading ? 'Looking up...' : 'Lookup Ticket'}</span>
+                </button>
+              </form>
+
+              {trackingError && (
+                <div className="bg-rose-950/60 border border-rose-800 text-rose-300 p-3.5 rounded-2xl text-xs flex items-center gap-2 animate-in fade-in">
+                  <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+                  <span>{trackingError}</span>
+                </div>
+              )}
+
+              {/* TRACKED TICKET INSPECTOR CARD */}
+              {trackedJob && (
+                <div className="bg-slate-950 border border-slate-800 rounded-3xl p-6 shadow-2xl space-y-6 animate-in fade-in">
+
+                  {/* Status & Code Bar */}
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-800 gap-3">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono text-sm text-amber-400 font-extrabold">{trackedJob.ticket_id}</span>
+                        <span className={`text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full border ${trackedJob.status === 'COMPLETED' ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40' :
+                          trackedJob.status === 'IN_PROGRESS' ? 'bg-amber-500/20 text-amber-400 border-amber-500/40' :
+                            'bg-blue-500/20 text-blue-400 border-blue-500/40'
+                          }`}>
+                          {trackedJob.status}
+                        </span>
+                      </div>
+                      <h3 className="text-lg font-black text-white mt-1">
+                        {trackedJob.device_brand} {trackedJob.device_model}
+                      </h3>
+                      <div className="text-xs text-slate-400">
+                        Customer: <strong className="text-white">{trackedJob.customer_name}</strong> &bull; {trackedJob.customer_phone}
+                      </div>
+                    </div>
+
+                    {/* 2% Commission Status Pill */}
+                    <div className="text-right">
+                      <div className="text-[10px] font-bold text-slate-400 uppercase">Your 2% Referral Cut</div>
+                      <div className="text-xl font-black text-emerald-400 mt-0.5">
+                        {trackedJob.seller_commission_amount > 0 ? `₹${trackedJob.seller_commission_amount}` : 'Calculated upon completion'}
+                      </div>
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border inline-block mt-1 ${trackedJob.commission_status === 'PAID' ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' :
+                        trackedJob.commission_status === 'PENDING' ? 'bg-amber-500/20 text-amber-300 border-amber-500/30' :
+                          'bg-slate-800 text-slate-400 border-slate-700'
+                        }`}>
+                        {trackedJob.commission_status}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* 4-Step Repair Lifecycle Progress */}
+                  <div className="space-y-2">
+                    <div className="text-xs font-bold text-slate-400">Repair Stage:</div>
+                    <div className="grid grid-cols-4 gap-2 text-center text-[10px] font-bold">
+                      <div className={`p-2 rounded-xl border ${['PENDING_APPROVAL', 'ACCEPTED', 'IN_PROGRESS', 'COMPLETED'].includes(trackedJob.status)
+                        ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40'
+                        : 'bg-slate-900 text-slate-500 border-slate-800'
+                        }`}>
+                        1. Referral Received
+                      </div>
+                      <div className={`p-2 rounded-xl border ${['ACCEPTED', 'IN_PROGRESS', 'COMPLETED'].includes(trackedJob.status)
+                        ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40'
+                        : 'bg-slate-900 text-slate-500 border-slate-800'
+                        }`}>
+                        2. Accepted &amp; Queue
+                      </div>
+                      <div className={`p-2 rounded-xl border ${['IN_PROGRESS', 'COMPLETED'].includes(trackedJob.status)
+                        ? 'bg-amber-500/20 text-amber-400 border-amber-500/40'
+                        : 'bg-slate-900 text-slate-500 border-slate-800'
+                        }`}>
+                        3. In Repair
+                      </div>
+                      <div className={`p-2 rounded-xl border ${trackedJob.status === 'COMPLETED'
+                        ? 'bg-emerald-500 text-slate-950 font-black border-emerald-400'
+                        : 'bg-slate-900 text-slate-500 border-slate-800'
+                        }`}>
+                        4. Fixed &amp; Ready
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Diagnostic details & Workshop Info */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                    <div className="bg-slate-900 p-4 rounded-2xl border border-slate-800 space-y-1">
+                      <div className="text-slate-400 font-semibold">Reported Issue / Problem</div>
+                      <div className="text-white font-bold">{trackedJob.problem_description}</div>
+                      {trackedJob.notes && (
+                        <div className="text-slate-400 pt-1 text-[11px]">
+                          <strong>Technician Notes:</strong> {trackedJob.notes}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="bg-slate-900 p-4 rounded-2xl border border-slate-800 space-y-1">
+                      <div className="text-slate-400 font-semibold">Assigned Repair Center (Admin)</div>
+                      <div className="text-white font-bold">{trackedJob.shop_name || 'Partner Repair Hub'}</div>
+                      <div className="text-slate-400 text-[11px]">
+                        Final Repair Amount: <strong className="text-white">{trackedJob.final_amount > 0 ? `₹${trackedJob.final_amount}` : `Est. ₹${trackedJob.estimated_cost}`}</strong>
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+              )}
+            </div>
+
+            {/* SELLER REFERRED JOBS TABLE */}
+            <div className="bg-slate-900/90 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl">
+              <div className="px-6 py-4 border-b border-slate-800 flex items-center justify-between">
+                <div>
+                  <h3 className="text-sm font-extrabold text-white">My Walk-in Referral Queue</h3>
+                  <p className="text-[11px] text-slate-400 mt-0.5">Click &quot;Inspect Ticket&quot; on any referral to load instant customer tracking info above.</p>
+                </div>
+                <span className="text-xs text-slate-400">{jobs.length} total referrals</span>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-slate-950 text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-800">
+                    <tr>
+                      <th className="py-3 px-4">Ticket</th>
+                      <th className="py-3 px-4">Customer</th>
+                      <th className="py-3 px-4">Device &amp; Issue</th>
+                      <th className="py-3 px-4">Repair Status</th>
+                      <th className="py-3 px-4">Final Bill</th>
+                      <th className="py-3 px-4 font-bold text-emerald-400">My 2% Commission</th>
+                      <th className="py-3 px-4 text-right">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-800 font-medium">
+                    {jobs.map((job) => (
+                      <tr key={job.id} className="hover:bg-slate-800/40 transition">
+                        <td className="py-3 px-4 font-mono font-bold text-amber-400">{job.ticket_id}</td>
+                        <td className="py-3 px-4 font-bold text-white">{job.customer_name}</td>
+                        <td className="py-3 px-4">
+                          <div className="text-white font-semibold">{job.device_brand} {job.device_model}</div>
+                          <div className="text-[11px] text-slate-400">{job.problem_description}</div>
+                        </td>
+                        <td className="py-3 px-4">
+                          <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase ${job.status === 'COMPLETED' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' :
+                            job.status === 'IN_PROGRESS' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' :
+                              'bg-slate-800 text-slate-300'
+                            }`}>
+                            {job.status}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 font-bold text-white">
+                          {job.final_amount > 0 ? `₹${job.final_amount.toLocaleString('en-IN')}` : 'In Diagnosis'}
+                        </td>
+                        <td className="py-3 px-4">
+                          {job.seller_commission_amount > 0 ? (
+                            <span className="text-emerald-400 font-black text-sm">
+                              ₹{job.seller_commission_amount} ({job.commission_status})
+                            </span>
+                          ) : (
+                            <span className="text-slate-500">&mdash; (Earns 2% when done)</span>
+                          )}
+                        </td>
+                        <td className="py-3 px-4 text-right">
+                          <button
+                            type="button"
+                            onClick={() => handleTrackTicket(job.ticket_id)}
+                            className="px-2.5 py-1 bg-blue-600/20 hover:bg-blue-600 text-blue-300 hover:text-white rounded-lg text-[11px] font-bold border border-blue-500/30 transition shadow"
+                          >
+                            Inspect
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {jobs.length === 0 && (
+                <div className="p-12 text-center text-slate-500 space-y-2">
+                  <Store className="w-8 h-8 mx-auto text-slate-600" />
+                  <div className="font-bold text-white text-sm">No referrals created yet</div>
+                  <p className="text-xs text-slate-400">Click &quot;+ Refer Customer&quot; to send your first walk-in repair referral.</p>
+                </div>
+              )}
+            </div>
+
+          </div>
+        )}
+
+        {/* ============================================================ */}
+        {/* ROLE 2: ADMIN WORKBENCH (REPAIR SHOP OWNER)                 */}
+        {/* ============================================================ */}
+        {role === 'ADMIN' && (
+          <div className="space-y-8">
+
+            {/* KPI Cards for Admin */}
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+              <div className="bg-slate-900 border border-slate-800 p-5 rounded-3xl shadow-xl">
+                <div className="text-slate-400 text-xs font-semibold flex items-center justify-between">
+                  <span>Referred Jobs</span>
+                  <Store className="w-4 h-4 text-blue-400" />
+                </div>
+                <div className="text-3xl font-black text-white mt-2">{jobs.length}</div>
+                <div className="text-[11px] text-slate-500 mt-1">From partner sellers</div>
+              </div>
+
+              <div className="bg-slate-900 border border-slate-800 p-5 rounded-3xl shadow-xl">
+                <div className="text-slate-400 text-xs font-semibold flex items-center justify-between">
+                  <span>Active Repairs</span>
+                  <Wrench className="w-4 h-4 text-amber-400" />
+                </div>
+                <div className="text-3xl font-black text-amber-400 mt-2">
+                  {jobs.filter(j => ['ACCEPTED', 'IN_PROGRESS'].includes(j.status)).length}
+                </div>
+                <div className="text-[11px] text-amber-400/80 mt-1">Under diagnostics &amp; repair</div>
+              </div>
+
+              <div className="bg-slate-900 border border-slate-800 p-5 rounded-3xl shadow-xl">
+                <div className="text-slate-400 text-xs font-semibold flex items-center justify-between">
+                  <span>Pending 2% Owed</span>
+                  <Clock className="w-4 h-4 text-rose-400" />
+                </div>
+                <div className="text-3xl font-black text-rose-400 mt-2">
+                  ₹{(commissions.summary?.pendingCommission || 0).toLocaleString('en-IN')}
+                </div>
+                <div className="text-[11px] text-rose-400/80 mt-1">Ready for UPI settlement</div>
+              </div>
+
+              <div className="bg-slate-900 border border-slate-800 p-5 rounded-3xl shadow-xl">
+                <div className="text-slate-400 text-xs font-semibold flex items-center justify-between">
+                  <span>Paid Commissions</span>
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                </div>
+                <div className="text-3xl font-black text-emerald-400 mt-2">
+                  ₹{(commissions.summary?.paidCommission || 0).toLocaleString('en-IN')}
+                </div>
+                <div className="text-[11px] text-emerald-400/80 mt-1">Settled to partners</div>
+              </div>
+            </div>
+
+            {/* Affiliated Partner Sellers */}
+            <div className="bg-slate-900/90 border border-slate-800 rounded-3xl p-6 shadow-xl space-y-4">
               <div className="flex items-center justify-between pb-3 border-b border-slate-800">
                 <div>
                   <div className="flex items-center gap-2">
                     <Store className="w-4 h-4 text-emerald-400" />
-                    <h2 className="text-sm font-extrabold text-white">My Registered Accessory Sellers (2% Partners)</h2>
+                    <h2 className="text-sm font-extrabold text-white">Registered Accessory Sellers (2% Referral Partners)</h2>
                   </div>
                   <p className="text-[11px] text-slate-400 mt-0.5">
-                    Sellers only sell mobile accessories. Only you (Admin) can onboard them to send repair referrals to your shop.
+                    Sellers only sell mobile accessories. You onboard them to refer repair walk-ins to your shop.
                   </p>
                 </div>
                 <button
+                  type="button"
                   onClick={() => setIsOnboardOpen(true)}
-                  className="text-xs font-bold text-emerald-400 hover:text-emerald-300 transition"
+                  className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition flex items-center gap-1"
                 >
-                  + Add Seller
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Onboard Seller</span>
                 </button>
               </div>
 
@@ -327,19 +761,19 @@ function DashboardContent() {
                 <div className="py-6 text-center text-xs text-slate-400 space-y-1">
                   <div className="font-semibold text-slate-300">No partner sellers registered yet</div>
                   <p className="text-[11px] text-slate-500">
-                    Click &quot;+ Onboard Seller Partner&quot; to create seller accounts for local mobile accessory shops.
+                    Click &quot;Onboard Seller&quot; to create seller credentials for neighborhood accessory shops.
                   </p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-3">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   {sellers.map((s) => (
-                    <div key={s.id} className="bg-slate-950 border border-slate-800 p-3.5 rounded-xl space-y-1.5">
+                    <div key={s.id} className="bg-slate-950 border border-slate-800 p-3.5 rounded-2xl space-y-1.5">
                       <div className="flex items-start justify-between">
                         <div>
                           <div className="font-bold text-white text-xs">{s.name}</div>
                           <div className="text-[11px] text-emerald-400 font-semibold">{s.shop_name || 'Accessory Partner'}</div>
                         </div>
-                        <span className="px-2 py-0.2 bg-emerald-500/20 text-emerald-300 text-[10px] font-bold rounded-full">
+                        <span className="px-2 py-0.5 bg-emerald-500/20 text-emerald-300 text-[10px] font-bold rounded-full">
                           Active
                         </span>
                       </div>
@@ -350,13 +784,14 @@ function DashboardContent() {
               )}
             </div>
 
-            {/* Repair Referrals Table */}
-            <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+            {/* Repair Job Queue Table */}
+            <div className="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl">
               <div className="px-6 py-4 border-b border-slate-800 flex items-center justify-between">
                 <div>
-                  <h2 className="text-sm font-bold text-white">Repair Referrals Workbench</h2>
-                  <p className="text-xs text-slate-400">Click &quot;Complete &amp; Bill (2%)&quot; to finalize ticket and auto-split 2% commission</p>
+                  <h3 className="text-sm font-extrabold text-white">Technician Repair Queue</h3>
+                  <p className="text-[11px] text-slate-400 mt-0.5">Manage work orders, diagnose devices, complete jobs, and settle commissions.</p>
                 </div>
+                <span className="text-xs text-slate-400">{jobs.length} jobs in queue</span>
               </div>
 
               <div className="overflow-x-auto">
@@ -364,39 +799,28 @@ function DashboardContent() {
                   <thead className="bg-slate-950 text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-800">
                     <tr>
                       <th className="py-3 px-4">Ticket</th>
-                      <th className="py-3 px-4">Customer &amp; Phone</th>
-                      <th className="py-3 px-4">Device &amp; Issue</th>
-                      <th className="py-3 px-4">Referring Seller</th>
+                      <th className="py-3 px-4">Referred By</th>
+                      <th className="py-3 px-4">Customer &amp; Device</th>
                       <th className="py-3 px-4">Status</th>
                       <th className="py-3 px-4">Final Bill</th>
-                      <th className="py-3 px-4 font-bold text-emerald-400">Seller 2%</th>
-                      <th className="py-3 px-4 text-right">Action</th>
+                      <th className="py-3 px-4 font-bold text-emerald-400">2% Seller Cut</th>
+                      <th className="py-3 px-4 text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-800 font-medium">
                     {jobs.map((job) => (
                       <tr key={job.id} className="hover:bg-slate-800/40 transition">
                         <td className="py-3 px-4 font-mono font-bold text-amber-400">{job.ticket_id}</td>
+                        <td className="py-3 px-4 font-semibold text-white">{job.seller_name || 'Direct Walk-in'}</td>
                         <td className="py-3 px-4">
-                          <div className="font-bold text-white">{job.customer_name}</div>
-                          <div className="text-[11px] text-slate-400">{job.customer_phone}</div>
+                          <div className="text-white font-bold">{job.customer_name} ({job.customer_phone})</div>
+                          <div className="text-[11px] text-slate-400">{job.device_brand} {job.device_model} &bull; {job.problem_description}</div>
                         </td>
                         <td className="py-3 px-4">
-                          <div className="text-white font-semibold">{job.device_brand} {job.device_model}</div>
-                          <div className="text-[11px] text-slate-400 max-w-xs truncate">{job.problem_description}</div>
-                        </td>
-                        <td className="py-3 px-4">
-                          <span className="bg-emerald-950/60 border border-emerald-800/50 text-emerald-300 px-2 py-0.5 rounded text-[11px]">
-                            {job.seller_name || 'Seller Partner'}
-                          </span>
-                        </td>
-                        <td className="py-3 px-4">
-                          <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase ${
-                            job.status === 'COMPLETED' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40' :
-                            job.status === 'IN_PROGRESS' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/40' :
-                            job.status === 'ACCEPTED' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/40' :
-                            'bg-slate-800 text-slate-300'
-                          }`}>
+                          <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase ${job.status === 'COMPLETED' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' :
+                            job.status === 'IN_PROGRESS' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' :
+                              'bg-blue-500/20 text-blue-400 border border-blue-500/30'
+                            }`}>
                             {job.status}
                           </span>
                         </td>
@@ -405,16 +829,9 @@ function DashboardContent() {
                         </td>
                         <td className="py-3 px-4">
                           {job.seller_commission_amount > 0 ? (
-                            <div>
-                              <span className="font-black text-emerald-400">
-                                ₹{job.seller_commission_amount}
-                              </span>
-                              <span className={`ml-1 text-[9px] px-1 py-0.2 rounded font-bold uppercase ${
-                                job.commission_status === 'PAID' ? 'bg-emerald-900 text-emerald-200' : 'bg-rose-900 text-rose-200'
-                              }`}>
-                                {job.commission_status}
-                              </span>
-                            </div>
+                            <span className="text-emerald-400 font-black">
+                              ₹{job.seller_commission_amount} ({job.commission_status})
+                            </span>
                           ) : (
                             <span className="text-slate-500">&mdash;</span>
                           )}
@@ -422,30 +839,34 @@ function DashboardContent() {
                         <td className="py-3 px-4 text-right space-x-1.5 whitespace-nowrap">
                           {job.status === 'PENDING_APPROVAL' && (
                             <button
+                              type="button"
                               onClick={() => handleStatusChange(job.id, 'ACCEPTED')}
-                              className="px-2.5 py-1 bg-blue-600 hover:bg-blue-500 text-white rounded text-[11px] font-bold shadow"
+                              className="px-2.5 py-1 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-[11px] font-bold shadow"
                             >
                               Accept
                             </button>
                           )}
                           {job.status === 'ACCEPTED' && (
                             <button
+                              type="button"
                               onClick={() => handleStatusChange(job.id, 'IN_PROGRESS')}
-                              className="px-2.5 py-1 bg-amber-600 hover:bg-amber-500 text-white rounded text-[11px] font-bold shadow"
+                              className="px-2.5 py-1 bg-amber-600 hover:bg-amber-500 text-white rounded-lg text-[11px] font-bold shadow"
                             >
                               Start Repair
                             </button>
                           )}
                           {job.status === 'IN_PROGRESS' && (
                             <button
+                              type="button"
                               onClick={() => setCompletingJob(job)}
-                              className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded text-[11px] font-bold shadow"
+                              className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-[11px] font-bold shadow"
                             >
                               Complete &amp; Bill (2%)
                             </button>
                           )}
                           {job.status === 'COMPLETED' && job.commission_status === 'PENDING' && (
                             <button
+                              type="button"
                               onClick={() => {
                                 const matchingComm = commissions.data.find(c => c.repair_job_id === job.id) || {
                                   id: job.id, ticket_id: job.ticket_id, commission_amount: job.seller_commission_amount,
@@ -453,7 +874,7 @@ function DashboardContent() {
                                 };
                                 setPayingCommission(matchingComm);
                               }}
-                              className="px-2.5 py-1 bg-rose-600 hover:bg-rose-500 text-white rounded text-[11px] font-bold shadow"
+                              className="px-2.5 py-1 bg-rose-600 hover:bg-rose-500 text-white rounded-lg text-[11px] font-bold shadow"
                             >
                               Pay ₹{job.seller_commission_amount} (2%)
                             </button>
@@ -467,174 +888,43 @@ function DashboardContent() {
                   </tbody>
                 </table>
               </div>
-
-              {jobs.length === 0 && (
-                <div className="p-12 text-center text-slate-500 space-y-2">
-                  <Wrench className="w-8 h-8 mx-auto text-slate-600" />
-                  <div className="font-bold text-white text-sm">No repair referrals yet</div>
-                  <p className="text-xs text-slate-400">Referrals submitted by partner accessory stores will appear here.</p>
-                </div>
-              )}
             </div>
+
           </div>
         )}
 
         {/* ============================================================ */}
-        {/* ROLE 2: SELLER (ACCESSORIES & 2% REFERRAL EARNER) VIEW       */}
-        {/* ============================================================ */}
-        {role === 'SELLER' && (
-          <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-4 border-b border-slate-800 gap-3">
-              <div>
-                <div className="flex items-center space-x-2">
-                  <h1 className="text-xl font-black text-white">Seller Referrals &amp; 2% Earnings Hub</h1>
-                  <span className="text-xs bg-emerald-500/20 text-emerald-400 px-2.5 py-0.5 rounded-full font-bold border border-emerald-500/30">
-                    {user.shopName || user.name || 'Accessory Partner'}
-                  </span>
-                </div>
-                <p className="text-xs text-slate-400 mt-0.5">
-                  Refer walk-in mobile repair customers to your partner repair shop. Earn strictly 2% on completed repair bills!
-                </p>
-              </div>
-
-              <button
-                onClick={() => setIsReferralOpen(true)}
-                className="px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold rounded-xl text-xs shadow-lg shadow-emerald-600/30 flex items-center space-x-1.5"
-              >
-                <Plus className="w-4 h-4" />
-                <span>Refer New Customer</span>
-              </button>
-            </div>
-
-            {/* Seller Earnings Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="bg-slate-900 border border-slate-800 p-4 rounded-2xl">
-                <div className="text-slate-400 text-xs font-medium">My Referred Customers</div>
-                <div className="text-2xl font-black text-white mt-1">
-                  {jobs.length}
-                </div>
-                <div className="text-[11px] text-slate-500 mt-1">Assigned to repair shop</div>
-              </div>
-              <div className="bg-slate-900 border border-slate-800 p-4 rounded-2xl">
-                <div className="text-slate-400 text-xs font-medium">Pending 2% Commissions</div>
-                <div className="text-2xl font-black text-amber-400 mt-1">
-                  ₹{commissions.summary?.pendingCommission || 0}
-                </div>
-                <div className="text-[11px] text-amber-400/80 mt-1">Awaiting shop payout</div>
-              </div>
-              <div className="bg-slate-900 border border-slate-800 p-4 rounded-2xl">
-                <div className="text-slate-400 text-xs font-medium">Total 2% Paid &amp; Received</div>
-                <div className="text-2xl font-black text-emerald-400 mt-1">
-                  ₹{commissions.summary?.paidCommission || 0}
-                </div>
-                <div className="text-[11px] text-emerald-400/80 mt-1">Directly credited to you</div>
-              </div>
-            </div>
-
-            {/* Referred Repairs Table */}
-            <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
-              <div className="px-6 py-4 border-b border-slate-800">
-                <h2 className="text-sm font-bold text-white">My Referred Repair Requests</h2>
-              </div>
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs">
-                  <thead className="bg-slate-950 text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-800">
-                    <tr>
-                      <th className="py-3 px-4">Ticket</th>
-                      <th className="py-3 px-4">Customer</th>
-                      <th className="py-3 px-4">Device &amp; Issue</th>
-                      <th className="py-3 px-4">Repair Status</th>
-                      <th className="py-3 px-4">Final Bill</th>
-                      <th className="py-3 px-4 font-bold text-emerald-400">My 2% Commission</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-800 font-medium">
-                    {jobs.map((job) => (
-                      <tr key={job.id} className="hover:bg-slate-800/40 transition">
-                        <td className="py-3 px-4 font-mono font-bold text-amber-400">{job.ticket_id}</td>
-                        <td className="py-3 px-4 font-bold text-white">{job.customer_name}</td>
-                        <td className="py-3 px-4">
-                          <div className="text-white font-semibold">{job.device_brand} {job.device_model}</div>
-                          <div className="text-[11px] text-slate-400">{job.problem_description}</div>
-                        </td>
-                        <td className="py-3 px-4">
-                          <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase bg-slate-800 text-slate-300">
-                            {job.status}
-                          </span>
-                        </td>
-                        <td className="py-3 px-4 font-bold text-white">
-                          {job.final_amount > 0 ? `₹${job.final_amount}` : 'Pending repair'}
-                        </td>
-                        <td className="py-3 px-4">
-                          {job.seller_commission_amount > 0 ? (
-                            <span className="text-emerald-400 font-black text-sm">
-                              ₹{job.seller_commission_amount} ({job.commission_status})
-                            </span>
-                          ) : (
-                            <span className="text-slate-500">&mdash; (Earns 2% when done)</span>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              {jobs.length === 0 && (
-                <div className="p-12 text-center text-slate-500 space-y-2">
-                  <Store className="w-8 h-8 mx-auto text-slate-600" />
-                  <div className="font-bold text-white text-sm">No referrals created yet</div>
-                  <p className="text-xs text-slate-400">Click &quot;+ Refer New Customer&quot; above to submit your first walk-in repair referral.</p>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* ============================================================ */}
-        {/* ROLE 3: SUPER ADMIN VIEW                                    */}
+        {/* ROLE 3: SUPER ADMIN COMMAND CENTER                          */}
         {/* ============================================================ */}
         {role === 'SUPER_ADMIN' && (
-          <div className="space-y-6">
-            <div className="pb-4 border-b border-slate-800">
-              <div className="flex items-center space-x-2">
-                <h1 className="text-xl font-black text-white">Super Admin Command Center</h1>
-                <span className="text-xs bg-purple-500/20 text-purple-400 px-2.5 py-0.5 rounded-full font-bold border border-purple-500/30">
-                  Platform Oversight
-                </span>
-              </div>
-              <p className="text-xs text-slate-400 mt-0.5">
-                Monitor repair shops, verify sellers, and audit the global 2% referral commission flow.
-              </p>
-            </div>
-
+          <div className="space-y-8">
             <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-              <div className="bg-slate-900 border border-slate-800 p-4 rounded-2xl">
+              <div className="bg-slate-900 border border-slate-800 p-5 rounded-3xl shadow-xl">
                 <div className="text-slate-400 text-xs font-medium">Registered Shops</div>
-                <div className="text-2xl font-black text-white mt-1">{platformStats.totalShops || 0}</div>
+                <div className="text-3xl font-black text-white mt-1">{platformStats.totalShops || 0}</div>
               </div>
-              <div className="bg-slate-900 border border-slate-800 p-4 rounded-2xl">
+              <div className="bg-slate-900 border border-slate-800 p-5 rounded-3xl shadow-xl">
                 <div className="text-slate-400 text-xs font-medium">Associated Sellers</div>
-                <div className="text-2xl font-black text-purple-400 mt-1">{platformStats.totalSellers || 0}</div>
+                <div className="text-3xl font-black text-purple-400 mt-1">{platformStats.totalSellers || 0}</div>
               </div>
-              <div className="bg-slate-900 border border-slate-800 p-4 rounded-2xl">
+              <div className="bg-slate-900 border border-slate-800 p-5 rounded-3xl shadow-xl">
                 <div className="text-slate-400 text-xs font-medium">Gross Repair Volume</div>
-                <div className="text-2xl font-black text-emerald-400 mt-1">
+                <div className="text-3xl font-black text-emerald-400 mt-1">
                   ₹{platformStats.totalRepairVolume?.toLocaleString('en-IN') || 0}
                 </div>
               </div>
-              <div className="bg-slate-900 border border-slate-800 p-4 rounded-2xl">
+              <div className="bg-slate-900 border border-slate-800 p-5 rounded-3xl shadow-xl">
                 <div className="text-slate-400 text-xs font-medium">Total 2% Referral Paid</div>
-                <div className="text-2xl font-black text-amber-400 mt-1">
+                <div className="text-3xl font-black text-amber-400 mt-1">
                   ₹{platformStats.totalCommissionPaid?.toLocaleString('en-IN') || 0}
                 </div>
               </div>
             </div>
 
-            {/* Global 2% Commission Ledger */}
-            <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+            {/* Global Audit Ledger */}
+            <div className="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl">
               <div className="px-6 py-4 border-b border-slate-800">
-                <h2 className="text-sm font-bold text-white">Global 2% Referral Commission Audit Trail</h2>
+                <h3 className="text-sm font-extrabold text-white">Global 2% Referral Commission Audit Trail</h3>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs">
@@ -656,9 +946,8 @@ function DashboardContent() {
                         <td className="py-3 px-4 font-bold text-white">₹{c.final_repair_amount}</td>
                         <td className="py-3 px-4 font-black text-emerald-400">₹{c.commission_amount}</td>
                         <td className="py-3 px-4">
-                          <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase ${
-                            c.status === 'PAID' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'
-                          }`}>
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase ${c.status === 'PAID' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'
+                            }`}>
                             {c.status}
                           </span>
                         </td>
@@ -671,84 +960,6 @@ function DashboardContent() {
                 </table>
               </div>
             </div>
-          </div>
-        )}
-
-        {/* ============================================================ */}
-        {/* ROLE 4: CUSTOMER / PUBLIC TRACKING VIEW                     */}
-        {/* ============================================================ */}
-        {role === 'CUSTOMER' && (
-          <div className="space-y-6 max-w-3xl mx-auto">
-            <div className="text-center pb-2">
-              <h1 className="text-2xl font-black text-white">Track Your Mobile Repair</h1>
-              <p className="text-xs text-slate-400 mt-1">
-                Enter your Ticket ID to check diagnosis, repair progress, and bill.
-              </p>
-            </div>
-
-            <form onSubmit={handleTrackTicket} className="bg-slate-900 p-4 rounded-2xl border border-slate-800 shadow-xl flex gap-3">
-              <input
-                type="text"
-                value={ticketInput}
-                onChange={(e) => setTicketInput(e.target.value)}
-                placeholder="Enter Ticket ID (e.g. REP-1048)"
-                className="flex-1 px-4 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-sm font-bold text-white uppercase focus:outline-none focus:border-blue-500 font-mono"
-              />
-              <button
-                type="submit"
-                disabled={trackingLoading}
-                className="px-6 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl text-xs shadow-lg transition flex items-center gap-1.5"
-              >
-                <Search className="w-4 h-4" />
-                <span>{trackingLoading ? 'Searching...' : 'Track Ticket'}</span>
-              </button>
-            </form>
-
-            {trackingError && (
-              <div className="bg-rose-950/60 border border-rose-800 text-rose-300 p-4 rounded-2xl text-xs">
-                {trackingError}
-              </div>
-            )}
-
-            {trackedJob && (
-              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl space-y-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-800 gap-2">
-                  <div>
-                    <span className="font-mono text-xs text-amber-400 font-bold">{trackedJob.ticket_id}</span>
-                    <h2 className="text-lg font-bold text-white mt-0.5">{trackedJob.device_brand} {trackedJob.device_model}</h2>
-                    <div className="text-xs text-slate-400">Customer: {trackedJob.customer_name}</div>
-                  </div>
-                  <div>
-                    <span className="px-3 py-1 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-full text-xs font-black uppercase">
-                      {trackedJob.status}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-                  <div className="bg-slate-950 p-3 rounded-xl border border-slate-800">
-                    <div className="text-slate-400 font-medium">Issue Diagnosed</div>
-                    <div className="text-white font-semibold mt-1">{trackedJob.problem_description}</div>
-                  </div>
-                  <div className="bg-slate-950 p-3 rounded-xl border border-slate-800">
-                    <div className="text-slate-400 font-medium">Assigned Repair Shop</div>
-                    <div className="text-white font-semibold mt-1">Partner Repair Shop</div>
-                  </div>
-                </div>
-
-                <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 flex items-center justify-between">
-                  <div>
-                    <div className="text-xs text-slate-400 font-medium">Total Bill Amount</div>
-                    <div className="text-xl font-black text-white mt-0.5">
-                      {trackedJob.final_amount > 0 ? `₹${trackedJob.final_amount.toLocaleString('en-IN')}` : `Est. ₹${trackedJob.estimated_cost}`}
-                    </div>
-                  </div>
-                  <div className="text-right text-xs text-slate-400">
-                    Referred via: <strong className="text-slate-200">{trackedJob.seller_name || 'Partner Accessory Store'}</strong>
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
         )}
 

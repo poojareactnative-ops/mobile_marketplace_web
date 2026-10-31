@@ -4,35 +4,15 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import Navbar from '../components/Navbar';
 import CommissionCalculator from '../components/CommissionCalculator';
+import NearbyMarketplace from '../components/NearbyMarketplace';
 import { supabaseService } from '../services/supabaseService';
 import { 
   Wrench, Store, ShieldCheck, User, ArrowRight, CheckCircle2, 
   Smartphone, Search, Shield, ChevronRight, Sparkles, Percent, 
-  Layers, Check, Clock, TrendingUp
+  Layers, Check, Clock, TrendingUp, Compass, MapPin
 } from 'lucide-react';
 
 export default function LandingPage() {
-  const [ticketInput, setTicketInput] = useState('');
-  const [trackingResult, setTrackingResult] = useState(null);
-  const [trackingError, setTrackingError] = useState('');
-  const [trackingLoading, setTrackingLoading] = useState(false);
-
-  const handleTrack = async (e) => {
-    e.preventDefault();
-    if (!ticketInput.trim()) return;
-    try {
-      setTrackingLoading(true);
-      setTrackingError('');
-      const res = await supabaseService.trackRepair(ticketInput.trim());
-      setTrackingResult(res);
-    } catch (err) {
-      setTrackingResult(null);
-      setTrackingError(err.message || 'No repair ticket found with this ID');
-    } finally {
-      setTrackingLoading(false);
-    }
-  };
-
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-amber-500 selection:text-slate-950">
       
@@ -70,29 +50,29 @@ export default function LandingPage() {
 
           {/* Action CTAs */}
           <div className="flex flex-wrap items-center justify-center gap-4 pt-2">
-            <Link
-              href="/dashboard"
-              className="px-7 py-4 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-400 hover:to-orange-500 text-slate-950 font-black rounded-2xl text-sm shadow-xl shadow-amber-500/25 transition flex items-center space-x-2.5 transform hover:-translate-y-0.5"
+            <a
+              href="#nearby"
+              className="px-7 py-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black rounded-2xl text-sm shadow-xl shadow-emerald-600/25 transition flex items-center space-x-2 transform hover:-translate-y-0.5"
             >
-              <span>Launch Dashboard</span>
-              <ArrowRight className="w-4 h-4" />
-            </Link>
+              <Compass className="w-4 h-4 text-emerald-300" />
+              <span>Explore Nearby Deals (1–2 km) &darr;</span>
+            </a>
 
             <Link
               href="/marketplace"
               className="px-7 py-4 bg-slate-900/90 hover:bg-slate-800 border border-slate-700 text-emerald-400 font-bold rounded-2xl text-sm transition flex items-center space-x-2 shadow-lg backdrop-blur-md transform hover:-translate-y-0.5"
             >
               <Store className="w-4 h-4 text-emerald-400" />
-              <span>Browse Products &amp; Deals</span>
+              <span>Browse Catalog</span>
             </Link>
 
-            <a
-              href="#tracker"
-              className="px-6 py-4 bg-slate-950/80 hover:bg-slate-900 border border-slate-800 text-slate-300 font-semibold text-sm rounded-2xl transition flex items-center space-x-2"
+            <Link
+              href="/dashboard"
+              className="px-6 py-4 bg-slate-950/80 hover:bg-slate-900 border border-slate-800 text-amber-400 font-semibold text-sm rounded-2xl transition flex items-center space-x-2"
             >
-              <Search className="w-4 h-4 text-blue-400" />
-              <span>Track Ticket &darr;</span>
-            </a>
+              <Wrench className="w-4 h-4 text-amber-400" />
+              <span>Partner Workbench &rarr;</span>
+            </Link>
           </div>
 
           {/* Interactive Live Calculator embedded directly in Hero */}
@@ -101,6 +81,9 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+
+      {/* 2.5 HYPERLOCAL NEARBY MARKETPLACE (1–2 KM RADIUS) */}
+      <NearbyMarketplace />
 
       {/* 3. FOUR ECOSYSTEM ROLE PORTALS */}
       <section id="roles" className="py-20 px-4 sm:px-6 lg:px-8 border-b border-slate-800/80 bg-slate-950">
@@ -375,88 +358,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* 5. PUBLIC REPAIR TRACKER ON LANDING PAGE */}
-      <section id="tracker" className="py-20 px-4 sm:px-6 lg:px-8 border-b border-slate-800/80 bg-slate-950">
-        <div className="max-w-3xl mx-auto space-y-6">
-          
-          <div className="text-center space-y-2">
-            <span className="text-xs font-black uppercase tracking-wider text-blue-400">Live Customer Tracker</span>
-            <h2 className="text-3xl font-black text-white">Inspect Your Mobile Repair Ticket</h2>
-            <p className="text-xs text-slate-400">
-              Enter your repair ticket ID to look up real-time status, diagnostics, and itemized billing.
-            </p>
-          </div>
-
-          <form onSubmit={handleTrack} className="bg-slate-900 border border-slate-800 p-3 sm:p-4 rounded-3xl flex gap-3 shadow-2xl">
-            <input
-              type="text"
-              value={ticketInput}
-              onChange={(e) => setTicketInput(e.target.value)}
-              placeholder="Enter Ticket ID (e.g. REP-1001)"
-              className="flex-1 px-4 py-3 bg-slate-950 border border-slate-700/80 rounded-2xl text-sm font-bold text-white uppercase focus:outline-none focus:border-blue-500 font-mono"
-            />
-            <button
-              type="submit"
-              disabled={trackingLoading}
-              className="px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-2xl text-xs shadow-lg transition flex items-center gap-1.5 shrink-0"
-            >
-              <Search className="w-4 h-4" />
-              <span>{trackingLoading ? 'Searching...' : 'Track Ticket'}</span>
-            </button>
-          </form>
-
-          {trackingError && (
-            <div className="bg-rose-950/60 border border-rose-800 text-rose-300 p-4 rounded-2xl text-xs">
-              {trackingError}
-            </div>
-          )}
-
-          {trackingResult && (
-            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl space-y-4 animate-in fade-in">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-                <div>
-                  <span className="font-mono text-amber-400 font-bold text-xs">{trackingResult.ticket_id}</span>
-                  <h3 className="text-lg font-black text-white mt-0.5">{trackingResult.device_brand} {trackingResult.device_model}</h3>
-                  <div className="text-xs text-slate-400">Customer: {trackingResult.customer_name}</div>
-                </div>
-                <span className={`px-3 py-1 rounded-full text-xs font-black uppercase ${
-                  trackingResult.status === 'COMPLETED' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' :
-                  trackingResult.status === 'IN_PROGRESS' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' :
-                  'bg-amber-500/20 text-amber-400 border border-amber-500/30'
-                }`}>
-                  {trackingResult.status}
-                </span>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-                <div className="bg-slate-950 p-3.5 rounded-2xl border border-slate-800">
-                  <div className="text-slate-400 font-medium">Diagnosed Issue</div>
-                  <div className="text-white font-semibold mt-1">{trackingResult.problem_description}</div>
-                </div>
-                <div className="bg-slate-950 p-3.5 rounded-2xl border border-slate-800">
-                  <div className="text-slate-400 font-medium">Assigned Repair Shop</div>
-                  <div className="text-white font-semibold mt-1">{trackingResult.shop_name || 'Partner Repair Hub'}</div>
-                </div>
-              </div>
-
-              <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 flex justify-between items-center">
-                <div>
-                  <div className="text-xs text-slate-400">Final Bill Amount</div>
-                  <div className="text-xl font-black text-white mt-0.5">
-                    {trackingResult.final_amount > 0 ? `₹${trackingResult.final_amount.toLocaleString('en-IN')}` : `Est. ₹${trackingResult.estimated_cost}`}
-                  </div>
-                </div>
-                <div className="text-right text-xs text-slate-400">
-                  Referred by: <strong className="text-white">{trackingResult.seller_name || 'Direct Walk-in'}</strong>
-                </div>
-              </div>
-            </div>
-          )}
-
-        </div>
-      </section>
-
-      {/* 6. FOOTER */}
+      {/* 5. FOOTER */}
       <footer className="border-t border-slate-800/80 bg-slate-950 py-10 text-xs text-slate-400">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center space-x-3">
