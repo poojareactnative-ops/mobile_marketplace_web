@@ -7,12 +7,13 @@ import SellerReferralModal from '../../components/SellerReferralModal';
 import RoleGuard from '../../components/RoleGuard';
 import { supabaseService } from '../../services/supabaseService';
 import { useAuth } from '../../context/AuthContext';
-import { Plus, Store, Clock, CheckCircle2, TrendingUp, Banknote, Smartphone, Wrench, Search, AlertCircle } from 'lucide-react';
+import { Plus, Store, Clock, CheckCircle2, TrendingUp, Banknote, Smartphone, Wrench, Search, AlertCircle, MessageSquare, Phone } from 'lucide-react';
 
 export default function SellerPage() {
   const { user } = useAuth();
   const [jobs, setJobs] = useState([]);
   const [commissions, setCommissions] = useState({ data: [], summary: {} });
+  const [inquiries, setInquiries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isReferralOpen, setIsReferralOpen] = useState(false);
 
@@ -25,12 +26,14 @@ export default function SellerPage() {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [list, comm] = await Promise.all([
+      const [list, comm, inq] = await Promise.all([
         supabaseService.getRepairJobs({ sellerId: user?.id }),
         supabaseService.getCommissions({ sellerId: user?.id }),
+        supabaseService.getInquiries({ ownerRole: 'SELLER' }),
       ]);
       setJobs(list || []);
       setCommissions(comm || { data: [], summary: {} });
+      setInquiries(inq || []);
     } catch (err) {
       console.error('Failed to load seller repair jobs:', err);
     } finally {
@@ -245,6 +248,79 @@ export default function SellerPage() {
                     </div>
                   </div>
                 </div>
+              </div>
+            )}
+          </div>
+
+          {/* Incoming Customer Inquiries Box */}
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+              <div className="flex items-center space-x-2">
+                <MessageSquare className="w-4 h-4 text-emerald-400" />
+                <h3 className="text-sm font-extrabold text-white">Incoming Customer Inquiries (Products &amp; Offers)</h3>
+              </div>
+              <span className="text-xs text-slate-400">{inquiries.length} inquiries</span>
+            </div>
+
+            {inquiries.length === 0 ? (
+              <p className="text-xs text-slate-500 py-3">
+                No customer queries received yet. When visitors submit inquiries on your products or offers without creating accounts, they will appear here.
+              </p>
+            ) : (
+              <div className="space-y-3">
+                {inquiries.map((inq) => {
+                  const cleanPhone = (inq.customer_phone || '').replace(/[^0-9]/g, '');
+                  const waUrl = `https://wa.me/${cleanPhone.startsWith('91') ? cleanPhone : '91' + cleanPhone}?text=${encodeURIComponent(
+                    `Hello ${inq.customer_name}! Regarding your inquiry for "${inq.item_title}" on SmartFix Hub...`
+                  )}`;
+
+                  return (
+                    <div key={inq.id} className="bg-slate-950 border border-slate-800 rounded-2xl p-4 space-y-2 text-xs">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-white">{inq.customer_name}</span>
+                          <span className="font-mono text-slate-400">({inq.customer_phone})</span>
+                          <span className="px-2 py-0.2 rounded-full text-[10px] font-black bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                            {inq.status}
+                          </span>
+                        </div>
+                        <span className="text-[10px] font-bold text-amber-400 bg-slate-900 px-2 py-0.5 rounded border border-slate-800">
+                          {inq.item_title}
+                        </span>
+                      </div>
+
+                      {inq.message && (
+                        <div className="text-slate-300 bg-slate-900/60 p-2.5 rounded-xl border border-slate-800/60 text-[11px]">
+                          &ldquo;{inq.message}&rdquo;
+                        </div>
+                      )}
+
+                      <div className="flex items-center justify-between pt-1">
+                        <span className="text-[10px] text-slate-500">
+                          {new Date(inq.created_at).toLocaleDateString()}
+                        </span>
+                        <div className="flex items-center gap-2">
+                          <a
+                            href={waUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg text-[11px] transition flex items-center gap-1"
+                          >
+                            <MessageSquare className="w-3 h-3" />
+                            <span>WhatsApp</span>
+                          </a>
+                          <a
+                            href={`tel:${inq.customer_phone}`}
+                            className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold rounded-lg text-[11px] transition flex items-center gap-1"
+                          >
+                            <Phone className="w-3 h-3 text-amber-400" />
+                            <span>Call</span>
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>

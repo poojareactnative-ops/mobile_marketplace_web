@@ -15,7 +15,7 @@ import {
   Wrench, Store, ShieldCheck, User, Plus, Search,
   CheckCircle2, Clock, AlertCircle, ArrowLeft, RefreshCw,
   LogIn, UserPlus, ShieldAlert, Phone, MapPin, Check,
-  Layers, ArrowRight, DollarSign, FileText, ChevronRight, Sparkles, Filter
+  Layers, ArrowRight, DollarSign, FileText, ChevronRight, Sparkles, Filter, MessageSquare
 } from 'lucide-react';
 
 function DashboardContent() {
@@ -28,9 +28,10 @@ function DashboardContent() {
   const [commissions, setCommissions] = useState({ data: [], summary: {} });
   const [platformStats, setPlatformStats] = useState({});
   const [sellers, setSellers] = useState([]);
+  const [inquiries, setInquiries] = useState([]);
 
   // Active Tab inside Workbench (distinct SaaS app layout)
-  const [activeTab, setActiveTab] = useState('MAIN'); // 'MAIN' | 'TRACKER' | 'COMMISSIONS' | 'SELLERS'
+  const [activeTab, setActiveTab] = useState('MAIN'); // 'MAIN' | 'TRACKER' | 'QUERIES' | 'COMMISSIONS' | 'SELLERS'
 
   // Modals state
   const [completingJob, setCompletingJob] = useState(null);
@@ -49,29 +50,39 @@ function DashboardContent() {
     try {
       setLoading(true);
 
+      // Load incoming inquiries for the active shop / role
+      const inqFilter = role === 'ADMIN' ? { ownerRole: 'ADMIN' } : (role === 'SELLER' ? { ownerRole: 'SELLER' } : {});
+      const inqPromise = supabaseService.getInquiries(inqFilter);
+
       if (role === 'SELLER') {
-        const [jobsData, commData] = await Promise.all([
+        const [jobsData, commData, inqData] = await Promise.all([
           supabaseService.getRepairJobs({ sellerId: user?.id }),
           supabaseService.getCommissions({ sellerId: user?.id }),
+          inqPromise,
         ]);
         setJobs(jobsData || []);
         setCommissions(commData || { data: [], summary: {} });
+        setInquiries(inqData || []);
       } else if (role === 'ADMIN') {
-        const [jobsData, commData, sellersData] = await Promise.all([
+        const [jobsData, commData, sellersData, inqData] = await Promise.all([
           supabaseService.getRepairJobs({ adminId: user?.id }),
           supabaseService.getCommissions({ adminId: user?.id }),
           supabaseService.getAffiliatedSellers(user?.id),
+          inqPromise,
         ]);
         setJobs(jobsData || []);
         setCommissions(commData || { data: [], summary: {} });
         setSellers(sellersData || []);
+        setInquiries(inqData || []);
       } else if (role === 'SUPER_ADMIN') {
-        const [commData, overData] = await Promise.all([
+        const [commData, overData, inqData] = await Promise.all([
           supabaseService.getCommissions(),
           supabaseService.getPlatformOverview(),
+          inqPromise,
         ]);
         setCommissions(commData || { data: [], summary: {} });
         setPlatformStats(overData?.stats || {});
+        setInquiries(inqData || []);
       }
     } catch (err) {
       console.warn('Data load notice:', err.message);
@@ -149,6 +160,13 @@ function DashboardContent() {
     } finally {
       setTrackingLoading(false);
     }
+  };
+
+  const handleUpdateInquiryStatus = async (inquiryId, status) => {
+    await supabaseService.updateInquiryStatus(inquiryId, status);
+    setInquiries((prev) =>
+      prev.map((i) => (i.id === inquiryId ? { ...i, status } : i))
+    );
   };
 
   if (authLoading) {
@@ -362,6 +380,23 @@ function DashboardContent() {
 
               <button
                 type="button"
+                onClick={() => setActiveTab('QUERIES')}
+                className={`px-3 py-1.5 rounded-xl font-bold transition flex items-center gap-1.5 ${activeTab === 'QUERIES'
+                  ? 'bg-emerald-600 text-white shadow'
+                  : 'text-slate-400 hover:text-white'
+                  }`}
+              >
+                <MessageSquare className="w-3.5 h-3.5" />
+                <span>Customer Queries</span>
+                {inquiries.filter(i => i.status === 'NEW').length > 0 && (
+                  <span className="px-1.5 py-0.2 bg-amber-400 text-slate-950 rounded-full text-[10px] font-black">
+                    {inquiries.filter(i => i.status === 'NEW').length}
+                  </span>
+                )}
+              </button>
+
+              <button
+                type="button"
                 onClick={() => setActiveTab('TRACKER')}
                 className={`px-3 py-1.5 rounded-xl font-bold transition flex items-center gap-1.5 ${activeTab === 'TRACKER'
                   ? 'bg-blue-600 text-white shadow'
@@ -391,6 +426,23 @@ function DashboardContent() {
 
               <button
                 type="button"
+                onClick={() => setActiveTab('QUERIES')}
+                className={`px-3 py-1.5 rounded-xl font-bold transition flex items-center gap-1.5 ${activeTab === 'QUERIES'
+                  ? 'bg-amber-500 text-slate-950 font-black shadow'
+                  : 'text-slate-400 hover:text-white'
+                  }`}
+              >
+                <MessageSquare className="w-3.5 h-3.5" />
+                <span>Customer Queries</span>
+                {inquiries.filter(i => i.status === 'NEW').length > 0 && (
+                  <span className="px-1.5 py-0.2 bg-rose-500 text-white rounded-full text-[10px] font-black">
+                    {inquiries.filter(i => i.status === 'NEW').length}
+                  </span>
+                )}
+              </button>
+
+              <button
+                type="button"
                 onClick={() => setActiveTab('TRACKER')}
                 className={`px-3 py-1.5 rounded-xl font-bold transition flex items-center gap-1.5 ${activeTab === 'TRACKER'
                   ? 'bg-blue-600 text-white shadow'
@@ -403,6 +455,125 @@ function DashboardContent() {
             </div>
           )}
         </div>
+
+        {/* Customer Queries Inbox View (when QUERIES tab active) */}
+        {activeTab === 'QUERIES' && (
+          <div className="bg-slate-900/90 border border-slate-800 rounded-3xl p-6 shadow-2xl space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-800 gap-2">
+              <div>
+                <div className="flex items-center space-x-2">
+                  <MessageSquare className="w-5 h-5 text-emerald-400" />
+                  <h2 className="text-base font-extrabold text-white">Incoming Customer Inquiries</h2>
+                </div>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Direct inquiries submitted by customers for your products and repair offers (zero customer account required).
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-slate-400 font-semibold">{inquiries.length} total inquiries</span>
+                {inquiries.filter(i => i.status === 'NEW').length > 0 && (
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                    {inquiries.filter(i => i.status === 'NEW').length} New
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {inquiries.length === 0 ? (
+              <div className="p-12 text-center text-slate-500 space-y-2">
+                <MessageSquare className="w-10 h-10 mx-auto text-slate-600 mb-2" />
+                <div className="text-sm font-bold text-white">No customer queries received yet</div>
+                <p className="text-xs text-slate-400">
+                  When visitors inquire about your products or offers on the marketplace, their messages will appear here.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {inquiries.map((inq) => {
+                  const cleanPhone = (inq.customer_phone || '').replace(/[^0-9]/g, '');
+                  const waUrl = `https://wa.me/${cleanPhone.startsWith('91') ? cleanPhone : '91' + cleanPhone}?text=${encodeURIComponent(
+                    `Hello ${inq.customer_name}! Regarding your inquiry for "${inq.item_title}" on SmartFix Hub...`
+                  )}`;
+
+                  return (
+                    <div key={inq.id} className="bg-slate-950 border border-slate-800 rounded-2xl p-4 space-y-3">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800/80 pb-2.5">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-extrabold text-white text-xs">{inq.customer_name}</span>
+                            <span className={`text-[10px] font-black uppercase px-2 py-0.2 rounded-full border ${
+                              inq.status === 'NEW' ? 'bg-amber-500/20 text-amber-300 border-amber-500/30' : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
+                            }`}>
+                              {inq.status}
+                            </span>
+                          </div>
+                          <div className="text-[11px] text-slate-400 flex items-center gap-1.5 mt-0.5">
+                            <Phone className="w-3 h-3 text-slate-500" />
+                            <span className="font-mono text-slate-300">{inq.customer_phone}</span>
+                          </div>
+                        </div>
+
+                        <div className="text-right">
+                          <span className="text-[10px] font-extrabold text-amber-400 bg-slate-900 px-2.5 py-1 rounded-lg border border-slate-800">
+                            {inq.item_title}
+                          </span>
+                        </div>
+                      </div>
+
+                      {inq.message && (
+                        <div className="text-xs text-slate-300 bg-slate-900/60 p-3 rounded-xl border border-slate-800/60 leading-relaxed">
+                          &ldquo;{inq.message}&rdquo;
+                        </div>
+                      )}
+
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-1 text-xs">
+                        <span className="text-[10px] text-slate-500">
+                          Received: {new Date(inq.created_at).toLocaleString()}
+                        </span>
+
+                        <div className="flex items-center gap-2">
+                          <a
+                            href={waUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition flex items-center gap-1 shadow"
+                          >
+                            <MessageSquare className="w-3.5 h-3.5" />
+                            <span>WhatsApp</span>
+                          </a>
+                          <a
+                            href={`tel:${inq.customer_phone}`}
+                            className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-bold transition flex items-center gap-1"
+                          >
+                            <Phone className="w-3.5 h-3.5 text-amber-400" />
+                            <span>Call</span>
+                          </a>
+                          {inq.status === 'NEW' ? (
+                            <button
+                              type="button"
+                              onClick={() => handleUpdateInquiryStatus(inq.id, 'CONTACTED')}
+                              className="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs transition"
+                            >
+                              Mark Contacted
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => handleUpdateInquiryStatus(inq.id, 'NEW')}
+                              className="px-2.5 py-1.5 text-slate-500 hover:text-slate-300 text-xs transition"
+                            >
+                              Reopen
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* ============================================================ */}
         {/* ROLE 1: SELLER WORKBENCH (WITH INTEGRATED TICKET TRACKER)   */}

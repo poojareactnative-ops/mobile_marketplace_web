@@ -7,8 +7,9 @@ import { useAuth } from '../../context/AuthContext';
 import { supabaseService } from '../../services/supabaseService';
 import { 
   ShoppingBag, Tag, Plus, Search, Filter, Wrench, Store, 
-  Sparkles, Trash2, CheckCircle2, ArrowRight, Clock, ShieldCheck
+  Sparkles, Trash2, CheckCircle2, ArrowRight, Clock, ShieldCheck, MessageSquare
 } from 'lucide-react';
+import CustomerInquiryModal from '../../components/CustomerInquiryModal';
 
 const CATEGORIES = [
   'All',
@@ -50,6 +51,7 @@ export default function MarketplacePage() {
   });
 
   const [actionLoading, setActionLoading] = useState(false);
+  const [inquiryItem, setInquiryItem] = useState(null);
 
   // Load initial data
   const loadMarketplaceData = async () => {
@@ -202,24 +204,26 @@ export default function MarketplacePage() {
               </p>
             </div>
 
-            {/* Quick action buttons for authorized users */}
-            <div className="flex flex-wrap items-center gap-2.5">
-              <button
-                onClick={handleOpenAddProduct}
-                className="px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold rounded-xl text-xs shadow-lg shadow-emerald-600/30 flex items-center space-x-1.5 transition"
-              >
-                <Plus className="w-4 h-4" />
-                <span>+ Upload Product</span>
-              </button>
+            {/* Quick action buttons - ONLY visible for authorized shop staff */}
+            {isAuthenticated && canManage && (
+              <div className="flex flex-wrap items-center gap-2.5">
+                <button
+                  onClick={handleOpenAddProduct}
+                  className="px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold rounded-xl text-xs shadow-lg shadow-emerald-600/30 flex items-center space-x-1.5 transition"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>+ Upload Product</span>
+                </button>
 
-              <button
-                onClick={handleOpenAddOffer}
-                className="px-4 py-2.5 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-slate-950 font-black rounded-xl text-xs shadow-lg shadow-amber-500/30 flex items-center space-x-1.5 transition"
-              >
-                <Tag className="w-4 h-4" />
-                <span>+ Create Offer</span>
-              </button>
-            </div>
+                <button
+                  onClick={handleOpenAddOffer}
+                  className="px-4 py-2.5 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-slate-950 font-black rounded-xl text-xs shadow-lg shadow-amber-500/30 flex items-center space-x-1.5 transition"
+                >
+                  <Tag className="w-4 h-4" />
+                  <span>+ Create Offer</span>
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </section>
@@ -269,19 +273,31 @@ export default function MarketplacePage() {
                     </div>
                   </div>
 
-                  <div className="pt-4 mt-4 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-400">
+                  <div className="pt-4 mt-4 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-400 gap-2">
                     <div className="truncate">
-                      By: <strong className="text-slate-300">{offer.uploader_name}</strong>
+                      By: <strong className="text-slate-300">{offer.uploader_name || 'Shop Partner'}</strong>
                     </div>
-                    {canManage && (
+
+                    <div className="flex items-center gap-2">
                       <button
-                        onClick={() => supabaseService.deleteOffer(offer.id).then(loadMarketplaceData)}
-                        className="text-slate-500 hover:text-rose-400 transition"
-                        title="Delete Offer"
+                        type="button"
+                        onClick={() => setInquiryItem({ ...offer, itemType: 'OFFER' })}
+                        className="px-3 py-1.5 bg-amber-500/20 hover:bg-amber-500 text-amber-300 hover:text-slate-950 font-bold rounded-xl text-xs transition flex items-center gap-1 border border-amber-500/30"
                       >
-                        <Trash2 className="w-3.5 h-3.5" />
+                        <MessageSquare className="w-3 h-3" />
+                        <span>Send Query</span>
                       </button>
-                    )}
+
+                      {isAuthenticated && canManage && (
+                        <button
+                          onClick={() => supabaseService.deleteOffer(offer.id).then(loadMarketplaceData)}
+                          className="text-slate-500 hover:text-rose-400 transition p-1"
+                          title="Delete Offer"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
               );
@@ -403,21 +419,32 @@ export default function MarketplacePage() {
                     </div>
                   </div>
 
-                  <div className="pt-4 mt-4 border-t border-slate-800 flex items-center justify-between text-xs">
+                  <div className="pt-4 mt-4 border-t border-slate-800 flex items-center justify-between text-xs gap-2">
                     <div className="flex items-center space-x-1.5 text-slate-400">
                       <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
                       <span>In Stock: <strong className="text-white">{prod.stock} units</strong></span>
                     </div>
 
-                    {canManage && (
+                    <div className="flex items-center gap-2">
                       <button
-                        onClick={() => handleDeleteProduct(prod.id)}
-                        className="text-slate-500 hover:text-rose-400 transition"
-                        title="Delete Product"
+                        type="button"
+                        onClick={() => setInquiryItem({ ...prod, itemType: 'PRODUCT' })}
+                        className="px-3 py-1.5 bg-emerald-500/20 hover:bg-emerald-500 text-emerald-300 hover:text-slate-950 font-bold rounded-xl text-xs transition flex items-center gap-1 border border-emerald-500/30"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <MessageSquare className="w-3 h-3" />
+                        <span>Send Query</span>
                       </button>
-                    )}
+
+                      {isAuthenticated && canManage && (
+                        <button
+                          onClick={() => handleDeleteProduct(prod.id)}
+                          className="text-slate-500 hover:text-rose-400 transition p-1"
+                          title="Delete Product"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
               );
@@ -617,6 +644,13 @@ export default function MarketplacePage() {
           </div>
         </div>
       )}
+
+      {/* Customer Inquiry Modal (Zero Login Required) */}
+      <CustomerInquiryModal
+        isOpen={!!inquiryItem}
+        onClose={() => setInquiryItem(null)}
+        item={inquiryItem}
+      />
 
       {/* Footer */}
       <footer className="border-t border-slate-800 bg-slate-900/80 py-8 text-xs text-slate-400">

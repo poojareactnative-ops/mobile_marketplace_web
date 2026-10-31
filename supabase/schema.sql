@@ -304,3 +304,32 @@ CREATE POLICY "Public Update Products" ON products FOR UPDATE USING (true);
 CREATE POLICY "Public Read Offers" ON offers FOR SELECT USING (true);
 CREATE POLICY "Public Insert Offers" ON offers FOR INSERT WITH CHECK (true);
 
+-- ====================================================================
+-- TABLE 7: INQUIRIES (End-User Inquiries for Products & Offers)
+-- End users do not need an account; queries are sent directly to owners
+-- ====================================================================
+CREATE TABLE IF NOT EXISTS inquiries (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    item_type TEXT NOT NULL CHECK (item_type IN ('PRODUCT', 'OFFER')),
+    item_id TEXT,
+    item_title TEXT NOT NULL,
+    shop_id UUID REFERENCES shops(id) ON DELETE SET NULL,
+    shop_name TEXT,
+    owner_role TEXT NOT NULL CHECK (owner_role IN ('ADMIN', 'SELLER')),
+    customer_name TEXT NOT NULL,
+    customer_phone TEXT NOT NULL,
+    message TEXT,
+    status TEXT NOT NULL DEFAULT 'NEW' CHECK (status IN ('NEW', 'CONTACTED', 'CLOSED')),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_inquiries_shop ON inquiries(shop_id);
+CREATE INDEX idx_inquiries_owner_role ON inquiries(owner_role);
+CREATE INDEX idx_inquiries_status ON inquiries(status);
+
+ALTER TABLE inquiries ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Public Read Inquiries" ON inquiries FOR SELECT USING (true);
+CREATE POLICY "Public Insert Inquiries" ON inquiries FOR INSERT WITH CHECK (true);
+CREATE POLICY "Public Update Inquiries" ON inquiries FOR UPDATE USING (true);
+
+

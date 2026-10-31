@@ -414,6 +414,17 @@ export const supabaseService = {
     }
   },
 
+  // 12.5 Fetch All Registered Shops (Live from Supabase)
+  async getShops() {
+    try {
+      const shops = await supabaseRest('shops?select=*&order=created_at.desc');
+      return Array.isArray(shops) ? shops : [];
+    } catch (e) {
+      console.error('Supabase getShops error:', e.message);
+      return [];
+    }
+  },
+
   // 11. Products Management
   async getProducts(filter = {}) {
     let endpoint = 'products?select=*&order=created_at.desc';
@@ -484,6 +495,115 @@ export const supabaseService = {
   async deleteOffer(offerId) {
     await supabaseRest(`offers?id=eq.${offerId}`, { method: 'DELETE' });
     return true;
+  },
+
+  // 13. Customer Inquiries Management (Zero login required for customers)
+  async submitCustomerInquiry(inquiryData) {
+    const newInquiry = {
+      id: `inq-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      item_type: inquiryData.itemType || 'PRODUCT',
+      item_id: String(inquiryData.itemId || ''),
+      item_title: inquiryData.itemTitle || 'Product/Offer',
+      shop_id: inquiryData.shopId || null,
+      shop_name: inquiryData.shopName || 'Shop Partner',
+      owner_role: inquiryData.ownerRole || 'SELLER',
+      customer_name: inquiryData.customerName?.trim() || 'Anonymous Customer',
+      customer_phone: inquiryData.customerPhone?.trim() || '',
+      message: inquiryData.message?.trim() || '',
+      status: 'NEW',
+      created_at: new Date().toISOString(),
+    };
+
+    // 1. Try Supabase REST insertion
+    try {
+      const res = await supabaseRest('inquiries', {
+        method: 'POST',
+        body: newInquiry,
+      });
+      if (Array.isArray(res) && res[0]) {
+        return res[0];
+      }
+    } catch (err) {
+      console.warn('Supabase inquiry insert fallback to local storage:', err.message);
+    }
+
+    // 2. LocalStorage persistence fallback for offline or unmigrated Supabase instance
+    if (typeof window !== 'undefined') {
+      try {
+        const stored = JSON.parse(localStorage.getItem('smartfix_customer_inquiries') || '[]');
+        stored.unshift(newInquiry);
+        localStorage.setItem('smartfix_customer_inquiries', JSON.stringify(stored));
+      } catch (e) {
+        // ignore
+      }
+    }
+
+    return newInquiry;
+  },
+
+  async getInquiries(filter = {}) {
+    let list = [];
+
+    // 1. Fetch from Supabase
+    try {
+      let endpoint = 'inquiries?select=*&order=created_at.desc';
+      if (filter.ownerRole) {
+        endpoint += `&owner_role=eq.${filter.ownerRole}`;
+      }
+      if (filter.shopId) {
+        endpoint += `&shop_id=eq.${filter.shopId}`;
+      }
+      const data = await supabaseRest(endpoint);
+      if (Array.isArray(data)) {
+        list = data;
+      }
+    } catch (err) {
+      console.warn('Supabase getInquiries notice:', err.message);
+    }
+
+    // 2. Merge local storage inquiries
+    if (typeof window !== 'undefined') {
+      try {
+        const local = JSON.parse(localStorage.getItem('smartfix_customer_inquiries') || '[]');
+        const existingIds = new Set(list.map((i) => i.id));
+        const filteredLocal = local.filter((i) => {
+          if (existingIds.has(i.id)) return false;
+          if (filter.ownerRole && i.owner_role !== filter.ownerRole) return false;
+          if (filter.shopId && i.shop_id !== filter.shopId) return false;
+          return true;
+        });
+        list = [...filteredLocal, ...list];
+      } catch (e) {
+        // ignore
+      }
+    }
+
+    return list;
+  },
+
+  async updateInquiryStatus(inquiryId, status) {
+    try {
+      await supabaseRest(`inquiries?id=eq.${inquiryId}`, {
+        method: 'PATCH',
+        body: { status },
+      });
+    } catch (e) {
+      // ignore
+    }
+
+    if (typeof window !== 'undefined') {
+      try {
+        const stored = JSON.parse(localStorage.getItem('smartfix_customer_inquiries') || '[]');
+        const updated = stored.map((item) =>
+          item.id === inquiryId ? { ...item, status } : item
+        );
+        localStorage.setItem('smartfix_customer_inquiries', JSON.stringify(updated));
+      } catch (e) {
+        // ignore
+      }
+    }
+
+    return { id: inquiryId, status };
   },
 };
 
