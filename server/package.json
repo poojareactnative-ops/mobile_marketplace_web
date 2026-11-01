@@ -1,0 +1,21 @@
+{
+  "name": "smartfix-hub-backend",
+  "version": "1.0.0",
+  "description": "SmartFix Hub Node.js Backend API powered by Supabase PostgreSQL and Supabase Auth",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js"
+  },
+  "keywords": [
+    "nodejs",
+    "express",
+    "supabase",
+    "postgresql",
+    "mobile-repair"
+  ],
+  "author": "Antigravity Pair Programming",
+  "license": "MIT"
+}
+

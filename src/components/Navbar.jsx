@@ -26,7 +26,7 @@ export default function Navbar() {
       case 'ADMIN':
         return { label: 'Repair Admin', class: 'bg-amber-500/15 text-amber-400 border-amber-500/30' };
       case 'SELLER':
-        return { label: 'Partner Seller (2%)', class: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30' };
+        return { label: 'Accessory Partner', class: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30' };
       case 'SUPER_ADMIN':
         return { label: 'Super Admin', class: 'bg-purple-500/15 text-purple-400 border-purple-500/30' };
       default:
@@ -73,9 +73,9 @@ export default function Navbar() {
             </Link>
             <Link
               href="/aboutme"
-              className={`px-3 py-2 rounded-xl transition flex items-center gap-1.5 ${pathname === '/aboutme' ? 'bg-emerald-950/40 text-emerald-400 font-bold border border-emerald-800/40' : 'hover:text-emerald-400 hover:bg-slate-900/60'}`}
+              className={`px-3 py-2 rounded-xl transition flex items-center gap-1.5 ${pathname === '/aboutme' || pathname === '/about' ? 'bg-amber-500/15 text-amber-400 font-bold border border-amber-500/30' : 'hover:text-amber-400 hover:bg-slate-900/60'}`}
             >
-              <ShoppingBag className="w-3.5 h-3.5" />
+              <User className="w-3.5 h-3.5" />
               <span>About Me</span>
             </Link>
 

@@ -2,9 +2,9 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
-import { 
-  MapPin, Navigation, Tag, ShoppingBag, Wrench, Store, 
-  Search, Filter, CheckCircle2, Phone, Sparkles, ChevronRight, 
+import {
+  MapPin, Navigation, Tag, ShoppingBag, Wrench, Store,
+  Search, Filter, CheckCircle2, Phone, Sparkles, ChevronRight,
   Sliders, AlertCircle, ArrowRight, ShieldCheck, Compass, Info, Check, MessageSquare
 } from 'lucide-react';
 import CustomerInquiryModal from './CustomerInquiryModal';
@@ -212,31 +212,25 @@ export default function NearbyMarketplace() {
 
   return (
     <section id="nearby" className="py-20 px-4 sm:px-6 lg:px-8 border-b border-slate-800/80 bg-slate-950 relative overflow-hidden">
-      
+
       {/* Ambient background glows */}
       <div className="absolute top-1/2 left-0 w-96 h-96 bg-amber-500/10 blur-[130px] pointer-events-none rounded-full" />
       <div className="absolute bottom-0 right-0 w-96 h-96 bg-emerald-500/10 blur-[130px] pointer-events-none rounded-full" />
 
       <div className="max-w-7xl mx-auto space-y-10 relative z-10">
-        
+
         {/* 1. SECTION HEADER */}
         <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
           <div className="space-y-3 max-w-3xl">
             <div className="inline-flex items-center space-x-2 bg-slate-900 border border-slate-800 px-3.5 py-1 rounded-full text-xs font-semibold text-slate-300 shadow-md">
               <Compass className="w-3.5 h-3.5 text-amber-400 animate-spin" style={{ animationDuration: '8s' }} />
               <span className="bg-gradient-to-r from-amber-400 to-emerald-400 bg-clip-text text-transparent font-bold">
-                Hyperlocal Proximity Radar (1–2 km Radius)
+                Nearby Services (1–2 km Radius)
               </span>
             </div>
 
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight">
-              Nearby Admin Repairs &amp; Seller Accessories
-            </h2>
-
             <p className="text-sm text-slate-400 leading-relaxed">
-              Real-time catalog displaying live products and exclusive repair offers from certified{' '}
-              <strong className="text-amber-400">Repair Center Admins</strong> and partner{' '}
-              <strong className="text-emerald-400">Accessory Sellers</strong> whose shops are strictly within{' '}
+              Explore verified repair centers, original accessories, and exclusive local discounts from trusted neighborhood shops strictly within{' '}
               <strong className="text-white underline decoration-amber-500 decoration-2 underline-offset-4">
                 1–2 km of your location
               </strong>.
@@ -247,11 +241,11 @@ export default function NearbyMarketplace() {
           <div className="flex items-center gap-3 bg-slate-900/80 border border-slate-800 p-3 rounded-2xl shrink-0 backdrop-blur-md">
             <div className="text-center px-3 border-r border-slate-800">
               <div className="text-xl font-black text-amber-400">{nearbyAdminCount}</div>
-              <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Admin Deals</div>
+              <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Repair Deals</div>
             </div>
             <div className="text-center px-3 border-r border-slate-800">
               <div className="text-xl font-black text-emerald-400">{nearbySellerCount}</div>
-              <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Seller Items</div>
+              <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Accessories</div>
             </div>
             <div className="text-center px-3">
               <div className="text-xl font-black text-white">{filteredItems.length}</div>
@@ -260,189 +254,9 @@ export default function NearbyMarketplace() {
           </div>
         </div>
 
-        {/* 2. GEOLOCATION RADAR CONTROL BAR */}
-        <div className="bg-slate-900/90 border border-slate-800 rounded-3xl p-5 sm:p-6 shadow-2xl backdrop-blur-xl space-y-5">
-          
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-slate-800/80">
-            
-            {/* User Current Location Indicator */}
-            <div className="flex items-start sm:items-center space-x-3">
-              <div className="w-10 h-10 rounded-2xl bg-amber-500/20 border border-amber-500/40 text-amber-400 flex items-center justify-center shrink-0">
-                <MapPin className="w-5 h-5" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="text-[11px] font-black uppercase tracking-wider text-slate-400">
-                    Your Current Location:
-                  </span>
-                  {isLiveGps && (
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                      Live GPS Active
-                    </span>
-                  )}
-                </div>
-                <div className="text-sm sm:text-base font-extrabold text-white flex items-center gap-2 mt-0.5">
-                  <span>{locationLabel}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Geolocation Trigger Buttons */}
-            <div className="flex flex-wrap items-center gap-2.5">
-              <button
-                type="button"
-                onClick={handleDetectLiveLocation}
-                disabled={gpsLoading}
-                className="px-4 py-2.5 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-slate-950 font-black rounded-xl text-xs shadow-lg shadow-amber-500/20 transition flex items-center space-x-1.5 transform hover:-translate-y-0.5 disabled:opacity-50"
-              >
-                <Navigation className={`w-3.5 h-3.5 ${gpsLoading ? 'animate-spin' : ''}`} />
-                <span>{gpsLoading ? 'Detecting GPS...' : 'Use My Live GPS'}</span>
-              </button>
-
-              {/* Area search filter */}
-              <div className="relative">
-                <input
-                  type="text"
-                  value={areaFilter}
-                  onChange={(e) => setAreaFilter(e.target.value)}
-                  placeholder="Filter by street or area..."
-                  className="px-3.5 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-xs font-bold text-slate-200 placeholder-slate-500 focus:outline-none focus:border-amber-500"
-                />
-              </div>
-            </div>
-
-          </div>
-
-          {/* GPS Error notice if any */}
-          {gpsError && (
-            <div className="bg-rose-950/70 border border-rose-800 text-rose-300 p-3 rounded-2xl text-xs flex items-center gap-2 animate-in fade-in">
-              <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
-              <span>{gpsError}</span>
-            </div>
-          )}
-
-          {/* RADIUS SELECTOR & SENSITIVITY (STRICT 1–2 KM FILTER) */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pt-1">
-            
-            {/* Radius Pills */}
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="flex items-center space-x-2 text-xs font-bold text-slate-300">
-                <Sliders className="w-4 h-4 text-amber-400" />
-                <span>Geofence Radius:</span>
-              </div>
-
-              <div className="inline-flex p-1 bg-slate-950 rounded-2xl border border-slate-800">
-                {[
-                  { label: '1.0 km (Tight)', value: 1.0 },
-                  { label: '1.5 km (Optimal)', value: 1.5 },
-                  { label: '2.0 km (Full Limit)', value: 2.0 },
-                ].map((opt) => (
-                  <button
-                    key={opt.value}
-                    type="button"
-                    onClick={() => setRadiusKm(opt.value)}
-                    className={`px-3.5 py-1.5 rounded-xl text-xs font-extrabold transition ${
-                      radiusKm === opt.value
-                        ? 'bg-amber-500 text-slate-950 shadow-md'
-                        : 'text-slate-400 hover:text-white'
-                    }`}
-                  >
-                    {opt.label}
-                  </button>
-                ))}
-              </div>
-
-              <span className="text-[11px] text-slate-400 italic">
-                Only live items within <strong className="text-amber-400">{radiusKm} km</strong> are displayed.
-              </span>
-            </div>
-
-            {/* Role Filter Tabs */}
-            <div className="flex items-center space-x-1.5 bg-slate-950 p-1 rounded-2xl border border-slate-800 text-xs self-start md:self-auto">
-              <button
-                type="button"
-                onClick={() => setRoleFilter('ALL')}
-                className={`px-3 py-1.5 rounded-xl font-bold transition ${
-                  roleFilter === 'ALL'
-                    ? 'bg-slate-800 text-white shadow'
-                    : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                All Partners
-              </button>
-              <button
-                type="button"
-                onClick={() => setRoleFilter('ADMIN')}
-                className={`px-3 py-1.5 rounded-xl font-bold transition flex items-center gap-1 ${
-                  roleFilter === 'ADMIN'
-                    ? 'bg-amber-500 text-slate-950 shadow'
-                    : 'text-amber-400 hover:text-amber-300'
-                }`}
-              >
-                <Wrench className="w-3.5 h-3.5" />
-                <span>Admin Hubs</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setRoleFilter('SELLER')}
-                className={`px-3 py-1.5 rounded-xl font-bold transition flex items-center gap-1 ${
-                  roleFilter === 'SELLER'
-                    ? 'bg-emerald-500 text-slate-950 shadow'
-                    : 'text-emerald-400 hover:text-emerald-300'
-                }`}
-              >
-                <Store className="w-3.5 h-3.5" />
-                <span>Sellers Only</span>
-              </button>
-            </div>
-
-          </div>
-
-          {/* Search Bar */}
-          <div className="flex flex-col md:flex-row items-center justify-between gap-3 pt-2">
-            
-            {/* Search Input */}
-            <div className="relative w-full md:w-80">
-              <Search className="w-4 h-4 absolute left-3.5 top-3 text-slate-500" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search screen repair, chargers, covers..."
-                className="w-full pl-10 pr-4 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-amber-500 font-medium"
-              />
-            </div>
-
-            {/* Type Switcher: ALL | OFFERS | PRODUCTS */}
-            <div className="flex items-center gap-1.5 w-full md:w-auto">
-              {[
-                { id: 'ALL', label: `All Items (${itemsWithDistance.filter(i => (i.distanceKm || 0) <= radiusKm).length})` },
-                { id: 'OFFERS', label: `Offers (${itemsWithDistance.filter(i => i.itemType === 'OFFER' && (i.distanceKm || 0) <= radiusKm).length})` },
-                { id: 'PRODUCTS', label: `Products (${itemsWithDistance.filter(i => i.itemType === 'PRODUCT' && (i.distanceKm || 0) <= radiusKm).length})` },
-              ].map((tab) => (
-                <button
-                  key={tab.id}
-                  type="button"
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex-1 md:flex-initial ${
-                    activeTab === tab.id
-                      ? 'bg-slate-800 text-white shadow'
-                      : 'text-slate-400 hover:text-white bg-slate-950/60'
-                  }`}
-                >
-                  {tab.label}
-                </button>
-              ))}
-            </div>
-
-          </div>
-
-        </div>
-
         {/* 3. PRODUCTS & OFFERS DISPLAY GRID */}
         <div className="space-y-6">
-          
+
           <div className="flex items-center justify-between text-xs text-slate-400 px-1">
             <span>
               Showing <strong className="text-white">{filteredItems.length} verified listings</strong> within a <strong className="text-amber-400">{radiusKm} km radius</strong>.
@@ -477,13 +291,12 @@ export default function NearbyMarketplace() {
                   >
                     {/* Subtle color highlight ribbon */}
                     <div
-                      className={`absolute top-0 right-0 w-36 h-36 rounded-bl-full pointer-events-none transition opacity-30 ${
-                        isAdmin ? 'bg-amber-500/25' : 'bg-emerald-500/25'
-                      }`}
+                      className={`absolute top-0 right-0 w-36 h-36 rounded-bl-full pointer-events-none transition opacity-30 ${isAdmin ? 'bg-amber-500/25' : 'bg-emerald-500/25'
+                        }`}
                     />
 
                     <div className="space-y-4">
-                      
+
                       {/* Top Row: Distance Badge & Role Pill */}
                       <div className="flex items-center justify-between gap-2">
                         {/* Distance Pill */}
@@ -492,15 +305,14 @@ export default function NearbyMarketplace() {
                           <span>{distanceText}</span>
                         </span>
 
-                        {/* Role Badge: Admin vs Seller */}
+                        {/* Category Badge */}
                         <span
-                          className={`text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full border ${
-                            isAdmin
-                              ? 'bg-amber-500/15 text-amber-300 border-amber-500/40'
-                              : 'bg-emerald-500/15 text-emerald-300 border-emerald-500/40'
-                          }`}
+                          className={`text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full border ${isAdmin
+                            ? 'bg-amber-500/15 text-amber-300 border-amber-500/40'
+                            : 'bg-emerald-500/15 text-emerald-300 border-emerald-500/40'
+                            }`}
                         >
-                          {isAdmin ? '🛠️ Admin Repair Center' : '🏪 Partner Seller (2%)'}
+                          {isAdmin ? '🛠️ Certified Repair Center' : '🏪 Verified Store'}
                         </span>
                       </div>
 
@@ -572,11 +384,10 @@ export default function NearbyMarketplace() {
                       <button
                         type="button"
                         onClick={() => setInquiryItem(item)}
-                        className={`px-4 py-2 font-black rounded-xl text-xs transition flex items-center space-x-1.5 shadow-lg transform hover:-translate-y-0.5 ${
-                          isAdmin
-                            ? 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 shadow-amber-500/20'
-                            : 'bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 shadow-emerald-500/20'
-                        }`}
+                        className={`px-4 py-2 font-black rounded-xl text-xs transition flex items-center space-x-1.5 shadow-lg transform hover:-translate-y-0.5 ${isAdmin
+                          ? 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 shadow-amber-500/20'
+                          : 'bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 shadow-emerald-500/20'
+                          }`}
                       >
                         <MessageSquare className="w-3.5 h-3.5" />
                         <span>Send Query</span>
@@ -619,38 +430,6 @@ export default function NearbyMarketplace() {
             </div>
           )}
 
-        </div>
-
-        {/* 4. HYPERLOCAL DUAL-REVENUE EXPLAINER FOOTNOTE */}
-        <div className="bg-slate-900/60 border border-slate-800/80 rounded-3xl p-6 sm:p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-          <div className="space-y-1.5 max-w-2xl">
-            <div className="flex items-center space-x-2">
-              <ShieldCheck className="w-5 h-5 text-emerald-400" />
-              <h4 className="text-sm font-extrabold text-white">
-                How Hyperlocal Referral Attribution Works
-              </h4>
-            </div>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              When a customer visits any nearby <strong className="text-emerald-400">Accessory Seller</strong> and needs a screen or battery repair, the seller creates a 1-click digital referral to the partner <strong className="text-amber-400">Repair Admin</strong>. Once completed, the seller automatically earns strictly <strong className="text-white">2% of the final repair bill</strong>.
-            </p>
-          </div>
-
-          <div className="flex items-center gap-3 shrink-0">
-            <Link
-              href="/marketplace"
-              className="px-5 py-3 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold rounded-xl text-xs transition flex items-center space-x-2"
-            >
-              <ShoppingBag className="w-4 h-4 text-emerald-400" />
-              <span>Full Marketplace &rarr;</span>
-            </Link>
-            <Link
-              href="/track"
-              className="px-5 py-3 bg-slate-950 hover:bg-slate-900 border border-slate-700 text-white font-bold rounded-xl text-xs transition flex items-center space-x-2"
-            >
-              <Search className="w-4 h-4 text-blue-400" />
-              <span>Track Ticket ID</span>
-            </Link>
-          </div>
         </div>
 
       </div>

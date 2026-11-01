@@ -2,12 +2,13 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import Navbar from '../../components/Navbar';
 import { useAuth } from '../../context/AuthContext';
 import { supabaseService } from '../../services/supabaseService';
 import { 
   ShoppingBag, Tag, Plus, Search, Filter, Wrench, Store, 
-  Sparkles, Trash2, CheckCircle2, ArrowRight, Clock, ShieldCheck, MessageSquare
+  Sparkles, Trash2, CheckCircle2, ArrowRight, Clock, ShieldCheck, MessageSquare, Percent
 } from 'lucide-react';
 import CustomerInquiryModal from '../../components/CustomerInquiryModal';
 
@@ -21,8 +22,12 @@ const CATEGORIES = [
 ];
 
 export default function MarketplacePage() {
+  const router = useRouter();
   const { user, isAuthenticated } = useAuth();
   
+  // Tab State: 'PRODUCTS' or 'OFFERS'
+  const [activeTab, setActiveTab] = useState('PRODUCTS');
+
   const [products, setProducts] = useState([]);
   const [offers, setOffers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -184,281 +189,355 @@ export default function MarketplacePage() {
       {/* Top Navbar */}
       <Navbar />
 
-      {/* Hero Banner */}
-      <section className="bg-gradient-to-b from-slate-900 to-slate-950 border-b border-slate-800 py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+      {/* Hero Header with Separate Tab Controls */}
+      <section className="bg-gradient-to-b from-slate-900 to-slate-950 border-b border-slate-800 py-10 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
         <div className="absolute top-0 right-1/4 w-96 h-96 bg-amber-500/10 blur-3xl pointer-events-none rounded-full" />
         <div className="absolute bottom-0 left-1/4 w-80 h-80 bg-emerald-500/10 blur-3xl pointer-events-none rounded-full" />
 
         <div className="max-w-7xl mx-auto space-y-6 relative z-10">
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
             <div>
               <div className="inline-flex items-center space-x-2 bg-slate-800/80 border border-slate-700 px-3 py-1 rounded-full text-xs font-semibold text-amber-400 mb-3">
                 <Sparkles className="w-3.5 h-3.5" />
-                <span>Hyperlocal Catalog &amp; Deals Hub</span>
+                <span>
+                  {activeTab === 'PRODUCTS' ? 'Hyperlocal Mobile Accessories' : 'Exclusive Repair Deals & Vouchers'}
+                </span>
               </div>
               <h1 className="text-3xl sm:text-4xl font-black text-white tracking-tight">
-                Products &amp; Exclusive Repair Offers
+                {activeTab === 'PRODUCTS' ? 'Products Catalog' : 'Promotional Offers & Deals'}
               </h1>
-              <p className="text-sm text-slate-400 max-w-2xl mt-1">
-                Explore accessories uploaded by verified local <strong className="text-emerald-400">Sellers</strong> and repair discounts managed directly by <strong className="text-amber-400">Repair Shop Admins</strong>.
+              <p className="text-sm text-slate-400 max-w-2xl mt-1.5 leading-relaxed">
+                {activeTab === 'PRODUCTS' 
+                  ? 'Explore certified accessories and gear uploaded by verified local accessory sellers and repair shops.'
+                  : 'Exclusive walking-distance repair discounts and deals posted by certified repair hub admins.'}
               </p>
             </div>
 
             {/* Quick action buttons - ONLY visible for authorized shop staff */}
             {isAuthenticated && canManage && (
-              <div className="flex flex-wrap items-center gap-2.5">
-                <button
-                  onClick={handleOpenAddProduct}
-                  className="px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold rounded-xl text-xs shadow-lg shadow-emerald-600/30 flex items-center space-x-1.5 transition"
-                >
-                  <Plus className="w-4 h-4" />
-                  <span>+ Upload Product</span>
-                </button>
-
-                <button
-                  onClick={handleOpenAddOffer}
-                  className="px-4 py-2.5 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-slate-950 font-black rounded-xl text-xs shadow-lg shadow-amber-500/30 flex items-center space-x-1.5 transition"
-                >
-                  <Tag className="w-4 h-4" />
-                  <span>+ Create Offer</span>
-                </button>
+              <div className="flex items-center gap-3">
+                {activeTab === 'PRODUCTS' ? (
+                  <button
+                    onClick={handleOpenAddProduct}
+                    className="px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold rounded-xl text-xs shadow-lg shadow-emerald-600/30 flex items-center space-x-1.5 transition"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>+ Upload Product</span>
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleOpenAddOffer}
+                    className="px-4 py-2.5 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-slate-950 font-black rounded-xl text-xs shadow-lg shadow-amber-500/30 flex items-center space-x-1.5 transition"
+                  >
+                    <Tag className="w-4 h-4" />
+                    <span>+ Create Offer</span>
+                  </button>
+                )}
               </div>
             )}
+          </div>
+
+          {/* Clean Segmented Tab Switcher */}
+          <div className="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 border-t border-slate-800/80">
+            <div className="inline-flex p-1.5 bg-slate-900 border border-slate-800 rounded-2xl shadow-inner gap-1">
+              <button
+                type="button"
+                onClick={() => setActiveTab('PRODUCTS')}
+                className={`flex items-center space-x-2.5 px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all ${
+                  activeTab === 'PRODUCTS'
+                    ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-lg shadow-emerald-600/25 ring-1 ring-emerald-400/40'
+                    : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                }`}
+              >
+                <ShoppingBag className="w-4 h-4" />
+                <span>Products</span>
+                <span className={`px-2 py-0.5 text-[10px] font-extrabold rounded-full ${
+                  activeTab === 'PRODUCTS' ? 'bg-white/20 text-white' : 'bg-slate-800 text-slate-400'
+                }`}>
+                  {products.length}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveTab('OFFERS')}
+                className={`flex items-center space-x-2.5 px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all ${
+                  activeTab === 'OFFERS'
+                    ? 'bg-gradient-to-r from-amber-500 to-orange-600 text-slate-950 font-black shadow-lg shadow-amber-500/25 ring-1 ring-amber-300/40'
+                    : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                }`}
+              >
+                <Tag className="w-4 h-4" />
+                <span>Exclusive Offers</span>
+                <span className={`px-2 py-0.5 text-[10px] font-extrabold rounded-full ${
+                  activeTab === 'OFFERS' ? 'bg-slate-950/30 text-slate-950' : 'bg-slate-800 text-slate-400'
+                }`}>
+                  {offers.length}
+                </span>
+              </button>
+            </div>
+
+            {/* Quick Tab Summary Status */}
+            <div className="text-xs text-slate-400 flex items-center space-x-2">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span>
+                Viewing {activeTab === 'PRODUCTS' ? `${filteredProducts.length} accessories` : `${offers.length} active promo deals`}
+              </span>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Main Container */}
-      <main className="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-10 flex-1">
+      {/* Main Container - Displays ONLY the Active Tab Content */}
+      <main className="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1">
         
-        {/* SECTION 1: PROMOTIONAL OFFERS SHOWCASE */}
-        <section className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <Tag className="w-5 h-5 text-amber-400" />
-              <h2 className="text-lg font-black text-white">Active Promotional Deals &amp; Discounts</h2>
-            </div>
-            <span className="text-xs text-slate-400">{offers.length} Active Offers</span>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {offers.map((offer) => {
-              const isAdmin = offer.uploader_role === 'ADMIN';
-              return (
-                <div
-                  key={offer.id}
-                  className="bg-slate-900 border border-slate-800 hover:border-slate-700 rounded-3xl p-5 relative overflow-hidden shadow-xl flex flex-col justify-between group transition"
-                >
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="px-3 py-1 bg-gradient-to-r from-amber-500 to-orange-600 text-slate-950 font-black text-xs rounded-full shadow">
-                        {offer.discount_percent}% OFF
-                      </span>
-                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
-                        isAdmin
-                          ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
-                          : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
-                      }`}>
-                        {isAdmin ? '🛠️ Admin Offer' : '🏪 Seller Deal'}
-                      </span>
-                    </div>
-
-                    <div>
-                      <h3 className="font-extrabold text-white text-base group-hover:text-amber-300 transition">
-                        {offer.title}
-                      </h3>
-                      <p className="text-xs text-slate-400 mt-1 leading-relaxed">
-                        {offer.description}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="pt-4 mt-4 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-400 gap-2">
-                    <div className="truncate">
-                      By: <strong className="text-slate-300">{offer.uploader_name || 'Shop Partner'}</strong>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setInquiryItem({ ...offer, itemType: 'OFFER' })}
-                        className="px-3 py-1.5 bg-amber-500/20 hover:bg-amber-500 text-amber-300 hover:text-slate-950 font-bold rounded-xl text-xs transition flex items-center gap-1 border border-amber-500/30"
-                      >
-                        <MessageSquare className="w-3 h-3" />
-                        <span>Send Query</span>
-                      </button>
-
-                      {isAuthenticated && canManage && (
-                        <button
-                          onClick={() => supabaseService.deleteOffer(offer.id).then(loadMarketplaceData)}
-                          className="text-slate-500 hover:text-rose-400 transition p-1"
-                          title="Delete Offer"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </section>
-
-        {/* SECTION 2: PRODUCTS CATALOG */}
-        <section className="space-y-6">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-2 border-b border-slate-800">
-            <div>
-              <div className="flex items-center space-x-2">
-                <ShoppingBag className="w-5 h-5 text-emerald-400" />
-                <h2 className="text-lg font-black text-white">Mobile Accessories Catalog</h2>
+        {/* ============================================================== */}
+        {/* TAB 1: PRODUCTS ONLY                                            */}
+        {/* ============================================================== */}
+        {activeTab === 'PRODUCTS' && (
+          <section className="space-y-6 animate-in fade-in duration-300">
+            {/* Filter & Search Bar */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-2 border-b border-slate-800">
+              <div>
+                <h2 className="text-lg font-black text-white flex items-center gap-2">
+                  <ShoppingBag className="w-5 h-5 text-emerald-400" />
+                  <span>Mobile Accessories Catalog</span>
+                </h2>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Filtered from {products.length} products uploaded by repair shop and accessory partners.
+                </p>
               </div>
-              <p className="text-xs text-slate-400 mt-0.5">
-                Filtered from {products.length} products uploaded by repair shop and accessory partners.
-              </p>
-            </div>
 
-            {/* Uploader Filter Buttons */}
-            <div className="flex items-center space-x-1.5 bg-slate-900 p-1 rounded-xl border border-slate-800 text-xs">
-              <button
-                onClick={() => setUploaderFilter('ALL')}
-                className={`px-3 py-1.5 rounded-lg font-bold transition ${
-                  uploaderFilter === 'ALL' ? 'bg-white text-slate-950 shadow' : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                All Uploads
-              </button>
-              <button
-                onClick={() => setUploaderFilter('ADMIN')}
-                className={`px-3 py-1.5 rounded-lg font-bold transition ${
-                  uploaderFilter === 'ADMIN' ? 'bg-amber-600 text-white shadow' : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                🛠️ Admin Only
-              </button>
-              <button
-                onClick={() => setUploaderFilter('SELLER')}
-                className={`px-3 py-1.5 rounded-lg font-bold transition ${
-                  uploaderFilter === 'SELLER' ? 'bg-emerald-600 text-white shadow' : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                🏪 Sellers Only
-              </button>
-            </div>
-          </div>
-
-          {/* Search & Category Filter Bar */}
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            {/* Search Input */}
-            <div className="relative w-full md:w-96">
-              <Search className="w-4 h-4 absolute left-3.5 top-3 text-slate-500" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search accessories by name, brand..."
-                className="w-full pl-10 pr-4 py-2 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-amber-500"
-              />
-            </div>
-
-            {/* Category Pills */}
-            <div className="flex flex-wrap items-center gap-1.5 w-full md:w-auto">
-              {CATEGORIES.map((cat) => (
+              {/* Source Filter Buttons */}
+              <div className="flex items-center space-x-1.5 bg-slate-900 p-1 rounded-xl border border-slate-800 text-xs">
                 <button
-                  key={cat}
-                  onClick={() => setSelectedCategory(cat)}
-                  className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${
-                    selectedCategory === cat
-                      ? 'bg-amber-500 text-slate-950 shadow font-bold'
-                      : 'bg-slate-900 border border-slate-800 text-slate-400 hover:text-white'
+                  onClick={() => setUploaderFilter('ALL')}
+                  className={`px-3 py-1.5 rounded-lg font-bold transition ${
+                    uploaderFilter === 'ALL' ? 'bg-white text-slate-950 shadow' : 'text-slate-400 hover:text-white'
                   }`}
                 >
-                  {cat}
+                  All Items
                 </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Products Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredProducts.map((prod) => {
-              const isAdmin = prod.uploader_role === 'ADMIN';
-              return (
-                <div
-                  key={prod.id}
-                  className="bg-slate-900 border border-slate-800 hover:border-slate-700 rounded-3xl p-5 shadow-xl flex flex-col justify-between group transition hover:-translate-y-0.5"
+                <button
+                  onClick={() => setUploaderFilter('ADMIN')}
+                  className={`px-3 py-1.5 rounded-lg font-bold transition ${
+                    uploaderFilter === 'ADMIN' ? 'bg-amber-600 text-white shadow' : 'text-slate-400 hover:text-white'
+                  }`}
                 >
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 bg-slate-950 px-2 py-0.5 rounded-lg border border-slate-800">
-                        {prod.category}
-                      </span>
-                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
-                        isAdmin
-                          ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
-                          : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
-                      }`}>
-                        {isAdmin ? '🛠️ Repair Admin' : '🏪 Seller Partner'}
-                      </span>
-                    </div>
-
-                    <div>
-                      <div className="text-[11px] text-amber-400 font-semibold">{prod.brand}</div>
-                      <h3 className="font-extrabold text-white text-base mt-0.5 group-hover:text-amber-300 transition">
-                        {prod.name}
-                      </h3>
-                    </div>
-
-                    <div className="flex items-baseline space-x-2 pt-2">
-                      <span className="text-2xl font-black text-white">
-                        ₹{Number(prod.price).toLocaleString('en-IN')}
-                      </span>
-                      <span className="text-xs text-slate-500 line-through">
-                        ₹{Math.round(Number(prod.price) * 1.25).toLocaleString('en-IN')}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="pt-4 mt-4 border-t border-slate-800 flex items-center justify-between text-xs gap-2">
-                    <div className="flex items-center space-x-1.5 text-slate-400">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                      <span>In Stock: <strong className="text-white">{prod.stock} units</strong></span>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setInquiryItem({ ...prod, itemType: 'PRODUCT' })}
-                        className="px-3 py-1.5 bg-emerald-500/20 hover:bg-emerald-500 text-emerald-300 hover:text-slate-950 font-bold rounded-xl text-xs transition flex items-center gap-1 border border-emerald-500/30"
-                      >
-                        <MessageSquare className="w-3 h-3" />
-                        <span>Send Query</span>
-                      </button>
-
-                      {isAuthenticated && canManage && (
-                        <button
-                          onClick={() => handleDeleteProduct(prod.id)}
-                          className="text-slate-500 hover:text-rose-400 transition p-1"
-                          title="Delete Product"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          {filteredProducts.length === 0 && (
-            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-12 text-center text-slate-500 space-y-2">
-              <ShoppingBag className="w-10 h-10 mx-auto text-slate-600 mb-2" />
-              <div className="text-sm font-bold text-white">No products found</div>
-              <p className="text-xs text-slate-400">Try adjusting your search query or category filters.</p>
+                  🛠️ Repair Centers
+                </button>
+                <button
+                  onClick={() => setUploaderFilter('SELLER')}
+                  className={`px-3 py-1.5 rounded-lg font-bold transition ${
+                    uploaderFilter === 'SELLER' ? 'bg-emerald-600 text-white shadow' : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  🏪 Accessory Stores
+                </button>
+              </div>
             </div>
-          )}
-        </section>
+
+            {/* Search & Category Filter Bar */}
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+              {/* Search Input */}
+              <div className="relative w-full md:w-96">
+                <Search className="w-4 h-4 absolute left-3.5 top-3 text-slate-500" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search accessories by name, brand..."
+                  className="w-full pl-10 pr-4 py-2 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-amber-500"
+                />
+              </div>
+
+              {/* Category Pills */}
+              <div className="flex flex-wrap items-center gap-1.5 w-full md:w-auto">
+                {CATEGORIES.map((cat) => (
+                  <button
+                    key={cat}
+                    onClick={() => setSelectedCategory(cat)}
+                    className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${
+                      selectedCategory === cat
+                        ? 'bg-amber-500 text-slate-950 shadow font-bold'
+                        : 'bg-slate-900 border border-slate-800 text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    {cat}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Products Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredProducts.map((prod) => {
+                const isAdmin = prod.uploader_role === 'ADMIN';
+                return (
+                  <div
+                    key={prod.id}
+                    className="bg-slate-900 border border-slate-800 hover:border-slate-700 rounded-3xl p-5 shadow-xl flex flex-col justify-between group transition hover:-translate-y-0.5"
+                  >
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 bg-slate-950 px-2 py-0.5 rounded-lg border border-slate-800">
+                          {prod.category}
+                        </span>
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                          isAdmin
+                            ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                            : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
+                        }`}>
+                          {isAdmin ? '🛠️ Certified Repair Center' : '🏪 Verified Store'}
+                        </span>
+                      </div>
+
+                      <div>
+                        <div className="text-[11px] text-amber-400 font-semibold">{prod.brand}</div>
+                        <h3 className="font-extrabold text-white text-base mt-0.5 group-hover:text-amber-300 transition">
+                          {prod.name}
+                        </h3>
+                      </div>
+
+                      <div className="flex items-baseline space-x-2 pt-2">
+                        <span className="text-2xl font-black text-white">
+                          ₹{Number(prod.price).toLocaleString('en-IN')}
+                        </span>
+                        <span className="text-xs text-slate-500 line-through">
+                          ₹{Math.round(Number(prod.price) * 1.25).toLocaleString('en-IN')}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="pt-4 mt-4 border-t border-slate-800 flex items-center justify-between text-xs gap-2">
+                      <div className="flex items-center space-x-1.5 text-slate-400">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                        <span>In Stock: <strong className="text-white">{prod.stock} units</strong></span>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setInquiryItem({ ...prod, itemType: 'PRODUCT' })}
+                          className="px-3 py-1.5 bg-emerald-500/20 hover:bg-emerald-500 text-emerald-300 hover:text-slate-950 font-bold rounded-xl text-xs transition flex items-center gap-1 border border-emerald-500/30"
+                        >
+                          <MessageSquare className="w-3 h-3" />
+                          <span>Send Query</span>
+                        </button>
+
+                        {isAuthenticated && canManage && (
+                          <button
+                            onClick={() => handleDeleteProduct(prod.id)}
+                            className="text-slate-500 hover:text-rose-400 transition p-1"
+                            title="Delete Product"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {filteredProducts.length === 0 && (
+              <div className="bg-slate-900 border border-slate-800 rounded-3xl p-12 text-center text-slate-500 space-y-2">
+                <ShoppingBag className="w-10 h-10 mx-auto text-slate-600 mb-2" />
+                <div className="text-sm font-bold text-white">No products found</div>
+                <p className="text-xs text-slate-400">Try adjusting your search query or category filters.</p>
+              </div>
+            )}
+          </section>
+        )}
+
+        {/* ============================================================== */}
+        {/* TAB 2: EXCLUSIVE OFFERS ONLY                                    */}
+        {/* ============================================================== */}
+        {activeTab === 'OFFERS' && (
+          <section className="space-y-6 animate-in fade-in duration-300">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+              <div className="flex items-center space-x-2">
+                <Tag className="w-5 h-5 text-amber-400" />
+                <h2 className="text-lg font-black text-white">Active Promotional Deals &amp; Discounts</h2>
+              </div>
+              <span className="text-xs text-slate-400">{offers.length} Active Offers</span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {offers.map((offer) => {
+                const isAdmin = offer.uploader_role === 'ADMIN';
+                return (
+                  <div
+                    key={offer.id}
+                    className="bg-slate-900 border border-slate-800 hover:border-slate-700 rounded-3xl p-6 relative overflow-hidden shadow-xl flex flex-col justify-between group transition hover:-translate-y-0.5"
+                  >
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <span className="px-3.5 py-1.5 bg-gradient-to-r from-amber-500 to-orange-600 text-slate-950 font-black text-xs rounded-full shadow-md flex items-center gap-1">
+                          <Percent className="w-3 h-3" />
+                          <span>{offer.discount_percent}% OFF</span>
+                        </span>
+                        <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full border ${
+                          isAdmin
+                            ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                            : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
+                        }`}>
+                          {isAdmin ? '🛠️ Repair Service Deal' : '🏪 Store Promotion'}
+                        </span>
+                      </div>
+
+                      <div>
+                        <h3 className="font-extrabold text-white text-lg group-hover:text-amber-300 transition">
+                          {offer.title}
+                        </h3>
+                        <p className="text-xs text-slate-400 mt-2 leading-relaxed">
+                          {offer.description}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="pt-5 mt-5 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-400 gap-2">
+                      <div className="truncate">
+                        By: <strong className="text-slate-300">{offer.uploader_name || 'Shop Partner'}</strong>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setInquiryItem({ ...offer, itemType: 'OFFER' })}
+                          className="px-3.5 py-1.5 bg-amber-500/20 hover:bg-amber-500 text-amber-300 hover:text-slate-950 font-bold rounded-xl text-xs transition flex items-center gap-1 border border-amber-500/30"
+                        >
+                          <MessageSquare className="w-3.5 h-3.5" />
+                          <span>Claim / Send Query</span>
+                        </button>
+
+                        {isAuthenticated && canManage && (
+                          <button
+                            onClick={() => supabaseService.deleteOffer(offer.id).then(loadMarketplaceData)}
+                            className="text-slate-500 hover:text-rose-400 transition p-1"
+                            title="Delete Offer"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {offers.length === 0 && (
+              <div className="bg-slate-900 border border-slate-800 rounded-3xl p-12 text-center text-slate-500 space-y-2">
+                <Tag className="w-10 h-10 mx-auto text-slate-600 mb-2" />
+                <div className="text-sm font-bold text-white">No active offers available</div>
+                <p className="text-xs text-slate-400">Check back later or check in-store promotions directly via WhatsApp inquiry.</p>
+              </div>
+            )}
+          </section>
+        )}
+
       </main>
 
       {/* MODAL 1: ADD PRODUCT */}
@@ -673,4 +752,3 @@ export default function MarketplacePage() {
     </div>
   );
 }
-
