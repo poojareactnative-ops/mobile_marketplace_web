@@ -28,22 +28,39 @@ export function middleware(request) {
     }
   }
 
-  const isAuthRoute = pathname === '/login' || pathname === '/register';
+  const isSuperAdminLogin = pathname === '/super-admin/login';
+  const isAuthRoute = pathname === '/login' || pathname === '/register' || isSuperAdminLogin;
+  const isSuperAdminProtected = pathname.startsWith('/super-admin') && !isSuperAdminLogin;
+
   const isProtectedRoute = 
     pathname.startsWith('/dashboard') ||
     pathname.startsWith('/admin') ||
     pathname.startsWith('/seller') ||
-    pathname.startsWith('/super-admin');
+    isSuperAdminProtected;
 
-  // 3. If ALREADY authenticated and visiting /login or /register -> Redirect to /dashboard
+  // 3. If ALREADY authenticated and visiting auth route
   if (user && isAuthRoute) {
+    if (user.role === 'SUPER_ADMIN') {
+      const superAdminUrl = request.nextUrl.clone();
+      superAdminUrl.pathname = '/super-admin';
+      superAdminUrl.search = '';
+      return NextResponse.redirect(superAdminUrl);
+    }
     const dashboardUrl = request.nextUrl.clone();
     dashboardUrl.pathname = '/dashboard';
     dashboardUrl.search = '';
     return NextResponse.redirect(dashboardUrl);
   }
 
-  // 4. If NOT authenticated and visiting a protected route -> Redirect to /login with redirect parameter
+  // 4. If NOT authenticated and visiting Super Admin protected route -> Redirect to dedicated /super-admin/login
+  if (!user && isSuperAdminProtected) {
+    const superLoginUrl = request.nextUrl.clone();
+    superLoginUrl.pathname = '/super-admin/login';
+    superLoginUrl.searchParams.set('redirect', pathname + (search || ''));
+    return NextResponse.redirect(superLoginUrl);
+  }
+
+  // 4b. If NOT authenticated and visiting general protected route -> Redirect to /login
   if (!user && isProtectedRoute) {
     const loginUrl = request.nextUrl.clone();
     loginUrl.pathname = '/login';
@@ -54,7 +71,7 @@ export function middleware(request) {
   // 5. Role-Based Authorization Checks (AuthZ) for authenticated users
   if (user) {
     // SUPER_ADMIN workbench: only SUPER_ADMIN permitted
-    if (pathname.startsWith('/super-admin') && user.role !== 'SUPER_ADMIN') {
+    if (isSuperAdminProtected && user.role !== 'SUPER_ADMIN') {
       const redirectUrl = request.nextUrl.clone();
       redirectUrl.pathname = '/dashboard';
       redirectUrl.search = '';

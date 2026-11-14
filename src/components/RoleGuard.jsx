@@ -11,12 +11,24 @@ export default function RoleGuard({ allowedRoles = [], children }) {
   const pathname = usePathname();
   const { user, role, isAuthenticated, loading } = useAuth();
 
+  const isSuperAdminOnly = allowedRoles.length === 1 && allowedRoles.includes('SUPER_ADMIN');
+  const targetLoginUrl = isSuperAdminOnly
+    ? `/super-admin/login?redirect=${encodeURIComponent(pathname)}`
+    : `/login?redirect=${encodeURIComponent(pathname)}`;
+
+  // Public auth pages must never be guarded by RoleGuard
+  const isAuthPage = pathname === '/login' || pathname === '/register' || pathname === '/super-admin/login';
+
   useEffect(() => {
-    if (!loading && (!isAuthenticated || !user)) {
-      // Auto-redirect to login with target path
-      router.push(`/login?redirect=${encodeURIComponent(pathname)}`);
+    if (!loading && !isAuthPage && (!isAuthenticated || !user)) {
+      // Auto-redirect to appropriate login with target path
+      router.push(targetLoginUrl);
     }
-  }, [loading, isAuthenticated, user, pathname, router]);
+  }, [loading, isAuthPage, isAuthenticated, user, pathname, router, targetLoginUrl]);
+
+  if (isAuthPage) {
+    return <>{children}</>;
+  }
 
   if (loading) {
     return (
@@ -31,19 +43,21 @@ export default function RoleGuard({ allowedRoles = [], children }) {
   if (!isAuthenticated || !user) {
     return (
       <div className="max-w-lg w-full mx-auto my-12 p-8 bg-slate-900 border border-slate-800 rounded-3xl text-center space-y-4 shadow-2xl">
-        <div className="w-12 h-12 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center mx-auto">
+        <div className={`w-12 h-12 rounded-2xl ${isSuperAdminOnly ? 'bg-purple-500/20 text-purple-400' : 'bg-amber-500/20 text-amber-400'} flex items-center justify-center mx-auto`}>
           <Lock className="w-6 h-6" />
         </div>
         <h2 className="text-xl font-black text-white">Authentication Required</h2>
         <p className="text-xs text-slate-400 leading-relaxed">
-          You must be signed in to access this workbench. Please sign in with your account to proceed.
+          {isSuperAdminOnly 
+            ? 'Super Admin authorization required. Please authenticate via the restricted governance vault.'
+            : 'You must be signed in to access this workbench. Please sign in with your account to proceed.'}
         </p>
         <Link
-          href={`/login?redirect=${encodeURIComponent(pathname)}`}
-          className="inline-flex items-center space-x-2 px-5 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-xl text-xs shadow-lg transition"
+          href={targetLoginUrl}
+          className={`inline-flex items-center space-x-2 px-5 py-2.5 ${isSuperAdminOnly ? 'bg-purple-600 hover:bg-purple-500 text-white' : 'bg-amber-500 hover:bg-amber-400 text-slate-950'} font-black rounded-xl text-xs shadow-lg transition`}
         >
           <LogIn className="w-4 h-4" />
-          <span>Sign In to Continue</span>
+          <span>{isSuperAdminOnly ? 'Access Super Admin Vault' : 'Sign In to Continue'}</span>
         </Link>
       </div>
     );

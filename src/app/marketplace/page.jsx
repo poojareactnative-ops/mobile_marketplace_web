@@ -6,8 +6,8 @@ import { useRouter } from 'next/navigation';
 import Navbar from '../../components/Navbar';
 import { useAuth } from '../../context/AuthContext';
 import { supabaseService } from '../../services/supabaseService';
-import { 
-  ShoppingBag, Tag, Plus, Search, Filter, Wrench, Store, 
+import {
+  ShoppingBag, Tag, Plus, Search, Filter, Wrench, Store,
   Sparkles, Trash2, CheckCircle2, ArrowRight, Clock, ShieldCheck, MessageSquare, Percent
 } from 'lucide-react';
 import CustomerInquiryModal from '../../components/CustomerInquiryModal';
@@ -24,7 +24,7 @@ const CATEGORIES = [
 export default function MarketplacePage() {
   const router = useRouter();
   const { user, isAuthenticated } = useAuth();
-  
+
   // Tab State: 'PRODUCTS' or 'OFFERS'
   const [activeTab, setActiveTab] = useState('PRODUCTS');
 
@@ -144,14 +144,14 @@ export default function MarketplacePage() {
 
   // Filtered products calculation
   const filteredProducts = products.filter((p) => {
-    const matchesSearch = 
+    const matchesSearch =
       p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (p.brand && p.brand.toLowerCase().includes(searchQuery.toLowerCase()));
 
-    const matchesCategory = 
+    const matchesCategory =
       selectedCategory === 'All' || p.category === selectedCategory;
 
-    const matchesUploader = 
+    const matchesUploader =
       uploaderFilter === 'ALL' || p.uploader_role === uploaderFilter;
 
     return matchesSearch && matchesCategory && matchesUploader;
@@ -185,7 +185,7 @@ export default function MarketplacePage() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-amber-500 selection:text-slate-950">
-      
+
       {/* Top Navbar */}
       <Navbar />
 
@@ -207,7 +207,7 @@ export default function MarketplacePage() {
                 {activeTab === 'PRODUCTS' ? 'Products Catalog' : 'Promotional Offers & Deals'}
               </h1>
               <p className="text-sm text-slate-400 max-w-2xl mt-1.5 leading-relaxed">
-                {activeTab === 'PRODUCTS' 
+                {activeTab === 'PRODUCTS'
                   ? 'Explore certified accessories and gear uploaded by verified local accessory sellers and repair shops.'
                   : 'Exclusive walking-distance repair discounts and deals posted by certified repair hub admins.'}
               </p>
@@ -243,17 +243,15 @@ export default function MarketplacePage() {
               <button
                 type="button"
                 onClick={() => setActiveTab('PRODUCTS')}
-                className={`flex items-center space-x-2.5 px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all ${
-                  activeTab === 'PRODUCTS'
-                    ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-lg shadow-emerald-600/25 ring-1 ring-emerald-400/40'
-                    : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
-                }`}
+                className={`flex items-center space-x-2.5 px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all ${activeTab === 'PRODUCTS'
+                  ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-lg shadow-emerald-600/25 ring-1 ring-emerald-400/40'
+                  : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                  }`}
               >
                 <ShoppingBag className="w-4 h-4" />
                 <span>Products</span>
-                <span className={`px-2 py-0.5 text-[10px] font-extrabold rounded-full ${
-                  activeTab === 'PRODUCTS' ? 'bg-white/20 text-white' : 'bg-slate-800 text-slate-400'
-                }`}>
+                <span className={`px-2 py-0.5 text-[10px] font-extrabold rounded-full ${activeTab === 'PRODUCTS' ? 'bg-white/20 text-white' : 'bg-slate-800 text-slate-400'
+                  }`}>
                   {products.length}
                 </span>
               </button>
@@ -261,17 +259,15 @@ export default function MarketplacePage() {
               <button
                 type="button"
                 onClick={() => setActiveTab('OFFERS')}
-                className={`flex items-center space-x-2.5 px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all ${
-                  activeTab === 'OFFERS'
-                    ? 'bg-gradient-to-r from-amber-500 to-orange-600 text-slate-950 font-black shadow-lg shadow-amber-500/25 ring-1 ring-amber-300/40'
-                    : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
-                }`}
+                className={`flex items-center space-x-2.5 px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all ${activeTab === 'OFFERS'
+                  ? 'bg-gradient-to-r from-amber-500 to-orange-600 text-slate-950 font-black shadow-lg shadow-amber-500/25 ring-1 ring-amber-300/40'
+                  : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                  }`}
               >
                 <Tag className="w-4 h-4" />
                 <span>Exclusive Offers</span>
-                <span className={`px-2 py-0.5 text-[10px] font-extrabold rounded-full ${
-                  activeTab === 'OFFERS' ? 'bg-slate-950/30 text-slate-950' : 'bg-slate-800 text-slate-400'
-                }`}>
+                <span className={`px-2 py-0.5 text-[10px] font-extrabold rounded-full ${activeTab === 'OFFERS' ? 'bg-slate-950/30 text-slate-950' : 'bg-slate-800 text-slate-400'
+                  }`}>
                   {offers.length}
                 </span>
               </button>
@@ -290,7 +286,7 @@ export default function MarketplacePage() {
 
       {/* Main Container - Displays ONLY the Active Tab Content */}
       <main className="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1">
-        
+
         {/* ============================================================== */}
         {/* TAB 1: PRODUCTS ONLY                                            */}
         {/* ============================================================== */}
@@ -312,25 +308,22 @@ export default function MarketplacePage() {
               <div className="flex items-center space-x-1.5 bg-slate-900 p-1 rounded-xl border border-slate-800 text-xs">
                 <button
                   onClick={() => setUploaderFilter('ALL')}
-                  className={`px-3 py-1.5 rounded-lg font-bold transition ${
-                    uploaderFilter === 'ALL' ? 'bg-white text-slate-950 shadow' : 'text-slate-400 hover:text-white'
-                  }`}
+                  className={`px-3 py-1.5 rounded-lg font-bold transition ${uploaderFilter === 'ALL' ? 'bg-white text-slate-950 shadow' : 'text-slate-400 hover:text-white'
+                    }`}
                 >
                   All Items
                 </button>
                 <button
                   onClick={() => setUploaderFilter('ADMIN')}
-                  className={`px-3 py-1.5 rounded-lg font-bold transition ${
-                    uploaderFilter === 'ADMIN' ? 'bg-amber-600 text-white shadow' : 'text-slate-400 hover:text-white'
-                  }`}
+                  className={`px-3 py-1.5 rounded-lg font-bold transition ${uploaderFilter === 'ADMIN' ? 'bg-amber-600 text-white shadow' : 'text-slate-400 hover:text-white'
+                    }`}
                 >
                   🛠️ Repair Centers
                 </button>
                 <button
                   onClick={() => setUploaderFilter('SELLER')}
-                  className={`px-3 py-1.5 rounded-lg font-bold transition ${
-                    uploaderFilter === 'SELLER' ? 'bg-emerald-600 text-white shadow' : 'text-slate-400 hover:text-white'
-                  }`}
+                  className={`px-3 py-1.5 rounded-lg font-bold transition ${uploaderFilter === 'SELLER' ? 'bg-emerald-600 text-white shadow' : 'text-slate-400 hover:text-white'
+                    }`}
                 >
                   🏪 Accessory Stores
                 </button>
@@ -357,11 +350,10 @@ export default function MarketplacePage() {
                   <button
                     key={cat}
                     onClick={() => setSelectedCategory(cat)}
-                    className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${
-                      selectedCategory === cat
-                        ? 'bg-amber-500 text-slate-950 shadow font-bold'
-                        : 'bg-slate-900 border border-slate-800 text-slate-400 hover:text-white'
-                    }`}
+                    className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${selectedCategory === cat
+                      ? 'bg-amber-500 text-slate-950 shadow font-bold'
+                      : 'bg-slate-900 border border-slate-800 text-slate-400 hover:text-white'
+                      }`}
                   >
                     {cat}
                   </button>
@@ -383,11 +375,10 @@ export default function MarketplacePage() {
                         <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 bg-slate-950 px-2 py-0.5 rounded-lg border border-slate-800">
                           {prod.category}
                         </span>
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
-                          isAdmin
-                            ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
-                            : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
-                        }`}>
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${isAdmin
+                          ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                          : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
+                          }`}>
                           {isAdmin ? '🛠️ Certified Repair Center' : '🏪 Verified Store'}
                         </span>
                       </div>
@@ -478,11 +469,10 @@ export default function MarketplacePage() {
                           <Percent className="w-3 h-3" />
                           <span>{offer.discount_percent}% OFF</span>
                         </span>
-                        <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full border ${
-                          isAdmin
-                            ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
-                            : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
-                        }`}>
+                        <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full border ${isAdmin
+                          ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                          : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
+                          }`}>
                           {isAdmin ? '🛠️ Repair Service Deal' : '🏪 Store Promotion'}
                         </span>
                       </div>

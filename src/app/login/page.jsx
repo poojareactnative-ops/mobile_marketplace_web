@@ -4,8 +4,8 @@ import React, { useState, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '../../context/AuthContext';
-import { 
-  Wrench, ArrowRight, Lock, Mail, AlertCircle, ShieldAlert, 
+import {
+  Wrench, ArrowRight, Lock, Mail, AlertCircle, ShieldAlert,
   Store, UserCheck, ShieldCheck, Sparkles, Eye, EyeOff, ArrowLeft,
   KeyRound, CheckCircle2
 } from 'lucide-react';
@@ -33,6 +33,15 @@ function LoginForm() {
       return;
     }
 
+    const cleanEmail = email.trim().toLowerCase();
+    if (cleanEmail === 'superadmin@smartfix.com' || cleanEmail === 'superadmin') {
+      setError('Super Admin account detected: Please sign in via the Protected Super Admin Portal.');
+      setTimeout(() => {
+        router.push('/super-admin/login');
+      }, 1200);
+      return;
+    }
+
     try {
       setSubmitting(true);
       setError('');
@@ -47,14 +56,13 @@ function LoginForm() {
 
   return (
     <div className="w-full space-y-6">
-      
+
       {redirectTarget !== '/dashboard' && (
         <div className="bg-amber-500/10 border border-amber-500/30 text-amber-300 p-3.5 rounded-2xl text-xs flex items-center gap-2.5 animate-in fade-in">
           <ShieldAlert className="w-4 h-4 shrink-0 text-amber-400" />
           <span>Please sign in to access: <strong className="text-white font-mono">{redirectTarget}</strong></span>
         </div>
       )}
-
       {error && (
         <div className="bg-rose-950/80 border border-rose-800 text-rose-300 p-3.5 rounded-2xl text-xs flex items-center gap-2.5 shadow-lg animate-in fade-in">
           <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
@@ -126,8 +134,8 @@ function LoginForm() {
       {/* Registration link */}
       <div className="pt-3 text-center text-xs text-slate-400 border-t border-slate-800">
         Don&apos;t have an account yet?{' '}
-        <Link 
-          href={`/register${redirectTarget !== '/dashboard' ? `?redirect=${encodeURIComponent(redirectTarget)}` : ''}`} 
+        <Link
+          href={`/register${redirectTarget !== '/dashboard' ? `?redirect=${encodeURIComponent(redirectTarget)}` : ''}`}
           className="font-bold text-amber-400 hover:text-amber-300 inline-flex items-center gap-1 ml-1"
         >
           <span>Register New Account</span>
@@ -142,7 +150,7 @@ function LoginForm() {
 export default function LoginPage() {
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-amber-500 selection:text-slate-950 relative overflow-hidden">
-      
+
       {/* Background ambient lighting */}
       <div className="absolute top-1/4 -left-48 w-96 h-96 bg-amber-500/10 blur-[120px] pointer-events-none rounded-full" />
       <div className="absolute bottom-1/4 -right-48 w-96 h-96 bg-indigo-500/10 blur-[120px] pointer-events-none rounded-full" />
@@ -164,10 +172,10 @@ export default function LoginPage() {
       {/* Main Dual-Column Content */}
       <main className="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-16 flex-1 flex items-center justify-center relative z-10">
         <div className="w-full grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-center">
-          
+
           {/* LEFT COLUMN: BRAND STORY & QUICK ACCESS */}
           <div className="lg:col-span-6 space-y-8 text-center lg:text-left">
-            
+
             <div className="inline-flex items-center space-x-2 bg-slate-900 border border-slate-800 px-3.5 py-1.5 rounded-full text-xs font-semibold text-slate-300 shadow-md">
               <Sparkles className="w-3.5 h-3.5 text-amber-400" />
               <span>SmartFix Hub Platform Access</span>
@@ -247,8 +255,12 @@ export default function LoginPage() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-slate-800/80 bg-slate-950 py-6 text-xs text-slate-500 text-center">
-        SmartFix Hub &bull; Hyperlocal Mobile Repair &amp; 2% Referral Platform &bull; Powered by Next.js &amp; Supabase
+      <footer className="border-t border-slate-800/80 bg-slate-950 py-6 text-xs text-slate-500 text-center flex flex-col sm:flex-row items-center justify-center gap-2">
+        <span>SmartFix Hub &bull; Hyperlocal Mobile Repair &amp; 2% Referral Platform &bull; Powered by Next.js &amp; Supabase</span>
+        <span className="hidden sm:inline">&bull;</span>
+        <Link href="/super-admin/login" className="text-slate-600 hover:text-purple-400 text-[11px] transition">
+          Restricted Super Admin Portal
+        </Link>
       </footer>
 
     </div>

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback, Suspense } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import Navbar from '../../components/Navbar';
 import CommissionCalculator from '../../components/CommissionCalculator';
 import AdminCompleteRepairModal from '../../components/AdminCompleteRepairModal';
@@ -19,7 +20,21 @@ import {
 } from 'lucide-react';
 
 function DashboardContent() {
+  const router = useRouter();
   const { user, role, isAuthenticated, loading: authLoading } = useAuth();
+
+  // Smart redirect: automatically navigate to the dedicated, full-screen dashboard for this role
+  useEffect(() => {
+    if (isAuthenticated && !authLoading) {
+      if (role === 'ADMIN') {
+        router.replace('/admin');
+      } else if (role === 'SELLER') {
+        router.replace('/seller');
+      } else if (role === 'SUPER_ADMIN') {
+        router.replace('/super-admin');
+      }
+    }
+  }, [isAuthenticated, authLoading, role, router]);
 
   const [loading, setLoading] = useState(true);
 

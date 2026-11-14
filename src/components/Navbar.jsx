@@ -17,8 +17,7 @@ export default function Navbar() {
   const [showUserMenu, setShowUserMenu] = useState(false);
 
   const handleSignOut = () => {
-    logout();
-    router.push('/login');
+    logout('/');
   };
 
   const getRoleBadge = (r) => {
@@ -35,6 +34,8 @@ export default function Navbar() {
   };
 
   const roleInfo = getRoleBadge(role);
+  const dashboardUrl = role === 'ADMIN' ? '/admin' : (role === 'SELLER' ? '/seller' : (role === 'SUPER_ADMIN' ? '/super-admin' : '/dashboard'));
+  const dashboardLabel = role === 'ADMIN' ? 'Admin Hub' : (role === 'SELLER' ? 'Seller Workbench' : (role === 'SUPER_ADMIN' ? 'Super Admin Audit' : 'My Workbench'));
 
   return (
     <header className="sticky top-0 z-40 bg-slate-950/85 backdrop-blur-xl border-b border-slate-800/80 text-white shadow-2xl">
@@ -82,11 +83,11 @@ export default function Navbar() {
             {/* Dashboard ONLY visible when authenticated as shop staff */}
             {isAuthenticated && (
               <Link
-                href="/dashboard"
-                className={`px-3 py-2 rounded-xl transition flex items-center gap-1.5 ${pathname === '/dashboard' ? 'bg-slate-900 text-amber-400 font-bold border border-slate-800' : 'hover:text-white hover:bg-slate-900/60'}`}
+                href={dashboardUrl}
+                className={`px-3 py-2 rounded-xl transition flex items-center gap-1.5 ${pathname === dashboardUrl || pathname === '/dashboard' ? 'bg-slate-900 text-amber-400 font-bold border border-slate-800' : 'hover:text-white hover:bg-slate-900/60'}`}
               >
                 <LayoutDashboard className="w-3.5 h-3.5" />
-                <span>My Workbench</span>
+                <span>{dashboardLabel}</span>
               </Link>
             )}
           </nav>
@@ -127,12 +128,12 @@ export default function Navbar() {
 
                     <div className="py-1">
                       <Link
-                        href="/dashboard"
+                        href={dashboardUrl}
                         onClick={() => setShowUserMenu(false)}
                         className="w-full text-left px-3 py-2 rounded-xl text-xs text-slate-300 hover:text-white hover:bg-slate-800/80 transition flex items-center gap-2 font-medium"
                       >
                         <LayoutDashboard className="w-3.5 h-3.5 text-amber-400" />
-                        <span>My Dashboard</span>
+                        <span>{dashboardLabel}</span>
                       </Link>
                       <Link
                         href="/marketplace"
@@ -157,8 +158,14 @@ export default function Navbar() {
                 )}
               </div>
             ) : (
-              /* Consumer View: Discreet quick contact button without asking for login */
+              /* Consumer View & Staff Sign-In */
               <div className="flex items-center space-x-2">
+                <Link
+                  href="/login"
+                  className="px-3 py-1.5 text-xs text-slate-300 hover:text-white transition font-medium rounded-xl hover:bg-slate-900 border border-transparent hover:border-slate-800"
+                >
+                  Sign In
+                </Link>
                 <Link
                   href="/#nearby"
                   className="px-3.5 py-1.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-black rounded-xl text-xs shadow-md transition flex items-center space-x-1"

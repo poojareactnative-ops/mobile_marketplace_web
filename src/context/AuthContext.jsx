@@ -49,6 +49,18 @@ export function AuthProvider({ children }) {
     }
   };
 
+  // 1b. Dedicated Super Admin Login with Security Passkey
+  const superAdminLogin = async (email, password, securityKey) => {
+    setLoading(true);
+    try {
+      const authenticatedUser = await supabaseService.superAdminLogin(email, password, securityKey);
+      saveUserSession(authenticatedUser);
+      return authenticatedUser;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // 2. Register new account
   const register = async (userData) => {
     setLoading(true);
@@ -61,9 +73,12 @@ export function AuthProvider({ children }) {
     }
   };
 
-  // 3. Logout
-  const logout = () => {
+  // 3. Logout (Clears user session and redirects to home screen)
+  const logout = (redirectPath = '/') => {
     saveUserSession(null);
+    if (typeof window !== 'undefined') {
+      window.location.href = redirectPath;
+    }
   };
 
   const value = {
@@ -72,6 +87,7 @@ export function AuthProvider({ children }) {
     isAuthenticated: !!user,
     loading,
     login,
+    superAdminLogin,
     register,
     logout,
   };
