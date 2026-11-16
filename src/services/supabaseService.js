@@ -445,22 +445,19 @@ export const supabaseService = {
     throw new Error('Account not found with this email. Please register first or contact your shop Admin.');
   },
 
-  // 9b. Dedicated Super Admin High-Security Authentication
-  async superAdminLogin(email, password, securityKey) {
+  // 9b. Dedicated Super Admin Authentication
+  async superAdminLogin(email, password) {
     const cleanEmail = String(email || '').trim().toLowerCase();
-    const cleanKey = String(securityKey || '').trim();
-
-    // 1. Mandatory Master Security Passkey Verification
-    const VALID_KEYS = ['MASTER-9922', '9922', 'SUPERKEY-2026', 'ADMIN_ROOT_KEY'];
-    if (!cleanKey || !VALID_KEYS.includes(cleanKey)) {
-      throw new Error('Access Denied: Invalid Master Platform Security Key. Enter the authorized 2FA security passkey.');
-    }
 
     if (!cleanEmail) {
       throw new Error('Please enter the Super Admin identity email.');
     }
 
-    // 2. Query Supabase for profile
+    if (!password) {
+      throw new Error('Please enter the Super Admin password.');
+    }
+
+    // Query Supabase for profile
     let profile = null;
     try {
       const data = await supabaseRest(`profiles?email=eq.${encodeURIComponent(cleanEmail)}&select=*`);
@@ -687,20 +684,11 @@ export const supabaseService = {
     try {
       const sellers = await supabaseRest(`profiles?role=eq.SELLER&admin_id=eq.${adminId}&select=*&order=created_at.desc`);
       const list = Array.isArray(sellers) ? sellers : [];
-      let verifiedMap = {};
-      if (typeof window !== 'undefined') {
-        try {
-          verifiedMap = JSON.parse(localStorage.getItem('smartfix_verified_partners') || '{}');
-        } catch (e) {}
-      }
-      return list.map((s) => {
-        const isGenVerified = !!verifiedMap[String(s.email).toLowerCase().trim()];
-        return {
-          ...s,
-          isVerified: isGenVerified,
-          verification_status: isGenVerified ? 'VERIFIED_GENUINE' : (s.status === 'ACTIVE' ? 'ACTIVE' : 'STANDARD'),
-        };
-      });
+      return list.map((s) => ({
+        ...s,
+        status: s.status || 'ACTIVE',
+        verification_status: 'ACTIVE',
+      }));
     } catch (e) {
       console.warn('getAffiliatedSellers notice:', e.message);
       return [];
@@ -738,21 +726,13 @@ export const supabaseService = {
         if (s.owner_id) shopMap[s.owner_id] = s;
       });
 
-      let verifiedMap = {};
-      if (typeof window !== 'undefined') {
-        try {
-          verifiedMap = JSON.parse(localStorage.getItem('smartfix_verified_partners') || '{}');
-        } catch (e) {}
-      }
-
       return (Array.isArray(sellers) ? sellers : []).map((se) => {
         const assignedAdmin = se.admin_id ? adminMap[se.admin_id] : null;
         const assignedShop = (se.shop_id && shopMap[se.shop_id]) || (se.admin_id && shopMap[se.admin_id]) || null;
-        const isGenVerified = !!verifiedMap[String(se.email).toLowerCase().trim()];
         return {
           ...se,
-          isVerified: isGenVerified,
-          verification_status: isGenVerified ? 'VERIFIED_GENUINE' : (se.status === 'ACTIVE' ? 'ACTIVE' : 'STANDARD'),
+          status: se.status || 'ACTIVE',
+          verification_status: 'ACTIVE',
           assignedAdminName: assignedAdmin?.name || 'Assigned Admin',
           assignedAdminEmail: assignedAdmin?.email || '',
           shop_name: assignedShop?.name || se.shop_name || 'Partner Repair Hub',

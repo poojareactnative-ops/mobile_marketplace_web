@@ -2,8 +2,8 @@
 
 import React, { useState } from 'react';
 import {
-  Store, UserPlus, AlertCircle, CheckCircle2, Bell, ShieldCheck,
-  Smartphone, Send, RefreshCw, Sparkles, Check, MessageCircle
+  Store, UserPlus, AlertCircle, CheckCircle2, ShieldCheck,
+  Phone, Mail, Percent, ArrowRight
 } from 'lucide-react';
 import { notificationService } from '../services/notificationService';
 
@@ -20,75 +20,7 @@ export default function AdminOnboardSellerModal({ isOpen, onClose, onSellerCreat
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(null);
 
-  // Genuine Partner Verification Alert State
-  const [sendingAlert, setSendingAlert] = useState(false);
-  const [alertSent, setAlertSent] = useState(false);
-  const [generatedOtp, setGeneratedOtp] = useState('');
-  const [inputOtp, setInputOtp] = useState('');
-  const [isVerified, setIsVerified] = useState(false);
-  const [otpError, setOtpError] = useState('');
-  const [alertModalDetails, setAlertModalDetails] = useState(null);
-
   if (!isOpen) return null;
-
-  // 1. Dispatch Verification Notification Alert to Partner
-  const handleSendAlert = async () => {
-    if (!form.phone && !form.email) {
-      setError('Please provide seller phone or email to send verification alert');
-      return;
-    }
-
-    try {
-      setSendingAlert(true);
-      setError('');
-      setOtpError('');
-
-      const res = await notificationService.sendPartnerVerificationAlert({
-        name: form.name || 'Store Partner',
-        phone: form.phone,
-        email: form.email,
-        shopName: form.shopName || `${form.name} Accessories`,
-      });
-
-      setAlertSent(true);
-      setGeneratedOtp(res.code);
-      setAlertModalDetails(res);
-    } catch (err) {
-      setError('Failed to dispatch alert: ' + err.message);
-    } finally {
-      setSendingAlert(false);
-    }
-  };
-
-  // 2. Validate Partner OTP to Confirm Genuine Store
-  const handleVerifyOtp = (codeToVerify) => {
-    const code = codeToVerify || inputOtp;
-    if (!code) {
-      setOtpError('Please enter the 4-digit code sent to the partner');
-      return;
-    }
-
-    const check = notificationService.verifyPartnerCode(
-      form.phone || form.email,
-      code,
-      generatedOtp
-    );
-
-    if (check.verified) {
-      setIsVerified(true);
-      setOtpError('');
-    } else {
-      setOtpError(check.error || 'Invalid code');
-    }
-  };
-
-  // Auto-fill demo OTP helper
-  const handleAutoFillOtp = () => {
-    if (generatedOtp) {
-      setInputOtp(generatedOtp);
-      handleVerifyOtp(generatedOtp);
-    }
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -102,16 +34,15 @@ export default function AdminOnboardSellerModal({ isOpen, onClose, onSellerCreat
       setError('');
       const created = await onSellerCreated({
         ...form,
-        isVerified,
-        verificationStatus: isVerified ? 'VERIFIED_GENUINE' : 'STANDARD',
-        verifiedAt: isVerified ? new Date().toISOString() : null,
+        isVerified: true,
+        verificationStatus: 'ACTIVE',
       });
 
       // Post audit notification alert
       notificationService.addNotificationAlert({
         type: 'PARTNER_VERIFIED',
-        title: isVerified ? 'Genuine Store Partner Verified' : 'New Partner Registered',
-        message: `Store "${form.shopName || form.name}" (${form.phone || form.email}) ${isVerified ? 'verified as genuine partner' : 'registered'} under ${adminUser?.shopName || 'Admin Hub'}.`,
+        title: 'New Partner Store Registered',
+        message: `Store "${form.shopName || form.name}" (${form.phone || form.email}) successfully partnered with ${adminUser?.shopName || 'Admin Hub'}.`,
         timestamp: new Date().toISOString(),
       });
 
@@ -125,13 +56,8 @@ export default function AdminOnboardSellerModal({ isOpen, onClose, onSellerCreat
           shopName: '',
           password: 'Seller@123',
         });
-        setAlertSent(false);
-        setIsVerified(false);
-        setInputOtp('');
-        setGeneratedOtp('');
-        setAlertModalDetails(null);
         onClose();
-      }, 1500);
+      }, 1200);
     } catch (err) {
       setError(err.message || 'Failed to onboard seller');
     } finally {
@@ -141,8 +67,11 @@ export default function AdminOnboardSellerModal({ isOpen, onClose, onSellerCreat
 
   return (
     <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-slate-900 border border-slate-700 rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in-95 font-sans max-h-[90vh] overflow-y-auto">
+      <div className="bg-slate-900 border border-slate-700/80 rounded-3xl max-w-lg w-full p-6 sm:p-7 shadow-2xl space-y-4 animate-in fade-in zoom-in-95 font-sans relative overflow-hidden">
         
+        {/* Glow */}
+        <div className="absolute top-0 right-0 w-60 h-60 bg-emerald-500/10 blur-3xl pointer-events-none rounded-full" />
+
         {/* Header */}
         <div className="flex justify-between items-start border-b border-slate-800 pb-3">
           <div className="flex items-center space-x-3">
@@ -150,16 +79,9 @@ export default function AdminOnboardSellerModal({ isOpen, onClose, onSellerCreat
               <Store className="w-5 h-5" />
             </div>
             <div>
-              <div className="flex items-center gap-1.5">
-                <h3 className="text-base font-extrabold text-white">Onboard New Accessory Seller Partner</h3>
-                {isVerified && (
-                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-bold border border-emerald-500/30">
-                    GENUINE VERIFIED
-                  </span>
-                )}
-              </div>
+              <h3 className="text-base font-extrabold text-white">Onboard Partner Accessory Store</h3>
               <p className="text-xs text-slate-400 mt-0.5">
-                Register and verify a genuine mobile accessory shop to refer repair walk-ins for 2% commission.
+                Register a mobile shop partner under {adminUser?.shopName || 'your workshop'} (2% Referral Model)
               </p>
             </div>
           </div>
@@ -167,212 +89,101 @@ export default function AdminOnboardSellerModal({ isOpen, onClose, onSellerCreat
         </div>
 
         {error && (
-          <div className="bg-rose-950/60 border border-rose-800 text-rose-300 p-3 rounded-xl text-xs flex items-center gap-2">
+          <div className="bg-rose-950/80 border border-rose-800 text-rose-300 p-3 rounded-xl text-xs flex items-center gap-2">
             <AlertCircle className="w-4 h-4 shrink-0" />
             <span>{error}</span>
           </div>
         )}
 
         {success && (
-          <div className="bg-emerald-950/60 border border-emerald-800 text-emerald-300 p-3 rounded-xl text-xs flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 shrink-0" />
-            <span>Seller successfully onboarded! Credentials and genuine partner badge activated.</span>
+          <div className="bg-emerald-950/80 border border-emerald-800 text-emerald-300 p-4 rounded-xl text-xs space-y-1.5 animate-in fade-in">
+            <div className="flex items-center gap-2 font-bold text-sm">
+              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+              <span>Partner Store Onboarded Successfully!</span>
+            </div>
+            <p className="text-slate-300">
+              Store <strong>{success.shopName || success.name}</strong> ({success.email}) is now active. They can log in with their credentials at /login.
+            </p>
           </div>
         )}
 
-        {/* Business Rule Banner */}
-        <div className="bg-slate-950 p-3 rounded-2xl border border-slate-800 text-[11px] text-slate-300 space-y-1">
-          <div className="flex items-center gap-1.5 text-emerald-400 font-bold">
-            <CheckCircle2 className="w-3.5 h-3.5" />
-            <span>Exclusive Admin Attribution</span>
-          </div>
-          <p className="text-slate-400 leading-relaxed">
-            This seller will be registered under your repair shop (<strong className="text-white">{adminUser?.shopName || 'Your Shop'}</strong>). 
-            They will earn 2% referral payouts on completed device repairs.
-          </p>
-        </div>
-
+        {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-3.5 text-xs">
-          <div>
-            <label className="block font-bold text-slate-300 mb-1">Seller Full Name <span className="text-rose-400">*</span></label>
-            <input
-              type="text"
-              required
-              value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
-              placeholder="e.g. Rahul Gupta"
-              className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white font-medium focus:outline-none focus:border-emerald-500"
-            />
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block font-bold text-slate-300 mb-1">Store / Shop Name</label>
+              <input
+                type="text"
+                required
+                value={form.shopName}
+                onChange={(e) => setForm({ ...form, shopName: e.target.value })}
+                placeholder="e.g. Rahul Mobile &amp; Accessories"
+                className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white font-medium focus:outline-none focus:border-emerald-500"
+              />
+            </div>
+
+            <div>
+              <label className="block font-bold text-slate-300 mb-1">Owner / Contact Name</label>
+              <input
+                type="text"
+                required
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                placeholder="e.g. Rahul Verma"
+                className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white font-medium focus:outline-none focus:border-emerald-500"
+              />
+            </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block font-bold text-slate-300 mb-1">Seller Login Email <span className="text-rose-400">*</span></label>
+              <label className="block font-bold text-slate-300 mb-1">Login Email Address</label>
               <input
                 type="email"
                 required
                 value={form.email}
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
-                placeholder="seller@example.com"
+                placeholder="partner@store.com"
                 className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white font-medium focus:outline-none focus:border-emerald-500"
               />
             </div>
+
             <div>
-              <label className="block font-bold text-slate-300 mb-1">Seller Phone <span className="text-rose-400">*</span></label>
+              <label className="block font-bold text-slate-300 mb-1">Store Phone Number</label>
               <input
                 type="tel"
-                required
                 value={form.phone}
                 onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                placeholder="+91 98765 43210"
+                placeholder="e.g. 9876543210"
                 className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white font-medium focus:outline-none focus:border-emerald-500"
               />
             </div>
           </div>
 
           <div>
-            <label className="block font-bold text-slate-300 mb-1">Accessory Store Name <span className="text-rose-400">*</span></label>
-            <input
-              type="text"
-              required
-              value={form.shopName}
-              onChange={(e) => setForm({ ...form, shopName: e.target.value })}
-              placeholder="e.g. Rahul Mobile &amp; Accessories"
-              className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white font-medium focus:outline-none focus:border-emerald-500"
-            />
-          </div>
-
-          {/* ============================================================== */}
-          {/* GENUINE PARTNER VERIFICATION & NOTIFICATION ALERT SECTION      */}
-          {/* ============================================================== */}
-          <div className="bg-slate-950 border border-slate-800 rounded-2xl p-3.5 space-y-2.5">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1.5 font-bold text-white text-xs">
-                <Bell className="w-3.5 h-3.5 text-amber-400" />
-                <span>Genuine Partner Verification Alert</span>
-              </div>
-              {isVerified ? (
-                <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-400 bg-emerald-500/20 px-2 py-0.5 rounded-full border border-emerald-500/30">
-                  <Check className="w-3 h-3" />
-                  <span>Verified Genuine</span>
-                </span>
-              ) : (
-                <span className="text-[10px] text-amber-400 font-medium">Unverified Partner</span>
-              )}
-            </div>
-
-            <p className="text-[11px] text-slate-400 leading-relaxed">
-              Dispatch an instant notification alert to the partner&apos;s phone/email with an authentication code to verify that the store is genuine.
-            </p>
-
-            {!isVerified ? (
-              <div className="space-y-2.5 pt-1">
-                {!alertSent ? (
-                  <button
-                    type="button"
-                    onClick={handleSendAlert}
-                    disabled={sendingAlert}
-                    className="w-full py-2 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 border border-amber-500/40 hover:border-amber-400 text-amber-300 font-bold text-xs flex items-center justify-center gap-2 transition"
-                  >
-                    {sendingAlert ? (
-                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                    ) : (
-                      <Send className="w-3.5 h-3.5" />
-                    )}
-                    <span>{sendingAlert ? 'Dispatching Alert...' : '🔔 Send Verification Alert to Store Partner'}</span>
-                  </button>
-                ) : (
-                  <div className="space-y-2 animate-in fade-in">
-                    
-                    {/* Simulated live notification toast banner */}
-                    <div className="p-2.5 rounded-xl bg-purple-950/40 border border-purple-500/40 text-[11px] text-purple-200 flex items-start gap-2 shadow-inner">
-                      <Smartphone className="w-4 h-4 text-purple-400 shrink-0 mt-0.5" />
-                      <div className="space-y-0.5">
-                        <div className="font-bold text-white flex items-center gap-1.5">
-                          <span>Verification Code Dispatched to Partner</span>
-                          <span className="text-[9px] bg-purple-500/30 px-1.5 py-0.2 rounded font-mono">SMS ALERT</span>
-                        </div>
-                        <p className="text-slate-300 text-[10px]">
-                          Notification alert sent to <strong className="text-white">{form.phone}</strong>. Please ask the partner to share the 4-digit code.
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Direct WhatsApp Alert Option */}
-                    {form.phone && form.phone.replace(/[^0-9]/g, '').length >= 10 && (
-                      <a
-                        href={`https://wa.me/${form.phone.replace(/[^0-9]/g, '').length === 10 ? '91' + form.phone.replace(/[^0-9]/g, '') : form.phone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(
-                          `Hi ${form.name}! SmartFix Hub Alert: Your verification code for genuine store registration of "${form.shopName || form.name}" is: *${generatedOtp}*. Please share this with the repair shop admin to verify your store.`
-                        )}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="w-full py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-2 transition shadow-md"
-                      >
-                        <MessageCircle className="w-4 h-4" />
-                        <span>📲 Send Real Code via WhatsApp to Partner</span>
-                      </a>
-                    )}
-
-                    <div className="flex gap-2">
-                      <input
-                        type="text"
-                        maxLength={6}
-                        value={inputOtp}
-                        onChange={(e) => setInputOtp(e.target.value)}
-                        placeholder="Enter 4-digit code"
-                        className="flex-1 px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white font-mono text-center font-bold tracking-widest focus:outline-none focus:border-emerald-500 text-sm"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => handleVerifyOtp(inputOtp)}
-                        className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition"
-                      >
-                        Verify
-                      </button>
-                    </div>
-
-                    {otpError && (
-                      <div className="text-[10px] text-rose-400 font-medium">{otpError}</div>
-                    )}
-
-                    <div className="flex items-center justify-between text-[10px] text-slate-400 pt-1">
-                      <button
-                        type="button"
-                        onClick={handleSendAlert}
-                        className="hover:text-amber-300 underline"
-                      >
-                        Resend alert
-                      </button>
-                      <span className="text-[10px] text-slate-500">Ask partner for code</span>
-                    </div>
-
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="p-3 bg-emerald-950/40 border border-emerald-500/40 rounded-xl flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
-                  <span className="text-xs font-bold text-emerald-300">
-                    Store Partner Authenticated as Genuine!
-                  </span>
-                </div>
-                <span className="text-[10px] text-slate-400 font-mono">OTP Verified</span>
-              </div>
-            )}
-          </div>
-
-          <div>
-            <label className="block font-bold text-slate-300 mb-1">Initial Login Password</label>
+            <label className="block font-bold text-slate-300 mb-1 flex items-center justify-between">
+              <span>Initial Login Password</span>
+              <span className="text-[10px] text-slate-400">Seller can reset this upon login</span>
+            </label>
             <input
               type="text"
               required
               value={form.password}
               onChange={(e) => setForm({ ...form, password: e.target.value })}
-              placeholder="Password for seller"
+              placeholder="Seller@123"
               className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white font-mono focus:outline-none focus:border-emerald-500"
             />
-            <span className="text-[10px] text-slate-500 mt-0.5 block">Share this password with the seller so they can log in at /login.</span>
+          </div>
+
+          {/* Business rule reminder */}
+          <div className="p-3 bg-slate-950/70 border border-slate-800 rounded-xl text-[11px] text-slate-400 space-y-1">
+            <div className="font-bold text-slate-300 flex items-center gap-1.5">
+              <Percent className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Partner Agreement</span>
+            </div>
+            <div>&bull; Partner earns strictly 2% referral fee on completed jobs.</div>
+            <div>&bull; Partner can immediately log in at <code className="text-white">/login</code> to track jobs and manage stock.</div>
           </div>
 
           <div className="flex justify-end space-x-2 pt-3 border-t border-slate-800">
@@ -386,17 +197,14 @@ export default function AdminOnboardSellerModal({ isOpen, onClose, onSellerCreat
             <button
               type="submit"
               disabled={loading || !!success}
-              className={`px-5 py-2.5 rounded-xl font-bold text-white shadow-lg flex items-center space-x-1.5 transition ${
-                isVerified 
-                  ? 'bg-emerald-600 hover:bg-emerald-500 shadow-emerald-600/25' 
-                  : 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500'
-              }`}
+              className="px-5 py-2.5 rounded-xl font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg flex items-center space-x-1.5 transition disabled:opacity-50"
             >
               <UserPlus className="w-4 h-4" />
-              <span>{loading ? 'Onboarding Seller...' : isVerified ? 'Register Verified Genuine Partner' : 'Register Partner Seller'}</span>
+              <span>{loading ? 'Onboarding Seller...' : 'Register Partner Seller'}</span>
             </button>
           </div>
         </form>
+
       </div>
     </div>
   );

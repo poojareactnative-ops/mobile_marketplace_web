@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation';
 import AdminCompleteRepairModal from '../../components/AdminCompleteRepairModal';
 import AdminPayCommissionModal from '../../components/AdminPayCommissionModal';
 import AdminOnboardSellerModal from '../../components/AdminOnboardSellerModal';
-import VerifyPartnerModal from '../../components/VerifyPartnerModal';
 import NotificationBell from '../../components/NotificationBell';
 import RoleGuard from '../../components/RoleGuard';
 import { supabaseService } from '../../services/supabaseService';
@@ -14,7 +13,7 @@ import { useAuth } from '../../context/AuthContext';
 import {
   Wrench, Store, Clock, UserPlus, CheckCircle2, Phone, Mail,
   MessageSquare, Plus, Search, Filter, RefreshCw, AlertCircle,
-  Layers, ArrowRight, DollarSign, FileText, ChevronRight, Sparkles,
+  Layers, ArrowRight, IndianRupee, FileText, ChevronRight, Sparkles,
   ShieldCheck, Check, Smartphone, Tag, ShoppingBag, Trash2, ArrowUpRight,
   Menu, X, LogOut, ArrowLeft, LayoutDashboard, Home, ExternalLink
 } from 'lucide-react';
@@ -46,7 +45,6 @@ export default function AdminPage() {
   const [completingJob, setCompletingJob] = useState(null);
   const [payingCommission, setPayingCommission] = useState(null);
   const [isOnboardOpen, setIsOnboardOpen] = useState(false);
-  const [verifyingPartner, setVerifyingPartner] = useState(null);
   const [isDirectTicketOpen, setIsDirectTicketOpen] = useState(false);
   const [directTicketForm, setDirectTicketForm] = useState({
     customerName: '',
@@ -196,7 +194,7 @@ export default function AdminPage() {
     {
       id: 'COMMISSIONS',
       label: '2% Commission Ledger',
-      icon: DollarSign,
+      icon: IndianRupee,
       count: pendingCommissionAmount > 0 ? `₹${pendingCommissionAmount} pend` : 'Settled',
       countClass: pendingCommissionAmount > 0 ? 'bg-rose-500/20 text-rose-400' : 'bg-emerald-500/20 text-emerald-400',
     },
@@ -304,8 +302,8 @@ export default function AdminPage() {
                       setIsSidebarOpen(false);
                     }}
                     className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all ${isActive
-                        ? 'bg-amber-500 text-slate-950 shadow-md font-black'
-                        : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                      ? 'bg-amber-500 text-slate-950 shadow-md font-black'
+                      : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
                       }`}
                   >
                     <div className="flex items-center gap-3">
@@ -326,19 +324,6 @@ export default function AdminPage() {
               <div className="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-500">
                 Quick Commands
               </div>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setIsDirectTicketOpen(true);
-                  setIsSidebarOpen(false);
-                }}
-                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 transition"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                <span>+ Walk-In Repair Ticket</span>
-              </button>
-
               <button
                 type="button"
                 onClick={() => {
@@ -498,8 +483,8 @@ export default function AdminPage() {
                         type="button"
                         onClick={() => setStatusFilter(st)}
                         className={`px-3 py-1.5 rounded-xl font-bold transition ${statusFilter === st
-                            ? 'bg-white text-slate-950 shadow'
-                            : 'bg-slate-950 text-slate-400 hover:text-white border border-slate-800'
+                          ? 'bg-white text-slate-950 shadow'
+                          : 'bg-slate-950 text-slate-400 hover:text-white border border-slate-800'
                           }`}
                       >
                         {st.replace('_', ' ')}
@@ -605,14 +590,14 @@ export default function AdminPage() {
 
                                 <td className="py-3 px-4">
                                   <span className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider border ${job.status === 'COMPLETED'
-                                      ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40'
-                                      : job.status === 'IN_PROGRESS'
-                                        ? 'bg-blue-500/20 text-blue-400 border-blue-500/40'
-                                        : job.status === 'ACCEPTED'
-                                          ? 'bg-purple-500/20 text-purple-400 border-purple-500/40'
-                                          : job.status === 'CANCELLED'
-                                            ? 'bg-rose-500/20 text-rose-400 border-rose-500/40'
-                                            : 'bg-amber-500/20 text-amber-400 border-amber-500/40'
+                                    ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40'
+                                    : job.status === 'IN_PROGRESS'
+                                      ? 'bg-blue-500/20 text-blue-400 border-blue-500/40'
+                                      : job.status === 'ACCEPTED'
+                                        ? 'bg-purple-500/20 text-purple-400 border-purple-500/40'
+                                        : job.status === 'CANCELLED'
+                                          ? 'bg-rose-500/20 text-rose-400 border-rose-500/40'
+                                          : 'bg-amber-500/20 text-amber-400 border-amber-500/40'
                                     }`}>
                                     {job.status.replace('_', ' ')}
                                   </span>
@@ -749,8 +734,8 @@ export default function AdminPage() {
                                 </td>
                                 <td className="py-3 px-4">
                                   <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${isPaid
-                                      ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                                      : 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
+                                    ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                                    : 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
                                     }`}>
                                     {comm.status}
                                   </span>
@@ -883,26 +868,12 @@ export default function AdminPage() {
                             </div>
                           </div>
 
-                          <div className="pt-2 border-t border-slate-800/80">
-                            {s.verification_status === 'VERIFIED_GENUINE' ? (
-                              <button
-                                type="button"
-                                onClick={() => setVerifyingPartner(s)}
-                                className="w-full py-1.5 px-3 rounded-xl bg-slate-950 hover:bg-slate-800 border border-emerald-500/30 text-emerald-400 hover:text-emerald-300 font-bold text-xs flex items-center justify-center gap-1.5 transition"
-                              >
-                                <ShieldCheck className="w-3.5 h-3.5" />
-                                <span>Verified Genuine &bull; Audit</span>
-                              </button>
-                            ) : (
-                              <button
-                                type="button"
-                                onClick={() => setVerifyingPartner(s)}
-                                className="w-full py-2 px-3 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition shadow-lg shadow-purple-900/30"
-                              >
-                                <ShieldCheck className="w-3.5 h-3.5" />
-                                <span>Verify Genuine Store</span>
-                              </button>
-                            )}
+                          <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between text-xs">
+                            <span className="inline-flex items-center gap-1.5 text-emerald-400 font-bold text-[11px]">
+                              <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
+                              <span>Active Partner</span>
+                            </span>
+                            <span className="text-[10px] text-slate-500 font-mono">2% Referral Model</span>
                           </div>
                         </div>
                       );
@@ -1191,14 +1162,6 @@ export default function AdminPage() {
             </div>
           </div>
         )}
-
-        {/* Modal: Verify Genuine Partner */}
-        <VerifyPartnerModal
-          isOpen={!!verifyingPartner}
-          partner={verifyingPartner}
-          onClose={() => setVerifyingPartner(null)}
-          onVerified={() => loadData()}
-        />
 
       </div>
     </RoleGuard>

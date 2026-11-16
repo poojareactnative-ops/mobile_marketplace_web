@@ -19,9 +19,7 @@ function SuperAdminLoginForm() {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [securityKey, setSecurityKey] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [showKey, setShowKey] = useState(false);
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [failedAttempts, setFailedAttempts] = useState(0);
@@ -37,7 +35,6 @@ function SuperAdminLoginForm() {
   const handleQuickFill = () => {
     setEmail('superadmin@smartfix.com');
     setPassword('SuperAdmin@123');
-    setSecurityKey('MASTER-9922');
     setError('');
   };
 
@@ -51,15 +48,11 @@ function SuperAdminLoginForm() {
       setError('Super Admin password required');
       return;
     }
-    if (!securityKey.trim()) {
-      setError('Master Platform Security Key (2FA Passcode) is mandatory');
-      return;
-    }
 
     try {
       setSubmitting(true);
       setError('');
-      await superAdminLogin(email.trim(), password, securityKey.trim());
+      await superAdminLogin(email.trim(), password);
       router.push(redirectTarget);
     } catch (err) {
       setFailedAttempts((prev) => prev + 1);
@@ -141,37 +134,6 @@ function SuperAdminLoginForm() {
           </div>
         </div>
 
-        {/* Master Security Key (2FA Passcode Protection) */}
-        <div>
-          <div className="flex items-center justify-between mb-1.5">
-            <label className="block text-xs font-bold text-purple-300 flex items-center gap-1.5">
-              <Key className="w-3.5 h-3.5 text-purple-400" />
-              <span>Master Platform Security Key (2FA Passcode)</span>
-            </label>
-            <span className="text-[10px] text-slate-500 font-mono">Required</span>
-          </div>
-          <div className="relative">
-            <input
-              type={showKey ? 'text' : 'password'}
-              required
-              value={securityKey}
-              onChange={(e) => setSecurityKey(e.target.value)}
-              placeholder="e.g. MASTER-9922"
-              className="w-full pl-3.5 pr-10 py-2.5 bg-purple-950/20 border border-purple-500/50 rounded-xl text-xs text-purple-200 placeholder-purple-400/40 focus:outline-none focus:border-purple-400 font-mono font-bold tracking-wider transition shadow-inner"
-            />
-            <button
-              type="button"
-              onClick={() => setShowKey(!showKey)}
-              className="absolute right-3.5 top-2.5 text-slate-500 hover:text-white transition"
-            >
-              {showKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-            </button>
-          </div>
-          <p className="text-[10px] text-slate-500 mt-1">
-            Authorized Platform Keys: <code className="text-purple-400">MASTER-9922</code> or <code className="text-purple-400">9922</code>
-          </p>
-        </div>
-
         {/* Authorize Button */}
         <button
           type="submit"
@@ -181,11 +143,11 @@ function SuperAdminLoginForm() {
           {submitting ? (
             <>
               <RefreshCw className="w-4 h-4 animate-spin" />
-              <span>Authenticating Cryptographic Key...</span>
+              <span>Signing in...</span>
             </>
           ) : (
             <>
-              <span>Authorize Super Admin Session</span>
+              <span>Sign In to Super Admin Vault</span>
               <ArrowRight className="w-4 h-4" />
             </>
           )}
@@ -200,7 +162,7 @@ function SuperAdminLoginForm() {
           className="w-full py-2 px-3 rounded-xl bg-slate-900/80 hover:bg-slate-800 border border-purple-500/20 hover:border-purple-500/40 text-[11px] text-purple-300 font-semibold flex items-center justify-center gap-2 transition"
         >
           <Sparkles className="w-3.5 h-3.5 text-purple-400" />
-          <span>Auto-Fill Authorized Super Admin Credentials</span>
+          <span>Auto-Fill Super Admin Credentials</span>
         </button>
       </div>
 
@@ -257,7 +219,7 @@ export default function SuperAdminLoginPage() {
             <div className="space-y-2.5 pt-2 text-left max-w-md mx-auto lg:mx-0">
               <div className="flex items-center space-x-3 bg-slate-900/60 border border-slate-800/80 p-3 rounded-2xl">
                 <CheckCircle2 className="w-4 h-4 text-purple-400 shrink-0" />
-                <span className="text-xs text-slate-300">Multi-Factor Master Key Authorization</span>
+                <span className="text-xs text-slate-300">Master Governance Authorization</span>
               </div>
               <div className="flex items-center space-x-3 bg-slate-900/60 border border-slate-800/80 p-3 rounded-2xl">
                 <CheckCircle2 className="w-4 h-4 text-purple-400 shrink-0" />
@@ -282,7 +244,7 @@ export default function SuperAdminLoginPage() {
                 </div>
                 <h2 className="text-2xl font-black text-white">Super Admin Sign-In</h2>
                 <p className="text-xs text-slate-400">
-                  Enter master credentials and 2FA security key
+                  Enter master credentials to access the governance vault
                 </p>
               </div>
 

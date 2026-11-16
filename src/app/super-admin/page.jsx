@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import CommissionCalculator from '../../components/CommissionCalculator';
 import SuperAdminOnboardSellerModal from '../../components/SuperAdminOnboardSellerModal';
-import VerifyPartnerModal from '../../components/VerifyPartnerModal';
 import NotificationBell from '../../components/NotificationBell';
 import RoleGuard from '../../components/RoleGuard';
 import { supabaseService } from '../../services/supabaseService';
@@ -43,7 +42,6 @@ export default function SuperAdminPage() {
 
   // Modals
   const [isOnboardSellerOpen, setIsOnboardSellerOpen] = useState(false);
-  const [verifyingPartner, setVerifyingPartner] = useState(null);
 
   // Load platform-wide data
   const loadPlatformData = useCallback(async () => {
@@ -770,30 +768,15 @@ export default function SuperAdminPage() {
                               )}
                             </td>
                             <td className="py-3.5 px-4">
-                              {se.verification_status === 'VERIFIED_GENUINE' ? (
-                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center gap-1 w-fit">
-                                  <ShieldCheck className="w-3 h-3 text-emerald-400" />
-                                  <span>GENUINE</span>
-                                </span>
-                              ) : (
-                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                                  ACTIVE
-                                </span>
-                              )}
+                              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                                ACTIVE
+                              </span>
                             </td>
                             <td className="py-3.5 px-4 text-right">
-                              <button
-                                type="button"
-                                onClick={() => setVerifyingPartner(se)}
-                                className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition inline-flex items-center gap-1 ${
-                                  se.verification_status === 'VERIFIED_GENUINE'
-                                    ? 'bg-slate-800 hover:bg-slate-700 text-slate-300'
-                                    : 'bg-purple-600 hover:bg-purple-500 text-white shadow'
-                                }`}
-                              >
-                                <ShieldCheck className="w-3 h-3" />
-                                <span>{se.verification_status === 'VERIFIED_GENUINE' ? 'Re-Audit' : 'Verify Partner'}</span>
-                              </button>
+                              <span className="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 inline-flex items-center gap-1">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                                <span>Active Partner</span>
+                              </span>
                             </td>
                           </tr>
                         ))}
@@ -898,14 +881,6 @@ export default function SuperAdminPage() {
           onClose={() => setIsOnboardSellerOpen(false)}
           onSellerCreated={handleSellerCreated}
           superAdminUser={user}
-        />
-
-        {/* Modal: Verify Genuine Partner */}
-        <VerifyPartnerModal
-          isOpen={!!verifyingPartner}
-          partner={verifyingPartner}
-          onClose={() => setVerifyingPartner(null)}
-          onVerified={() => loadPlatformData()}
         />
 
       </div>

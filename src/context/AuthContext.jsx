@@ -54,11 +54,11 @@ export function AuthProvider({ children }) {
     }
   };
 
-  // 1b. Dedicated Super Admin Login with Security Passkey
-  const superAdminLogin = async (email, password, securityKey) => {
+  // 1b. Dedicated Super Admin Login
+  const superAdminLogin = async (email, password) => {
     setLoading(true);
     try {
-      const authenticatedUser = await supabaseService.superAdminLogin(email, password, securityKey);
+      const authenticatedUser = await supabaseService.superAdminLogin(email, password);
       saveUserSession(authenticatedUser);
       return authenticatedUser;
     } finally {

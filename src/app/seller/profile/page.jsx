@@ -116,7 +116,7 @@ export default function SellerProfilePage() {
                   </h1>
                   <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
                     <ShieldCheck className="w-3.5 h-3.5" />
-                    Verified Store Partner
+                    Active Partner Store
                   </span>
                 </div>
                 <p className="text-xs sm:text-sm text-slate-400">
