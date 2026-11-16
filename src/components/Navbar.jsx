@@ -6,7 +6,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import {
   Wrench, ShieldCheck, Store, User, Database, LogOut,
   LogIn, UserPlus, ChevronDown, ShoppingBag, LayoutDashboard,
-  Search, Sparkles, MapPin, Compass
+  Search, Sparkles, MapPin, Compass, KeyRound
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -135,6 +135,21 @@ export default function Navbar() {
                         <LayoutDashboard className="w-3.5 h-3.5 text-amber-400" />
                         <span>{dashboardLabel}</span>
                       </Link>
+                      {user?.role === 'SELLER' && (
+                        <Link
+                          href="/seller/profile"
+                          onClick={() => setShowUserMenu(false)}
+                          className="w-full text-left px-3 py-2 rounded-xl text-xs text-slate-300 hover:text-white hover:bg-slate-800/80 transition flex items-center justify-between font-medium"
+                        >
+                          <div className="flex items-center gap-2">
+                            <KeyRound className="w-3.5 h-3.5 text-amber-400" />
+                            <span>Store Profile &amp; Password</span>
+                          </div>
+                          {user?.isDefaultPassword && (
+                            <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+                          )}
+                        </Link>
+                      )}
                       <Link
                         href="/marketplace"
                         onClick={() => setShowUserMenu(false)}

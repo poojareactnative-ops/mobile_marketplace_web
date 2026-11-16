@@ -13,8 +13,9 @@ import {
 function SuperAdminLoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirectTarget = searchParams.get('redirect') || '/super-admin';
-  const { superAdminLogin } = useAuth();
+  const rawRedirect = searchParams.get('redirect');
+  const redirectTarget = (rawRedirect && !rawRedirect.includes('/login')) ? rawRedirect : '/super-admin';
+  const { user, role, isAuthenticated, loading, superAdminLogin } = useAuth();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -24,6 +25,13 @@ function SuperAdminLoginForm() {
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [failedAttempts, setFailedAttempts] = useState(0);
+
+  // If already authenticated as Super Admin, proceed directly to workbench
+  React.useEffect(() => {
+    if (!loading && isAuthenticated && role === 'SUPER_ADMIN') {
+      router.replace(redirectTarget);
+    }
+  }, [loading, isAuthenticated, role, router, redirectTarget]);
 
   // Quick fill helper for platform test
   const handleQuickFill = () => {

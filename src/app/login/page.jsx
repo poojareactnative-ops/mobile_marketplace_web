@@ -45,8 +45,12 @@ function LoginForm() {
     try {
       setSubmitting(true);
       setError('');
-      await login(email.trim(), password);
-      router.push(redirectTarget);
+      const loggedUser = await login(email.trim(), password);
+      if (loggedUser?.role === 'SELLER') {
+        router.push(redirectTarget !== '/dashboard' ? redirectTarget : '/seller');
+      } else {
+        router.push(redirectTarget);
+      }
     } catch (err) {
       setError(err.message || 'Login failed. Please check your credentials.');
     } finally {

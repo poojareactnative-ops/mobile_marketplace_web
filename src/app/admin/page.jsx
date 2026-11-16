@@ -6,6 +6,8 @@ import { useRouter } from 'next/navigation';
 import AdminCompleteRepairModal from '../../components/AdminCompleteRepairModal';
 import AdminPayCommissionModal from '../../components/AdminPayCommissionModal';
 import AdminOnboardSellerModal from '../../components/AdminOnboardSellerModal';
+import VerifyPartnerModal from '../../components/VerifyPartnerModal';
+import NotificationBell from '../../components/NotificationBell';
 import RoleGuard from '../../components/RoleGuard';
 import { supabaseService } from '../../services/supabaseService';
 import { useAuth } from '../../context/AuthContext';
@@ -44,6 +46,7 @@ export default function AdminPage() {
   const [completingJob, setCompletingJob] = useState(null);
   const [payingCommission, setPayingCommission] = useState(null);
   const [isOnboardOpen, setIsOnboardOpen] = useState(false);
+  const [verifyingPartner, setVerifyingPartner] = useState(null);
   const [isDirectTicketOpen, setIsDirectTicketOpen] = useState(false);
   const [directTicketForm, setDirectTicketForm] = useState({
     customerName: '',
@@ -420,6 +423,8 @@ export default function AdminPage() {
                 <UserPlus className="w-3.5 h-3.5" />
                 <span>+ Onboard Seller</span>
               </button>
+
+              <NotificationBell />
 
               <button
                 type="button"
@@ -825,11 +830,23 @@ export default function AdminPage() {
                       return (
                         <div key={s.id} className="bg-slate-900 border border-slate-800 hover:border-slate-700 rounded-3xl p-5 shadow-lg space-y-4 transition">
                           <div className="flex items-start justify-between">
-                            <div className="space-y-0.5">
-                              <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
-                                Active Partner
-                              </span>
-                              <h4 className="font-extrabold text-white text-base pt-1">{s.shop_name || s.name}</h4>
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                                  Active Partner
+                                </span>
+                                {s.verification_status === 'VERIFIED_GENUINE' ? (
+                                  <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/20 px-2 py-0.5 rounded-full border border-emerald-500/30 flex items-center gap-1">
+                                    <ShieldCheck className="w-3 h-3 text-emerald-400" />
+                                    <span>Genuine Partner</span>
+                                  </span>
+                                ) : (
+                                  <span className="text-[10px] text-slate-400 bg-slate-800/80 px-2 py-0.5 rounded-full">
+                                    Verified Store
+                                  </span>
+                                )}
+                              </div>
+                              <h4 className="font-extrabold text-white text-base pt-0.5">{s.shop_name || s.name}</h4>
                               <p className="text-xs text-slate-400">Owner: {s.name}</p>
                             </div>
 
@@ -864,6 +881,28 @@ export default function AdminPage() {
                               <div className="font-black text-amber-400">₹{sellerCommission}</div>
                               <div className="text-[10px] text-slate-500">2% Cut</div>
                             </div>
+                          </div>
+
+                          <div className="pt-2 border-t border-slate-800/80">
+                            {s.verification_status === 'VERIFIED_GENUINE' ? (
+                              <button
+                                type="button"
+                                onClick={() => setVerifyingPartner(s)}
+                                className="w-full py-1.5 px-3 rounded-xl bg-slate-950 hover:bg-slate-800 border border-emerald-500/30 text-emerald-400 hover:text-emerald-300 font-bold text-xs flex items-center justify-center gap-1.5 transition"
+                              >
+                                <ShieldCheck className="w-3.5 h-3.5" />
+                                <span>Verified Genuine &bull; Audit</span>
+                              </button>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => setVerifyingPartner(s)}
+                                className="w-full py-2 px-3 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition shadow-lg shadow-purple-900/30"
+                              >
+                                <ShieldCheck className="w-3.5 h-3.5" />
+                                <span>Verify Genuine Store</span>
+                              </button>
+                            )}
                           </div>
                         </div>
                       );
@@ -1152,6 +1191,14 @@ export default function AdminPage() {
             </div>
           </div>
         )}
+
+        {/* Modal: Verify Genuine Partner */}
+        <VerifyPartnerModal
+          isOpen={!!verifyingPartner}
+          partner={verifyingPartner}
+          onClose={() => setVerifyingPartner(null)}
+          onVerified={() => loadData()}
+        />
 
       </div>
     </RoleGuard>

@@ -14,7 +14,12 @@ export function AuthProvider({ children }) {
     try {
       const saved = localStorage.getItem('smartfix_session_user');
       if (saved) {
-        setUser(JSON.parse(saved));
+        const parsed = JSON.parse(saved);
+        if (parsed?.role === 'SELLER' && parsed?.email) {
+          const pwdInfo = supabaseService.getSellerPasswordInfo(parsed.email);
+          parsed.isDefaultPassword = pwdInfo.isDefault;
+        }
+        setUser(parsed);
       }
     } catch (e) {
       console.warn('Session load notice:', e);
@@ -73,7 +78,21 @@ export function AuthProvider({ children }) {
     }
   };
 
-  // 3. Logout (Clears user session and redirects to home screen)
+  // 3. Update / Reset Password (for Sellers with default password)
+  const updatePassword = async (currentPassword, newPassword) => {
+    if (!user || !user.email) {
+      throw new Error('No authenticated user session found.');
+    }
+    const res = supabaseService.updateSellerPassword(user.email, currentPassword, newPassword);
+    const updatedUser = {
+      ...user,
+      isDefaultPassword: false,
+    };
+    saveUserSession(updatedUser);
+    return res;
+  };
+
+  // 4. Logout (Clears user session and redirects to home screen)
   const logout = (redirectPath = '/') => {
     saveUserSession(null);
     if (typeof window !== 'undefined') {
@@ -85,10 +104,12 @@ export function AuthProvider({ children }) {
     user,
     role: user?.role || 'GUEST',
     isAuthenticated: !!user,
+    isDefaultPassword: !!user?.isDefaultPassword,
     loading,
     login,
     superAdminLogin,
     register,
+    updatePassword,
     logout,
   };
 

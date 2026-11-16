@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import Navbar from '../../components/Navbar';
 import SellerReferralModal from '../../components/SellerReferralModal';
+import ResetDefaultPasswordModal from '../../components/ResetDefaultPasswordModal';
 import RoleGuard from '../../components/RoleGuard';
 import { supabaseService } from '../../services/supabaseService';
 import { useAuth } from '../../context/AuthContext';
@@ -11,7 +12,8 @@ import {
   Store, Clock, CheckCircle2, TrendingUp, Banknote, Smartphone,
   Wrench, Search, AlertCircle, MessageSquare, Phone, Plus,
   RefreshCw, DollarSign, ShoppingBag, Trash2, ArrowRight,
-  ShieldCheck, Check, Sparkles, Filter, Mail
+  ShieldCheck, Check, Sparkles, Filter, Mail, KeyRound, AlertTriangle,
+  UserCheck, Lock, Eye, EyeOff
 } from 'lucide-react';
 
 const CATEGORIES = [
@@ -23,10 +25,34 @@ const CATEGORIES = [
 ];
 
 export default function SellerPage() {
-  const { user } = useAuth();
+  const { user, isDefaultPassword, updatePassword } = useAuth();
 
   // Active Tab
-  const [activeTab, setActiveTab] = useState('REFERRALS'); // 'REFERRALS' | 'COMMISSIONS' | 'PRODUCTS' | 'INQUIRIES' | 'TRACKER'
+  const [activeTab, setActiveTab] = useState('REFERRALS'); // 'REFERRALS' | 'COMMISSIONS' | 'PRODUCTS' | 'INQUIRIES' | 'TRACKER' | 'PROFILE'
+
+  // Reset Default Password Modal State
+  const [isResetPasswordOpen, setIsResetPasswordOpen] = useState(false);
+
+  // In-tab Profile Password Reset Form State
+  const [profileCurrentPwd, setProfileCurrentPwd] = useState('Seller@123');
+  const [profileNewPwd, setProfileNewPwd] = useState('');
+  const [profileConfirmPwd, setProfileConfirmPwd] = useState('');
+  const [profileShowCurrent, setProfileShowCurrent] = useState(false);
+  const [profileShowNew, setProfileShowNew] = useState(false);
+  const [profileShowConfirm, setProfileShowConfirm] = useState(false);
+  const [profileError, setProfileError] = useState('');
+  const [profileSuccess, setProfileSuccess] = useState('');
+  const [profileSubmitting, setProfileSubmitting] = useState(false);
+
+  // Auto-prompt Reset Default Password popup on login / mount if default password is still active
+  useEffect(() => {
+    if (user && user.role === 'SELLER') {
+      const pwdInfo = supabaseService.getSellerPasswordInfo(user.email);
+      if (pwdInfo?.isDefault || isDefaultPassword) {
+        setIsResetPasswordOpen(true);
+      }
+    }
+  }, [user, isDefaultPassword]);
 
   // Data states
   const [jobs, setJobs] = useState([]);
@@ -153,6 +179,43 @@ export default function SellerPage() {
     }
   };
 
+  // In-tab Password Reset Handler
+  const handleInTabPasswordUpdate = async (e) => {
+    e.preventDefault();
+    setProfileError('');
+    setProfileSuccess('');
+
+    if (!profileCurrentPwd) {
+      setProfileError('Please provide your current default password (default: Seller@123).');
+      return;
+    }
+    if (!profileNewPwd || profileNewPwd.length < 6) {
+      setProfileError('New password must be at least 6 characters long.');
+      return;
+    }
+    if (profileNewPwd === 'Seller@123') {
+      setProfileError('Please choose a new private password different from "Seller@123".');
+      return;
+    }
+    if (profileNewPwd !== profileConfirmPwd) {
+      setProfileError('New password and confirmation do not match.');
+      return;
+    }
+
+    try {
+      setProfileSubmitting(true);
+      await updatePassword(profileCurrentPwd, profileNewPwd);
+      setProfileSuccess('Password updated successfully! Your account is now secured.');
+      setProfileNewPwd('');
+      setProfileConfirmPwd('');
+      await loadData();
+    } catch (err) {
+      setProfileError(err.message || 'Failed to update password.');
+    } finally {
+      setProfileSubmitting(false);
+    }
+  };
+
   // Filtered jobs calculation
   const filteredJobs = jobs.filter((j) => {
     const matchesStatus = statusFilter === 'ALL' || j.status === statusFilter;
@@ -180,6 +243,43 @@ export default function SellerPage() {
       <RoleGuard allowedRoles={['SELLER', 'SUPER_ADMIN']}>
         <main className="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 flex-1">
           
+          {/* DEFAULT PASSWORD ALERT BANNER */}
+          {(isDefaultPassword || supabaseService.getSellerPasswordInfo(user?.email)?.isDefault) && (
+            <div className="bg-amber-500/10 border border-amber-500/40 text-amber-300 p-4 sm:p-5 rounded-3xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xl">
+              <div className="flex items-center gap-3.5">
+                <div className="w-10 h-10 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0">
+                  <AlertTriangle className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="font-black text-sm text-white flex items-center gap-2">
+                    <span>Default Password Active &bull; Action Required</span>
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-mono">Seller@123</span>
+                  </div>
+                  <p className="text-xs text-amber-300/80 mt-0.5 leading-relaxed">
+                    Your partner store account is currently using the system default password. Please reset your password to secure referral earnings and catalog access.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 shrink-0 self-start sm:self-auto">
+                <button
+                  type="button"
+                  onClick={() => setIsResetPasswordOpen(true)}
+                  className="px-4 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-xl text-xs transition shadow-lg flex items-center gap-1.5"
+                >
+                  <KeyRound className="w-4 h-4" />
+                  <span>Reset Password Now</span>
+                </button>
+                <Link
+                  href="/seller/profile"
+                  className="px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl text-xs transition border border-slate-700/80 flex items-center gap-1.5"
+                >
+                  <span>Go to Profile</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
+              </div>
+            </div>
+          )}
+
           {/* 1. SELLER STORE PROFILE & HEADER */}
           <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl relative overflow-hidden backdrop-blur-xl">
             <div className="absolute top-0 right-0 w-80 h-80 bg-emerald-500/10 blur-3xl pointer-events-none rounded-full" />
@@ -325,6 +425,23 @@ export default function SellerPage() {
             >
               <Search className="w-4 h-4" />
               <span>Instant Ticket Tracker</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('PROFILE')}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition ${
+                activeTab === 'PROFILE'
+                  ? 'bg-emerald-600 text-white shadow-md font-black'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <UserCheck className="w-4 h-4" />
+              <span>Store Profile &amp; Security</span>
+              {(isDefaultPassword || supabaseService.getSellerPasswordInfo(user?.email)?.isDefault) && (
+                <span className="px-2 py-0.5 rounded-full text-[10px] bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30 animate-pulse">
+                  Reset Needed
+                </span>
+              )}
             </button>
           </div>
 
@@ -808,12 +925,210 @@ export default function SellerPage() {
           )}
 
           {/* ============================================================== */}
+          {/* TAB 6: STORE PROFILE & PASSWORD MANAGEMENT                    */}
+          {/* ============================================================== */}
+          {activeTab === 'PROFILE' && (
+            <div className="space-y-6 animate-in fade-in duration-300">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+                {/* Left Card: Store Details */}
+                <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 space-y-4">
+                  <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                    <h3 className="text-sm font-black text-white uppercase tracking-wider flex items-center gap-2">
+                      <Store className="w-4 h-4 text-emerald-400" />
+                      <span>Store Profile</span>
+                    </h3>
+                    <Link
+                      href="/seller/profile"
+                      className="text-[11px] font-bold text-emerald-400 hover:underline flex items-center gap-1"
+                    >
+                      <span>Full Profile Page</span>
+                      <ArrowRight className="w-3 h-3" />
+                    </Link>
+                  </div>
+
+                  <div className="space-y-3 text-xs">
+                    <div>
+                      <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Store / Partner Name</div>
+                      <div className="font-bold text-white text-sm mt-0.5">{user?.shopName || user?.name || 'Partner Store'}</div>
+                    </div>
+
+                    <div>
+                      <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Login Email</div>
+                      <div className="font-mono text-slate-300 mt-0.5 truncate">{user?.email}</div>
+                    </div>
+
+                    {user?.phone && (
+                      <div>
+                        <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Registered Phone</div>
+                        <div className="font-mono text-slate-300 mt-0.5">{user?.phone}</div>
+                      </div>
+                    )}
+
+                    <div>
+                      <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Assigned Repair Hub</div>
+                      <div className="text-amber-400 font-bold mt-0.5">{user?.shopName || 'Registered Workshop Admin'}</div>
+                    </div>
+
+                    <div>
+                      <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Commission Terms</div>
+                      <div className="text-emerald-400 font-bold mt-0.5">Strictly 2% referral fee on completed jobs</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Right Card: Security & Password Management */}
+                <div className="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-7 space-y-5">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-3">
+                    <div>
+                      <h3 className="text-base font-black text-white flex items-center gap-2">
+                        <KeyRound className="w-5 h-5 text-amber-400" />
+                        <span>Security &amp; Password Management</span>
+                      </h3>
+                      <p className="text-xs text-slate-400 mt-0.5">
+                        Reset your default password so the login popup warning is permanently cleared.
+                      </p>
+                    </div>
+
+                    {(isDefaultPassword || supabaseService.getSellerPasswordInfo(user?.email)?.isDefault) ? (
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-amber-500/20 text-amber-300 border border-amber-500/40 self-start sm:self-auto animate-pulse">
+                        <AlertTriangle className="w-3.5 h-3.5 text-amber-400" />
+                        Default Password Active
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 self-start sm:self-auto">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                        Custom Password Active
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Warning banner */}
+                  {(isDefaultPassword || supabaseService.getSellerPasswordInfo(user?.email)?.isDefault) && (
+                    <div className="p-3 bg-amber-500/10 border border-amber-500/30 text-amber-300 rounded-2xl text-xs flex items-center gap-2">
+                      <AlertTriangle className="w-4 h-4 shrink-0 text-amber-400" />
+                      <span>Your account is using default password <strong className="text-white font-mono">Seller@123</strong>. Please update it below.</span>
+                    </div>
+                  )}
+
+                  {/* Error & Success alerts */}
+                  {profileError && (
+                    <div className="p-3 bg-rose-950/80 border border-rose-800 text-rose-300 rounded-2xl text-xs flex items-center gap-2">
+                      <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
+                      <span>{profileError}</span>
+                    </div>
+                  )}
+
+                  {profileSuccess && (
+                    <div className="p-3 bg-emerald-950/80 border border-emerald-800 text-emerald-300 rounded-2xl text-xs flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-400" />
+                      <span>{profileSuccess}</span>
+                    </div>
+                  )}
+
+                  {/* Form */}
+                  <form onSubmit={handleInTabPasswordUpdate} className="space-y-4">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-300 mb-1 flex items-center justify-between">
+                        <span>Current Password</span>
+                        <span className="text-[10px] text-amber-400 font-mono">Default: Seller@123</span>
+                      </label>
+                      <div className="relative">
+                        <Lock className="w-4 h-4 absolute left-3.5 top-3 text-slate-500" />
+                        <input
+                          type={profileShowCurrent ? 'text' : 'password'}
+                          required
+                          value={profileCurrentPwd}
+                          onChange={(e) => setProfileCurrentPwd(e.target.value)}
+                          placeholder="Current password (default: Seller@123)"
+                          className="w-full pl-10 pr-10 py-2.5 bg-slate-950/90 border border-slate-700/80 rounded-xl text-xs text-white focus:outline-none focus:border-amber-500 font-mono"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setProfileShowCurrent(!profileShowCurrent)}
+                          className="absolute right-3 top-2.5 text-slate-500 hover:text-slate-300"
+                        >
+                          {profileShowCurrent ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs font-bold text-slate-300 mb-1">
+                          New Secure Password
+                        </label>
+                        <div className="relative">
+                          <KeyRound className="w-4 h-4 absolute left-3.5 top-3 text-slate-500" />
+                          <input
+                            type={profileShowNew ? 'text' : 'password'}
+                            required
+                            value={profileNewPwd}
+                            onChange={(e) => setProfileNewPwd(e.target.value)}
+                            placeholder="Min 6 characters"
+                            className="w-full pl-10 pr-10 py-2.5 bg-slate-950/90 border border-slate-700/80 rounded-xl text-xs text-white focus:outline-none focus:border-emerald-500"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setProfileShowNew(!profileShowNew)}
+                            className="absolute right-3 top-2.5 text-slate-500 hover:text-slate-300"
+                          >
+                            {profileShowNew ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          </button>
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold text-slate-300 mb-1">
+                          Confirm New Password
+                        </label>
+                        <div className="relative">
+                          <ShieldCheck className="w-4 h-4 absolute left-3.5 top-3 text-slate-500" />
+                          <input
+                            type={profileShowConfirm ? 'text' : 'password'}
+                            required
+                            value={profileConfirmPwd}
+                            onChange={(e) => setProfileConfirmPwd(e.target.value)}
+                            placeholder="Repeat new password"
+                            className="w-full pl-10 pr-10 py-2.5 bg-slate-950/90 border border-slate-700/80 rounded-xl text-xs text-white focus:outline-none focus:border-emerald-500"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setProfileShowConfirm(!profileShowConfirm)}
+                            className="absolute right-3 top-2.5 text-slate-500 hover:text-slate-300"
+                          >
+                            {profileShowConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="pt-2">
+                      <button
+                        type="submit"
+                        disabled={profileSubmitting}
+                        className="py-2.5 px-5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black rounded-xl text-xs shadow-lg shadow-emerald-600/30 transition flex items-center justify-center gap-2 disabled:opacity-50"
+                      >
+                        <ShieldCheck className="w-4 h-4" />
+                        <span>{profileSubmitting ? 'Updating Password...' : 'Save New Password & Secure Account'}</span>
+                      </button>
+                    </div>
+                  </form>
+                </div>
+
+              </div>
+            </div>
+          )}
+
+          {/* ============================================================== */}
           {/* MODAL 1: CREATE REPAIR REFERRAL                                 */}
           {/* ============================================================== */}
           <SellerReferralModal
             isOpen={isReferralOpen}
             onClose={() => setIsReferralOpen(false)}
+            onCreated={handleCreateReferral}
             onSubmit={handleCreateReferral}
+            currentSeller={user}
             sellerUser={user}
           />
 
@@ -917,6 +1232,17 @@ export default function SellerPage() {
               </div>
             </div>
           )}
+
+          {/* ============================================================== */}
+          {/* MODAL 3: RESET DEFAULT PASSWORD POPUP (TRIGGERED ON LOGIN)     */}
+          {/* ============================================================== */}
+          <ResetDefaultPasswordModal
+            isOpen={isResetPasswordOpen}
+            onClose={() => setIsResetPasswordOpen(false)}
+            onSuccess={() => {
+              loadData();
+            }}
+          />
 
         </main>
       </RoleGuard>

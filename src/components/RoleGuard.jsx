@@ -12,12 +12,22 @@ export default function RoleGuard({ allowedRoles = [], children }) {
   const { user, role, isAuthenticated, loading } = useAuth();
 
   const isSuperAdminOnly = allowedRoles.length === 1 && allowedRoles.includes('SUPER_ADMIN');
-  const targetLoginUrl = isSuperAdminOnly
-    ? `/super-admin/login?redirect=${encodeURIComponent(pathname)}`
-    : `/login?redirect=${encodeURIComponent(pathname)}`;
-
+  
   // Public auth pages must never be guarded by RoleGuard
-  const isAuthPage = pathname === '/login' || pathname === '/register' || pathname === '/super-admin/login';
+  const isAuthPage = 
+    pathname === '/login' || 
+    pathname === '/register' || 
+    pathname === '/super-admin/login' ||
+    Boolean(pathname && (pathname.startsWith('/login') || pathname.startsWith('/register') || pathname.startsWith('/super-admin/login')));
+
+  // Clean redirect target: never redirect back to a login page
+  const cleanRedirectPath = pathname && !pathname.includes('/login') && !pathname.includes('/register') 
+    ? encodeURIComponent(pathname) 
+    : '';
+
+  const targetLoginUrl = isSuperAdminOnly
+    ? (cleanRedirectPath ? `/super-admin/login?redirect=${cleanRedirectPath}` : '/super-admin/login')
+    : (cleanRedirectPath ? `/login?redirect=${cleanRedirectPath}` : '/login');
 
   useEffect(() => {
     if (!loading && !isAuthPage && (!isAuthenticated || !user)) {

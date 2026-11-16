@@ -248,6 +248,72 @@ export const supabaseService = {
     }
   },
 
+  // 8.5 Seller Password Store & Default Password Management
+  getSellerPasswordInfo(email) {
+    const cleanEmail = String(email || '').trim().toLowerCase();
+    if (typeof window === 'undefined') {
+      return { password: 'Seller@123', isDefault: true, lastUpdated: null };
+    }
+    try {
+      const store = JSON.parse(localStorage.getItem('smartfix_seller_passwords') || '{}');
+      if (store[cleanEmail]) {
+        return store[cleanEmail];
+      }
+    } catch (e) {
+      console.warn('Password store read error:', e);
+    }
+    // Default fallback if not yet initialized
+    return {
+      password: 'Seller@123',
+      isDefault: true,
+      lastUpdated: null,
+    };
+  },
+
+  updateSellerPassword(email, currentPassword, newPassword) {
+    const cleanEmail = String(email || '').trim().toLowerCase();
+    if (!cleanEmail) throw new Error('Seller email is required.');
+    if (!newPassword || newPassword.length < 6) {
+      throw new Error('New password must be at least 6 characters long.');
+    }
+
+    const currentInfo = this.getSellerPasswordInfo(cleanEmail);
+    if (currentPassword && currentPassword !== currentInfo.password) {
+      throw new Error('Current password does not match. Please verify your current credentials.');
+    }
+
+    if (newPassword === 'Seller@123') {
+      throw new Error('Please choose a new custom password different from the system default "Seller@123".');
+    }
+
+    if (typeof window !== 'undefined') {
+      try {
+        const store = JSON.parse(localStorage.getItem('smartfix_seller_passwords') || '{}');
+        store[cleanEmail] = {
+          password: newPassword,
+          isDefault: false,
+          lastUpdated: new Date().toISOString(),
+        };
+        localStorage.setItem('smartfix_seller_passwords', JSON.stringify(store));
+
+        // Also update session user if currently logged in
+        const sessionUser = JSON.parse(localStorage.getItem('smartfix_session_user') || 'null');
+        if (sessionUser && String(sessionUser.email).toLowerCase().trim() === cleanEmail) {
+          sessionUser.isDefaultPassword = false;
+          localStorage.setItem('smartfix_session_user', JSON.stringify(sessionUser));
+          document.cookie = `smartfix_session_user=${encodeURIComponent(JSON.stringify(sessionUser))}; path=/; max-age=604800`;
+        }
+      } catch (e) {
+        console.warn('Failed to persist updated password:', e);
+      }
+    }
+
+    return {
+      success: true,
+      message: 'Password updated successfully! Your account is now secured.',
+    };
+  },
+
   // 9. Authentication: Login
   async login(email, password) {
     const cleanEmail = String(email || '').trim().toLowerCase();
@@ -339,16 +405,25 @@ export const supabaseService = {
         }
 
         // If SELLER, fetch their assigned partner repair shop name
-        if (user.role === 'SELLER' && user.admin_id) {
-          try {
-            const adminShop = await supabaseRest(`shops?owner_id=eq.${user.admin_id}&select=id,name`);
-            if (Array.isArray(adminShop) && adminShop[0]) {
-              shopId = adminShop[0].id;
-              shopName = adminShop[0].name;
+        let isDefaultPassword = false;
+        if (user.role === 'SELLER') {
+          if (user.admin_id) {
+            try {
+              const adminShop = await supabaseRest(`shops?owner_id=eq.${user.admin_id}&select=id,name`);
+              if (Array.isArray(adminShop) && adminShop[0]) {
+                shopId = adminShop[0].id;
+                shopName = adminShop[0].name;
+              }
+            } catch (e) {
+              // ignore
             }
-          } catch (e) {
-            // ignore
           }
+
+          const pwdInfo = this.getSellerPasswordInfo(cleanEmail);
+          if (password && password !== pwdInfo.password) {
+            throw new Error('Incorrect password. If you recently updated your default password, please use your new password, or contact your shop Admin.');
+          }
+          isDefaultPassword = pwdInfo.isDefault;
         }
 
         return {
@@ -360,6 +435,7 @@ export const supabaseService = {
           shopName,
           shopId,
           adminId: user.admin_id || null,
+          isDefaultPassword,
         };
       }
     } catch (queryErr) {
@@ -567,6 +643,41 @@ export const supabaseService = {
 
     const created = Array.isArray(res) && res[0] ? res[0] : newSeller;
     created.shopName = sellerData.shopName || `${created.name} Accessories`;
+
+    // Persist default seller password securely in local store
+    const initialPassword = sellerData.password || 'Seller@123';
+    if (typeof window !== 'undefined') {
+      try {
+        const store = JSON.parse(localStorage.getItem('smartfix_seller_passwords') || '{}');
+        store[cleanEmail] = {
+          password: initialPassword,
+          isDefault: true,
+          lastUpdated: null,
+          createdByName: actingUser.name || 'Admin',
+        };
+        localStorage.setItem('smartfix_seller_passwords', JSON.stringify(store));
+      } catch (e) {}
+    }
+
+    // Persist genuine verification metadata safely without schema cache conflicts
+    if (sellerData.isVerified) {
+      if (typeof window !== 'undefined') {
+        try {
+          const map = JSON.parse(localStorage.getItem('smartfix_verified_partners') || '{}');
+          map[cleanEmail] = {
+            verified: true,
+            verifiedAt: sellerData.verifiedAt || new Date().toISOString(),
+            phone: sellerData.phone || '',
+            name: created.name,
+            shopName: created.shopName,
+          };
+          localStorage.setItem('smartfix_verified_partners', JSON.stringify(map));
+        } catch (e) {}
+      }
+      created.verification_status = 'VERIFIED_GENUINE';
+      created.isVerified = true;
+    }
+
     return created;
   },
 
@@ -575,7 +686,21 @@ export const supabaseService = {
     if (!adminId) return [];
     try {
       const sellers = await supabaseRest(`profiles?role=eq.SELLER&admin_id=eq.${adminId}&select=*&order=created_at.desc`);
-      return Array.isArray(sellers) ? sellers : [];
+      const list = Array.isArray(sellers) ? sellers : [];
+      let verifiedMap = {};
+      if (typeof window !== 'undefined') {
+        try {
+          verifiedMap = JSON.parse(localStorage.getItem('smartfix_verified_partners') || '{}');
+        } catch (e) {}
+      }
+      return list.map((s) => {
+        const isGenVerified = !!verifiedMap[String(s.email).toLowerCase().trim()];
+        return {
+          ...s,
+          isVerified: isGenVerified,
+          verification_status: isGenVerified ? 'VERIFIED_GENUINE' : (s.status === 'ACTIVE' ? 'ACTIVE' : 'STANDARD'),
+        };
+      });
     } catch (e) {
       console.warn('getAffiliatedSellers notice:', e.message);
       return [];
@@ -613,11 +738,21 @@ export const supabaseService = {
         if (s.owner_id) shopMap[s.owner_id] = s;
       });
 
+      let verifiedMap = {};
+      if (typeof window !== 'undefined') {
+        try {
+          verifiedMap = JSON.parse(localStorage.getItem('smartfix_verified_partners') || '{}');
+        } catch (e) {}
+      }
+
       return (Array.isArray(sellers) ? sellers : []).map((se) => {
         const assignedAdmin = se.admin_id ? adminMap[se.admin_id] : null;
         const assignedShop = (se.shop_id && shopMap[se.shop_id]) || (se.admin_id && shopMap[se.admin_id]) || null;
+        const isGenVerified = !!verifiedMap[String(se.email).toLowerCase().trim()];
         return {
           ...se,
+          isVerified: isGenVerified,
+          verification_status: isGenVerified ? 'VERIFIED_GENUINE' : (se.status === 'ACTIVE' ? 'ACTIVE' : 'STANDARD'),
           assignedAdminName: assignedAdmin?.name || 'Assigned Admin',
           assignedAdminEmail: assignedAdmin?.email || '',
           shop_name: assignedShop?.name || se.shop_name || 'Partner Repair Hub',

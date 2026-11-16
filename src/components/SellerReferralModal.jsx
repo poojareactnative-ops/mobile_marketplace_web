@@ -3,7 +3,14 @@
 import React, { useState } from 'react';
 import { Send, AlertCircle } from 'lucide-react';
 
-export default function SellerReferralModal({ isOpen, onClose, onCreated, currentSeller }) {
+export default function SellerReferralModal({
+  isOpen,
+  onClose,
+  onCreated,
+  onSubmit,
+  currentSeller,
+  sellerUser,
+}) {
   const [form, setForm] = useState({
     customerName: '',
     customerPhone: '',
@@ -24,14 +31,22 @@ export default function SellerReferralModal({ isOpen, onClose, onCreated, curren
       return;
     }
 
+    const submitFn = onCreated || onSubmit;
+    if (typeof submitFn !== 'function') {
+      setError('Internal error: Submit handler not provided.');
+      return;
+    }
+
+    const seller = sellerUser || currentSeller;
+
     try {
       setLoading(true);
       setError('');
-      await onCreated({
+      await submitFn({
         ...form,
         estimatedCost: Number(form.estimatedCost) || 0,
-        sellerId: currentSeller?.id,
-        sellerName: currentSeller?.shopName || currentSeller?.name || 'Seller Partner',
+        sellerId: seller?.id,
+        sellerName: seller?.shopName || seller?.name || 'Seller Partner',
       });
       // reset form
       setForm({
