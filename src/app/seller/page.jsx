@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Navbar from '../../components/Navbar';
 import SellerReferralModal from '../../components/SellerReferralModal';
 import ResetDefaultPasswordModal from '../../components/ResetDefaultPasswordModal';
+import SellerPayoutRequestModal from '../../components/SellerPayoutRequestModal';
 import RoleGuard from '../../components/RoleGuard';
 import { supabaseService } from '../../services/supabaseService';
 import { useAuth } from '../../context/AuthContext';
@@ -13,7 +14,7 @@ import {
   Wrench, Search, AlertCircle, MessageSquare, Phone, Plus,
   RefreshCw, DollarSign, ShoppingBag, Trash2, ArrowRight,
   ShieldCheck, Check, Sparkles, Filter, Mail, KeyRound, AlertTriangle,
-  UserCheck, Lock, Eye, EyeOff
+  UserCheck, Lock, Eye, EyeOff, IndianRupee
 } from 'lucide-react';
 
 const CATEGORIES = [
@@ -67,6 +68,7 @@ export default function SellerPage() {
 
   // Modals state
   const [isReferralOpen, setIsReferralOpen] = useState(false);
+  const [isPayoutModalOpen, setIsPayoutModalOpen] = useState(false);
   const [isAddProductOpen, setIsAddProductOpen] = useState(false);
   const [newProduct, setNewProduct] = useState({
     name: '',
@@ -629,16 +631,26 @@ export default function SellerPage() {
                   </p>
                 </div>
 
-                <div className="flex items-center gap-4 bg-slate-950 border border-slate-800 p-4 rounded-2xl shrink-0">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3.5 bg-slate-950 border border-slate-800 p-4 rounded-2xl shrink-0">
                   <div>
                     <div className="text-[10px] text-slate-400 uppercase font-bold">Awaiting Payout</div>
                     <div className="text-2xl font-black text-amber-400">₹{pendingCommission}</div>
                   </div>
-                  <div className="h-8 w-px bg-slate-800" />
+                  <div className="hidden sm:block h-8 w-px bg-slate-800" />
                   <div>
                     <div className="text-[10px] text-slate-400 uppercase font-bold">Total Paid to Date</div>
                     <div className="text-2xl font-black text-emerald-400">₹{paidCommission}</div>
                   </div>
+                  {pendingCommission > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setIsPayoutModalOpen(true)}
+                      className="px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-xs rounded-xl shadow-lg shadow-emerald-500/20 transition flex items-center justify-center gap-1.5 self-center sm:self-auto mt-2 sm:mt-0"
+                    >
+                      <IndianRupee className="w-3.5 h-3.5" />
+                      <span>Request Payout</span>
+                    </button>
+                  )}
                 </div>
               </div>
 
@@ -1239,6 +1251,19 @@ export default function SellerPage() {
           <ResetDefaultPasswordModal
             isOpen={isResetPasswordOpen}
             onClose={() => setIsResetPasswordOpen(false)}
+            onSuccess={() => {
+              loadData();
+            }}
+          />
+
+          {/* ============================================================== */}
+          {/* MODAL 4: REQUEST UPI / BANK REFERRAL PAYOUT                     */}
+          {/* ============================================================== */}
+          <SellerPayoutRequestModal
+            isOpen={isPayoutModalOpen}
+            onClose={() => setIsPayoutModalOpen(false)}
+            pendingBalance={pendingCommission}
+            sellerUser={user}
             onSuccess={() => {
               loadData();
             }}

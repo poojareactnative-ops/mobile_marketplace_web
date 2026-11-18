@@ -3,13 +3,15 @@
 import React, { useState } from 'react';
 import Navbar from '../../components/Navbar';
 import { supabaseService } from '../../services/supabaseService';
-import { Search, Wrench, Smartphone, CheckCircle2, Clock, ShieldCheck, ArrowRight, Store, FileText } from 'lucide-react';
+import { Search, Wrench, Smartphone, CheckCircle2, Clock, ShieldCheck, ArrowRight, Store, FileText, Award, Printer } from 'lucide-react';
+import InvoiceWarrantyModal from '../../components/InvoiceWarrantyModal';
 
 export default function TrackPage() {
   const [ticketInput, setTicketInput] = useState('');
   const [job, setJob] = useState(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [isInvoiceOpen, setIsInvoiceOpen] = useState(false);
 
   const handleTrack = async (e) => {
     e.preventDefault();
@@ -157,6 +159,19 @@ export default function TrackPage() {
               </div>
             </div>
 
+            {/* Verified Device Intake Condition */}
+            {job.notes && (
+              <div className="p-3.5 bg-slate-950/90 rounded-2xl border border-slate-800/90 text-xs space-y-1">
+                <div className="text-[10px] font-bold text-blue-400 uppercase tracking-wider flex items-center gap-1.5">
+                  <ShieldCheck className="w-3.5 h-3.5" />
+                  <span>Verified Device Intake Condition</span>
+                </div>
+                <div className="text-slate-300 font-mono text-[11px] leading-relaxed">
+                  {job.notes}
+                </div>
+              </div>
+            )}
+
             {/* Bill Summary Banner */}
             <div className="bg-gradient-to-r from-slate-950 to-slate-900 p-5 rounded-2xl border border-slate-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <div>
@@ -167,15 +182,57 @@ export default function TrackPage() {
                 <div className="text-[11px] text-slate-500 mt-0.5">Includes genuine parts and technician labor</div>
               </div>
 
-              <div className="text-xs text-slate-400 bg-slate-950 px-3.5 py-2 rounded-xl border border-slate-800 self-start sm:self-auto">
-                Referred via: <strong className="text-emerald-400">{job.seller_name || 'Partner Accessory Store'}</strong>
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 self-start sm:self-auto">
+                <div className="text-xs text-slate-400 bg-slate-950 px-3 py-2 rounded-xl border border-slate-800">
+                  Referred via: <strong className="text-emerald-400">{job.seller_name || 'Partner Accessory Store'}</strong>
+                </div>
+
+                {job.status === 'COMPLETED' && (
+                  <button
+                    type="button"
+                    onClick={() => setIsInvoiceOpen(true)}
+                    className="px-4 py-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs rounded-xl flex items-center gap-2 shadow-lg shadow-amber-500/20 transition transform hover:-translate-y-0.5"
+                  >
+                    <Award className="w-4 h-4 text-slate-950" />
+                    <span>View Invoice &amp; 60D Warranty</span>
+                  </button>
+                )}
               </div>
             </div>
+
+            {/* Warranty & Guarantee Callout Banner */}
+            {job.status === 'COMPLETED' && (
+              <div className="p-4 rounded-2xl bg-gradient-to-r from-emerald-950/30 to-purple-950/30 border border-emerald-500/30 flex items-center justify-between gap-3 text-xs">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
+                    <ShieldCheck className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <div className="font-bold text-white">SmartFix 60-Day Protection Active</div>
+                    <div className="text-slate-400 text-[11px]">Free component defect replacement valid for 60 days from completion.</div>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsInvoiceOpen(true)}
+                  className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-emerald-300 font-bold rounded-xl text-[11px] shrink-0 border border-slate-700 transition"
+                >
+                  Verify Certificate
+                </button>
+              </div>
+            )}
 
           </div>
         )}
 
       </main>
+
+      {/* Invoice & Warranty Certificate Modal */}
+      <InvoiceWarrantyModal
+        isOpen={isInvoiceOpen}
+        onClose={() => setIsInvoiceOpen(false)}
+        job={job}
+      />
     </div>
   );
 }

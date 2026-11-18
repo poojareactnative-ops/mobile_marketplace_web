@@ -65,11 +65,9 @@ export const supabaseService = {
     return Array.isArray(res) && res[0] ? res[0] : { id: jobId, status };
   },
 
-  // 4. Admin completes repair & calculates 2% commission
+  // 4. Admin completes repair & calculates realistic 3-Way Split: 2% Seller, 1% Platform Tech Fee, 97% Workshop
   async completeRepairJob(jobId, finalAmount, notes = '') {
     const amount = Number(finalAmount);
-    const sellerCommission = Math.round(amount * 0.02);
-    const adminRemaining = amount - sellerCommission;
 
     // 1. Fetch current job to get seller & shop info
     let currentJob = null;
@@ -82,13 +80,20 @@ export const supabaseService = {
       // ignore
     }
 
+    const hasSeller = !!(currentJob && currentJob.seller_id);
+    const sellerCommission = hasSeller ? Math.round(amount * 0.02) : 0;
+    const platformFee = Math.round(amount * 0.01); // 1% SmartFix Technology Fee
+    const adminRemaining = amount - sellerCommission - platformFee;
+
     const updates = {
       final_amount: amount,
       seller_commission_amount: sellerCommission,
+      platform_fee_percent: 1.0,
+      platform_fee_amount: platformFee,
       admin_remaining_amount: adminRemaining,
       status: 'COMPLETED',
-      commission_status: (currentJob && currentJob.seller_id) ? 'PENDING' : 'NOT_APPLICABLE',
-      notes,
+      commission_status: hasSeller ? 'PENDING' : 'NOT_APPLICABLE',
+      notes: notes || currentJob?.notes || '',
       updated_at: new Date().toISOString(),
     };
 
@@ -99,7 +104,7 @@ export const supabaseService = {
     });
 
     // 3. Insert into repair_commissions ledger if job was referred by a seller
-    if (currentJob && currentJob.seller_id) {
+    if (hasSeller) {
       try {
         await supabaseRest('repair_commissions', {
           method: 'POST',
@@ -121,7 +126,17 @@ export const supabaseService = {
       }
     }
 
-    return { jobId, finalAmount: amount, sellerCommission, adminRemaining };
+    // 4. Notify Super Admin of 1% Platform Tech Fee Accrual
+    try {
+      await notificationService.addNotificationAlert({
+        type: 'PLATFORM_FEE_COLLECTED',
+        title: `₹${platformFee} Platform Fee Accrued`,
+        message: `1% platform convenience fee (₹${platformFee}) earned on completed ticket ${currentJob?.ticket_id || jobId} (Bill: ₹${amount}).`,
+        recipientRole: 'SUPER_ADMIN',
+      });
+    } catch (e) {}
+
+    return { jobId, finalAmount: amount, sellerCommission, platformFee, adminRemaining };
   },
 
   // 5. Admin pays 2% commission to Seller
@@ -210,6 +225,8 @@ export const supabaseService = {
         .filter(j => j.status === 'COMPLETED')
         .reduce((acc, j) => acc + Number(j.final_amount || 0), 0);
 
+      const totalPlatformRevenue = Math.round(totalRepairVolume * 0.01);
+
       const totalCommissionPaid = commList
         .filter(c => c.status === 'PAID')
         .reduce((acc, c) => acc + Number(c.commission_amount || 0), 0);
@@ -226,6 +243,7 @@ export const supabaseService = {
           totalRepairJobs: jobsList.length,
           completedRepairs: jobsList.filter(j => j.status === 'COMPLETED').length,
           totalRepairVolume,
+          totalPlatformRevenue,
           totalCommissionPaid,
           totalCommissionPending,
         },
@@ -240,6 +258,7 @@ export const supabaseService = {
           totalRepairJobs: 0,
           completedRepairs: 0,
           totalRepairVolume: 0,
+          totalPlatformRevenue: 0,
           totalCommissionPaid: 0,
           totalCommissionPending: 0,
         },
@@ -248,21 +267,21 @@ export const supabaseService = {
     }
   },
 
-  // 8.5 Seller Password Store & Default Password Management
-  getSellerPasswordInfo(email) {
+  // 8.5 Seller Password Store & Default Password Management (100% Database-Driven)
+  async getSellerPasswordInfo(email) {
     const cleanEmail = String(email || '').trim().toLowerCase();
-    if (typeof window === 'undefined') {
-      return { password: 'Seller@123', isDefault: true, lastUpdated: null };
-    }
     try {
-      const store = JSON.parse(localStorage.getItem('smartfix_seller_passwords') || '{}');
-      if (store[cleanEmail]) {
-        return store[cleanEmail];
+      const data = await supabaseRest(`profiles?email=eq.${encodeURIComponent(cleanEmail)}&select=password,is_default_password`);
+      if (Array.isArray(data) && data[0]) {
+        return {
+          password: data[0].password || 'Seller@123',
+          isDefault: data[0].is_default_password ?? true,
+          lastUpdated: null,
+        };
       }
     } catch (e) {
-      console.warn('Password store read error:', e);
+      console.warn('Password query notice:', e.message);
     }
-    // Default fallback if not yet initialized
     return {
       password: 'Seller@123',
       isDefault: true,
@@ -270,47 +289,36 @@ export const supabaseService = {
     };
   },
 
-  updateSellerPassword(email, currentPassword, newPassword) {
+  async updateSellerPassword(email, currentPassword, newPassword) {
     const cleanEmail = String(email || '').trim().toLowerCase();
     if (!cleanEmail) throw new Error('Seller email is required.');
     if (!newPassword || newPassword.length < 6) {
       throw new Error('New password must be at least 6 characters long.');
     }
-
-    const currentInfo = this.getSellerPasswordInfo(cleanEmail);
-    if (currentPassword && currentPassword !== currentInfo.password) {
-      throw new Error('Current password does not match. Please verify your current credentials.');
-    }
-
     if (newPassword === 'Seller@123') {
       throw new Error('Please choose a new custom password different from the system default "Seller@123".');
     }
 
-    if (typeof window !== 'undefined') {
-      try {
-        const store = JSON.parse(localStorage.getItem('smartfix_seller_passwords') || '{}');
-        store[cleanEmail] = {
-          password: newPassword,
-          isDefault: false,
-          lastUpdated: new Date().toISOString(),
-        };
-        localStorage.setItem('smartfix_seller_passwords', JSON.stringify(store));
-
-        // Also update session user if currently logged in
-        const sessionUser = JSON.parse(localStorage.getItem('smartfix_session_user') || 'null');
-        if (sessionUser && String(sessionUser.email).toLowerCase().trim() === cleanEmail) {
-          sessionUser.isDefaultPassword = false;
-          localStorage.setItem('smartfix_session_user', JSON.stringify(sessionUser));
-          document.cookie = `smartfix_session_user=${encodeURIComponent(JSON.stringify(sessionUser))}; path=/; max-age=604800`;
-        }
-      } catch (e) {
-        console.warn('Failed to persist updated password:', e);
-      }
+    // Verify current password from database
+    const profiles = await supabaseRest(`profiles?email=eq.${encodeURIComponent(cleanEmail)}&select=password`);
+    const existing = Array.isArray(profiles) && profiles[0] ? profiles[0] : null;
+    if (existing?.password && currentPassword && existing.password !== currentPassword) {
+      throw new Error('Current password does not match. Please verify your current credentials.');
     }
+
+    // Update directly in Supabase profiles
+    await supabaseRest(`profiles?email=eq.${encodeURIComponent(cleanEmail)}`, {
+      method: 'PATCH',
+      body: {
+        password: newPassword,
+        is_default_password: false,
+        updated_at: new Date().toISOString(),
+      },
+    });
 
     return {
       success: true,
-      message: 'Password updated successfully! Your account is now secured.',
+      message: 'Password updated successfully in database! Your account is now secured.',
     };
   },
 
@@ -324,6 +332,9 @@ export const supabaseService = {
         const data = await supabaseRest(`profiles?email=eq.superadmin@smartfix.com&select=*`);
         if (Array.isArray(data) && data[0]) {
           const user = data[0];
+          if (password && user.password && user.password !== password) {
+            throw new Error('Incorrect password for Super Admin console.');
+          }
           return {
             id: user.id,
             name: user.name || 'Master Platform Super Admin',
@@ -341,17 +352,20 @@ export const supabaseService = {
               method: 'POST',
               body: {
                 email: 'superadmin@smartfix.com',
+                password: password || 'Admin@123',
                 name: 'Master Platform Super Admin',
                 phone: '+91 99999 00000',
                 role: 'SUPER_ADMIN',
                 status: 'ACTIVE',
+                is_default_password: false,
               },
             });
           } catch (insertErr) {
-            // ignore if table or network blocked
+            // ignore if already present
           }
         }
       } catch (err) {
+        if (err.message && err.message.includes('Incorrect password')) throw err;
         console.warn('Supabase query note during super admin login:', err?.message);
       }
 
@@ -373,6 +387,11 @@ export const supabaseService = {
       const data = await supabaseRest(`profiles?email=eq.${encodeURIComponent(cleanEmail)}&select=*`);
       if (Array.isArray(data) && data[0]) {
         const user = data[0];
+
+        // Verify password against database record
+        if (user.password && password && user.password !== password) {
+          throw new Error('Incorrect password. Please verify your credentials.');
+        }
         
         let shopName = user.shop_name || '';
         let shopId = user.shop_id || null;
@@ -392,6 +411,7 @@ export const supabaseService = {
         }
 
         // If ADMIN, fetch their owned repair shop
+        let adminStatus = user.status || 'ACTIVE';
         if (user.role === 'ADMIN') {
           try {
             const ownedShops = await supabaseRest(`shops?owner_id=eq.${user.id}&select=id,name`);
@@ -419,11 +439,7 @@ export const supabaseService = {
             }
           }
 
-          const pwdInfo = this.getSellerPasswordInfo(cleanEmail);
-          if (password && password !== pwdInfo.password) {
-            throw new Error('Incorrect password. If you recently updated your default password, please use your new password, or contact your shop Admin.');
-          }
-          isDefaultPassword = pwdInfo.isDefault;
+          isDefaultPassword = user.is_default_password ?? (user.password === 'Seller@123' || !user.password);
         }
 
         return {
@@ -432,6 +448,7 @@ export const supabaseService = {
           email: user.email,
           role: user.role,
           phone: user.phone,
+          status: user.status || adminStatus,
           shopName,
           shopId,
           adminId: user.admin_id || null,
@@ -439,6 +456,7 @@ export const supabaseService = {
         };
       }
     } catch (queryErr) {
+      if (queryErr.message && queryErr.message.includes('Incorrect password')) throw queryErr;
       console.warn('Supabase query error during login:', queryErr?.message);
     }
 
@@ -552,12 +570,15 @@ export const supabaseService = {
       if (e.message && e.message.includes('already exists')) throw e;
     }
 
+    const initialStatus = userData.role === 'ADMIN' ? 'PENDING' : 'ACTIVE';
     const newUser = {
       email: cleanEmail,
+      password: userData.password || null,
       name: userData.name || cleanEmail.split('@')[0],
       phone: userData.phone || '',
       role: userData.role === 'ADMIN' ? 'ADMIN' : 'CUSTOMER',
-      status: 'ACTIVE',
+      status: initialStatus,
+      is_default_password: false,
     };
 
     const res = await supabaseRest('profiles', {
@@ -623,14 +644,17 @@ export const supabaseService = {
       throw new Error(`A user with email "${cleanEmail}" is already registered on the platform.`);
     }
 
+    const initialPassword = sellerData.password || 'Seller@123';
     const newSeller = {
       email: cleanEmail,
+      password: initialPassword,
       name: sellerData.name?.trim() || cleanEmail.split('@')[0],
       phone: sellerData.phone || '',
       role: 'SELLER',
       admin_id: targetAdminId,
       shop_id: targetShopId,
       status: 'ACTIVE',
+      is_default_password: true,
     };
 
     const res = await supabaseRest('profiles', {
@@ -640,41 +664,6 @@ export const supabaseService = {
 
     const created = Array.isArray(res) && res[0] ? res[0] : newSeller;
     created.shopName = sellerData.shopName || `${created.name} Accessories`;
-
-    // Persist default seller password securely in local store
-    const initialPassword = sellerData.password || 'Seller@123';
-    if (typeof window !== 'undefined') {
-      try {
-        const store = JSON.parse(localStorage.getItem('smartfix_seller_passwords') || '{}');
-        store[cleanEmail] = {
-          password: initialPassword,
-          isDefault: true,
-          lastUpdated: null,
-          createdByName: actingUser.name || 'Admin',
-        };
-        localStorage.setItem('smartfix_seller_passwords', JSON.stringify(store));
-      } catch (e) {}
-    }
-
-    // Persist genuine verification metadata safely without schema cache conflicts
-    if (sellerData.isVerified) {
-      if (typeof window !== 'undefined') {
-        try {
-          const map = JSON.parse(localStorage.getItem('smartfix_verified_partners') || '{}');
-          map[cleanEmail] = {
-            verified: true,
-            verifiedAt: sellerData.verifiedAt || new Date().toISOString(),
-            phone: sellerData.phone || '',
-            name: created.name,
-            shopName: created.shopName,
-          };
-          localStorage.setItem('smartfix_verified_partners', JSON.stringify(map));
-        } catch (e) {}
-      }
-      created.verification_status = 'VERIFIED_GENUINE';
-      created.isVerified = true;
-    }
-
     return created;
   },
 
@@ -744,11 +733,11 @@ export const supabaseService = {
     }
   },
 
-  // 12.7 Fetch All Registered Repair Shop Admins (with their assigned shops)
+  // 12.7 Fetch All Registered Repair Shop Admins (with their assigned shops & approval status)
   async getAllAdmins() {
     try {
       const [admins, shops] = await Promise.all([
-        supabaseRest('profiles?role=eq.ADMIN&select=*&order=name.asc'),
+        supabaseRest('profiles?role=eq.ADMIN&select=*&order=created_at.desc'),
         supabaseRest('shops?select=*'),
       ]);
 
@@ -759,19 +748,64 @@ export const supabaseService = {
 
       return (Array.isArray(admins) ? admins : []).map((admin) => {
         const ownedShop = shopByOwner[admin.id] || null;
+
         return {
           id: admin.id,
           name: admin.name || 'Repair Admin',
           email: admin.email,
           phone: admin.phone || '',
+          role: 'ADMIN',
+          status: admin.status || 'PENDING',
           shopId: ownedShop?.id || admin.shop_id || null,
           shopName: ownedShop?.name || admin.shop_name || `${admin.name}'s Repair Center`,
+          shopAddress: ownedShop?.address || 'Local Hub',
+          created_at: admin.created_at || new Date().toISOString(),
         };
       });
     } catch (e) {
       console.warn('getAllAdmins notice:', e.message);
       return [];
     }
+  },
+
+  // 12.8 Super Admin: Update Admin Approval Status (Accept / Reject) - 100% Database-Driven
+  async updateAdminStatus(adminId, newStatus) {
+    if (!adminId) throw new Error('Admin ID is required.');
+    const validStatuses = ['ACTIVE', 'REJECTED', 'PENDING'];
+    if (!validStatuses.includes(newStatus)) {
+      throw new Error(`Invalid status: ${newStatus}. Must be ACTIVE, REJECTED, or PENDING.`);
+    }
+
+    // Direct database update
+    await supabaseRest(`profiles?id=eq.${adminId}`, {
+      method: 'PATCH',
+      body: { 
+        status: newStatus,
+        updated_at: new Date().toISOString(),
+      },
+    });
+
+    // If current session is this admin, update session
+    if (typeof window !== 'undefined') {
+      try {
+        const sessionUser = JSON.parse(localStorage.getItem('smartfix_session_user') || 'null');
+        if (sessionUser && (sessionUser.id === adminId || sessionUser.email === adminId)) {
+          sessionUser.status = newStatus;
+          localStorage.setItem('smartfix_session_user', JSON.stringify(sessionUser));
+          document.cookie = `smartfix_session_user=${encodeURIComponent(JSON.stringify(sessionUser))}; path=/; max-age=604800`;
+        }
+      } catch (e) {}
+    }
+
+    // Post audit notification alert
+    await notificationService.addNotificationAlert({
+      type: newStatus === 'ACTIVE' ? 'ADMIN_ACCEPTED' : 'ADMIN_REJECTED',
+      title: newStatus === 'ACTIVE' ? 'Admin Application Approved' : 'Admin Application Rejected',
+      message: `Super Admin ${newStatus === 'ACTIVE' ? 'accepted and activated' : 'rejected'} Repair Shop Admin account (${adminId}).`,
+      recipientRole: 'SUPER_ADMIN',
+    });
+
+    return { success: true, status: newStatus };
   },
 
   // 11. Products Management
@@ -863,7 +897,7 @@ export const supabaseService = {
       created_at: new Date().toISOString(),
     };
 
-    // 1. Try Supabase REST insertion
+    // Supabase REST insertion
     try {
       const res = await supabaseRest('inquiries', {
         method: 'POST',
@@ -873,27 +907,14 @@ export const supabaseService = {
         return res[0];
       }
     } catch (err) {
-      console.warn('Supabase inquiry insert fallback to local storage:', err.message);
-    }
-
-    // 2. LocalStorage persistence fallback for offline or unmigrated Supabase instance
-    if (typeof window !== 'undefined') {
-      try {
-        const stored = JSON.parse(localStorage.getItem('smartfix_customer_inquiries') || '[]');
-        stored.unshift(newInquiry);
-        localStorage.setItem('smartfix_customer_inquiries', JSON.stringify(stored));
-      } catch (e) {
-        // ignore
-      }
+      console.warn('Database inquiry insert notice:', err.message);
     }
 
     return newInquiry;
   },
 
   async getInquiries(filter = {}) {
-    let list = [];
-
-    // 1. Fetch from Supabase
+    // 100% Database-driven fetch
     try {
       let endpoint = 'inquiries?select=*&order=created_at.desc';
       if (filter.ownerRole) {
@@ -903,56 +924,92 @@ export const supabaseService = {
         endpoint += `&shop_id=eq.${filter.shopId}`;
       }
       const data = await supabaseRest(endpoint);
-      if (Array.isArray(data)) {
-        list = data;
-      }
+      return Array.isArray(data) ? data : [];
     } catch (err) {
       console.warn('Supabase getInquiries notice:', err.message);
+      return [];
     }
-
-    // 2. Merge local storage inquiries
-    if (typeof window !== 'undefined') {
-      try {
-        const local = JSON.parse(localStorage.getItem('smartfix_customer_inquiries') || '[]');
-        const existingIds = new Set(list.map((i) => i.id));
-        const filteredLocal = local.filter((i) => {
-          if (existingIds.has(i.id)) return false;
-          if (filter.ownerRole && i.owner_role !== filter.ownerRole) return false;
-          if (filter.shopId && i.shop_id !== filter.shopId) return false;
-          return true;
-        });
-        list = [...filteredLocal, ...list];
-      } catch (e) {
-        // ignore
-      }
-    }
-
-    return list;
   },
 
   async updateInquiryStatus(inquiryId, status) {
-    try {
-      await supabaseRest(`inquiries?id=eq.${inquiryId}`, {
-        method: 'PATCH',
-        body: { status },
-      });
-    } catch (e) {
-      // ignore
-    }
-
-    if (typeof window !== 'undefined') {
-      try {
-        const stored = JSON.parse(localStorage.getItem('smartfix_customer_inquiries') || '[]');
-        const updated = stored.map((item) =>
-          item.id === inquiryId ? { ...item, status } : item
-        );
-        localStorage.setItem('smartfix_customer_inquiries', JSON.stringify(updated));
-      } catch (e) {
-        // ignore
-      }
-    }
+    await supabaseRest(`inquiries?id=eq.${inquiryId}`, {
+      method: 'PATCH',
+      body: { status },
+    });
 
     return { id: inquiryId, status };
+  },
+
+  // 15. Seller Wallet Payout Requests (UPI / Bank Settlement)
+  async requestPayout(payoutData) {
+    const amount = Number(payoutData.amount);
+    if (!amount || amount <= 0) {
+      throw new Error('Please enter a valid payout amount.');
+    }
+    if (!payoutData.upiId && !payoutData.bankAccountNo) {
+      throw new Error('Please provide either a UPI ID or Bank Account Details for the transfer.');
+    }
+
+    const newRequest = {
+      seller_id: payoutData.sellerId,
+      seller_name: payoutData.sellerName,
+      shop_id: payoutData.shopId || null,
+      admin_id: payoutData.adminId || null,
+      amount,
+      payment_method: payoutData.paymentMethod || 'UPI',
+      upi_id: payoutData.upiId || null,
+      bank_account_no: payoutData.bankAccountNo || null,
+      bank_ifsc: payoutData.bankIfsc || null,
+      status: 'PENDING',
+    };
+
+    const res = await supabaseRest('payout_requests', {
+      method: 'POST',
+      body: newRequest,
+    });
+
+    // Notify assigned admin & super admin
+    try {
+      await notificationService.addNotificationAlert({
+        type: 'PAYOUT_REQUESTED',
+        title: `₹${amount} Payout Requested by ${payoutData.sellerName}`,
+        message: `${payoutData.sellerName} requested a payout of ₹${amount} via ${payoutData.paymentMethod || 'UPI'}.`,
+        recipientRole: 'ADMIN',
+      });
+    } catch (e) {}
+
+    return Array.isArray(res) && res[0] ? res[0] : newRequest;
+  },
+
+  async getPayoutRequests(filter = {}) {
+    try {
+      let endpoint = 'payout_requests?select=*&order=created_at.desc';
+      if (filter.sellerId) endpoint += `&seller_id=eq.${filter.sellerId}`;
+      if (filter.adminId) endpoint += `&admin_id=eq.${filter.adminId}`;
+      if (filter.status) endpoint += `&status=eq.${filter.status}`;
+      const data = await supabaseRest(endpoint);
+      return Array.isArray(data) ? data : [];
+    } catch (e) {
+      console.warn('getPayoutRequests notice:', e.message);
+      return [];
+    }
+  },
+
+  async processPayoutRequest(payoutId, transactionRef, notes = '') {
+    const updates = {
+      status: 'PROCESSED',
+      transaction_ref: transactionRef || `UTR-${Date.now()}`,
+      processed_at: new Date().toISOString(),
+      notes,
+      updated_at: new Date().toISOString(),
+    };
+
+    const res = await supabaseRest(`payout_requests?id=eq.${payoutId}`, {
+      method: 'PATCH',
+      body: updates,
+    });
+
+    return Array.isArray(res) && res[0] ? res[0] : { id: payoutId, ...updates };
   },
 };
 

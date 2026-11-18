@@ -14,7 +14,8 @@ import {
   Wrench, Plus, Search, Filter, RefreshCw, AlertCircle, FileText,
   DollarSign, ChevronRight, Sparkles, Phone, Mail, MapPin, CheckCircle2,
   Menu, X, LogOut, ArrowLeft, LayoutDashboard, Home, ExternalLink,
-  Cpu, KeyRound, ArrowUpRight, BarChart3, Check, Smartphone, Shield
+  Cpu, KeyRound, ArrowUpRight, BarChart3, Check, Smartphone, Shield,
+  Building2, UserCheck, UserX
 } from 'lucide-react';
 
 export default function SuperAdminPage() {
@@ -33,12 +34,15 @@ export default function SuperAdminPage() {
   const [overview, setOverview] = useState({});
   const [shops, setShops] = useState([]);
   const [sellers, setSellers] = useState([]);
+  const [admins, setAdmins] = useState([]);
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
 
   // Search & Filter
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
+  const [adminStatusFilter, setAdminStatusFilter] = useState('ALL');
+  const [adminActionLoading, setAdminActionLoading] = useState(null);
 
   // Modals
   const [isOnboardSellerOpen, setIsOnboardSellerOpen] = useState(false);
@@ -47,12 +51,13 @@ export default function SuperAdminPage() {
   const loadPlatformData = useCallback(async () => {
     try {
       setLoading(true);
-      const [c, o, sh, se, j] = await Promise.all([
+      const [c, o, sh, se, j, adm] = await Promise.all([
         supabaseService.getCommissions(),
         supabaseService.getPlatformOverview(),
         supabaseService.getShops(),
         supabaseService.getAllSellers(),
         supabaseService.getRepairJobs(),
+        supabaseService.getAllAdmins(),
       ]);
 
       setCommissions(c || { data: [], summary: {} });
@@ -60,6 +65,7 @@ export default function SuperAdminPage() {
       setShops(sh || []);
       setSellers(se || []);
       setJobs(j || []);
+      setAdmins(adm || []);
     } catch (err) {
       console.error('Failed to load Super Admin governance data:', err);
     } finally {
@@ -73,6 +79,33 @@ export default function SuperAdminPage() {
 
   const handleSignOut = () => {
     logout('/');
+  };
+
+  // Super Admin Accept Admin
+  const handleAcceptAdmin = async (adminId) => {
+    try {
+      setAdminActionLoading(adminId);
+      await supabaseService.updateAdminStatus(adminId, 'ACTIVE');
+      await loadPlatformData();
+    } catch (err) {
+      alert('Error accepting admin: ' + err.message);
+    } finally {
+      setAdminActionLoading(null);
+    }
+  };
+
+  // Super Admin Reject Admin
+  const handleRejectAdmin = async (adminId) => {
+    if (!confirm('Are you sure you want to reject this Repair Shop Admin? They will be blocked from accessing workshop controls.')) return;
+    try {
+      setAdminActionLoading(adminId);
+      await supabaseService.updateAdminStatus(adminId, 'REJECTED');
+      await loadPlatformData();
+    } catch (err) {
+      alert('Error rejecting admin: ' + err.message);
+    } finally {
+      setAdminActionLoading(null);
+    }
   };
 
   const handleSellerCreated = async (sellerData) => {
@@ -90,6 +123,20 @@ export default function SuperAdminPage() {
       (c.ticket_id && c.ticket_id.toLowerCase().includes(q)) ||
       (c.shop_name && c.shop_name.toLowerCase().includes(q)) ||
       (c.seller_name && c.seller_name.toLowerCase().includes(q));
+    return matchesStatus && matchesSearch;
+  });
+
+  // Filtered admins
+  const pendingAdminsCount = admins.filter(a => a.status === 'PENDING').length;
+  const filteredAdmins = admins.filter((a) => {
+    const matchesStatus = adminStatusFilter === 'ALL' || a.status === adminStatusFilter;
+    const q = searchQuery.toLowerCase();
+    const matchesSearch =
+      !searchQuery ||
+      (a.name && a.name.toLowerCase().includes(q)) ||
+      (a.email && a.email.toLowerCase().includes(q)) ||
+      (a.phone && a.phone.includes(q)) ||
+      (a.shopName && a.shopName.toLowerCase().includes(q));
     return matchesStatus && matchesSearch;
   });
 
@@ -143,6 +190,13 @@ export default function SuperAdminPage() {
       icon: DollarSign,
       count: commissions.data?.length || 0,
       countClass: 'bg-amber-500/20 text-amber-300',
+    },
+    {
+      id: 'ADMINS',
+      label: 'Workshop Admins',
+      icon: Building2,
+      count: pendingAdminsCount > 0 ? `${pendingAdminsCount} Pending` : admins.length,
+      countClass: pendingAdminsCount > 0 ? 'bg-amber-500/20 text-amber-300 animate-pulse font-bold' : 'bg-purple-500/20 text-purple-300',
     },
     {
       id: 'SHOPS',
@@ -348,7 +402,7 @@ export default function SuperAdminPage() {
           <main className="p-4 sm:p-8 space-y-6 flex-1 max-w-7xl w-full mx-auto">
 
             {/* Macro KPI Cards Grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
 
               {/* Card 1: Registered Shops */}
               <div className="bg-slate-900/90 border border-slate-800/90 p-4 sm:p-5 rounded-3xl space-y-2 relative overflow-hidden">
@@ -410,6 +464,21 @@ export default function SuperAdminPage() {
                       ₹{Number(overview.totalCommissionPending || 0).toLocaleString('en-IN')} pending
                     </span>
                   )}
+                </div>
+              </div>
+
+              {/* Card 5: SmartFix Platform Revenue (1% Tech Fee Vault) */}
+              <div className="col-span-2 sm:col-span-1 bg-gradient-to-br from-purple-950/60 to-indigo-950/60 border border-purple-500/40 p-4 sm:p-5 rounded-3xl space-y-2 relative overflow-hidden shadow-lg shadow-purple-500/10">
+                <div className="flex items-center justify-between text-purple-300 text-xs font-semibold">
+                  <span>SmartFix 1% Vault</span>
+                  <ShieldCheck className="w-4 h-4 text-purple-400" />
+                </div>
+                <div className="text-2xl sm:text-3xl font-black text-white">
+                  ₹{Number(overview.totalPlatformRevenue || Math.round((overview.totalRepairVolume || 0) * 0.01)).toLocaleString('en-IN')}
+                </div>
+                <div className="text-[11px] text-purple-300/80 flex items-center gap-1 font-bold">
+                  <Sparkles className="w-3 h-3 text-amber-400" />
+                  <span>Platform Tech Revenue</span>
                 </div>
               </div>
 
@@ -619,6 +688,165 @@ export default function SuperAdminPage() {
                             </td>
                           </tr>
                         ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ============================================================== */}
+            {/* TAB: WORKSHOP ADMINS GOVERNANCE (ACCEPT / REJECT)              */}
+            {/* ============================================================== */}
+            {activeTab === 'ADMINS' && (
+              <div className="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl space-y-0">
+                <div className="px-6 py-5 border-b border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <div>
+                    <div className="flex items-center gap-2.5">
+                      <h2 className="text-sm sm:text-base font-extrabold text-white">Repair Shop Admin Applications &amp; Governance</h2>
+                      {pendingAdminsCount > 0 && (
+                        <span className="px-2.5 py-0.5 rounded-full text-[11px] font-black bg-amber-500/20 text-amber-300 border border-amber-500/30 animate-pulse">
+                          {pendingAdminsCount} Awaiting Review
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-[11px] text-slate-400 mt-1">
+                      Review, accept, or reject workshop owner registrations. Accepted admins gain workshop control; rejected admins are blocked.
+                    </p>
+                  </div>
+
+                  {/* Status Filter Buttons */}
+                  <div className="flex items-center gap-1.5 bg-slate-950 p-1.5 rounded-2xl border border-slate-800 self-start md:self-auto">
+                    {['ALL', 'PENDING', 'ACTIVE', 'REJECTED'].map((st) => (
+                      <button
+                        key={st}
+                        type="button"
+                        onClick={() => setAdminStatusFilter(st)}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
+                          adminStatusFilter === st
+                            ? 'bg-purple-600 text-white shadow-md'
+                            : 'text-slate-400 hover:text-white'
+                        }`}
+                      >
+                        <span>{st === 'ALL' ? 'All Admins' : st}</span>
+                        {st === 'PENDING' && pendingAdminsCount > 0 && (
+                          <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {loading ? (
+                  <div className="p-16 text-center text-slate-400 text-xs flex flex-col items-center gap-3">
+                    <div className="w-8 h-8 border-3 border-purple-500 border-t-transparent rounded-full animate-spin" />
+                    <span>Loading registered admins...</span>
+                  </div>
+                ) : filteredAdmins.length === 0 ? (
+                  <div className="p-16 text-center text-slate-400 text-xs space-y-3">
+                    <Building2 className="w-10 h-10 mx-auto text-slate-600" />
+                    <p className="font-extrabold text-base text-slate-300">No admins match this filter</p>
+                    <p className="text-xs text-slate-500 max-w-md mx-auto">
+                      {adminStatusFilter === 'PENDING' 
+                        ? 'There are currently no pending repair shop admin applications awaiting approval.'
+                        : 'Registered workshop owners will appear here for governance review.'}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs">
+                      <thead className="bg-slate-950 text-slate-400 uppercase font-semibold border-b border-slate-800">
+                        <tr>
+                          <th className="py-3 px-4">Admin Name &amp; Phone</th>
+                          <th className="py-3 px-4">Login Email</th>
+                          <th className="py-3 px-4">Repair Workshop / Hub</th>
+                          <th className="py-3 px-4">Approval Status</th>
+                          <th className="py-3 px-4 text-right">Governance Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-800 font-medium">
+                        {filteredAdmins.map((adm) => {
+                          const isActioning = adminActionLoading === adm.id;
+                          return (
+                            <tr key={adm.id} className="hover:bg-slate-800/40 transition">
+                              <td className="py-3.5 px-4">
+                                <div className="font-bold text-white text-sm">{adm.name}</div>
+                                <div className="text-[11px] text-slate-400 font-mono flex items-center gap-1 mt-0.5">
+                                  <Phone className="w-3 h-3 text-slate-500" />
+                                  <span>{adm.phone || 'No phone'}</span>
+                                </div>
+                              </td>
+
+                              <td className="py-3.5 px-4 font-mono text-slate-300">
+                                <div className="flex items-center gap-1.5">
+                                  <Mail className="w-3.5 h-3.5 text-slate-500" />
+                                  <span>{adm.email}</span>
+                                </div>
+                              </td>
+
+                              <td className="py-3.5 px-4">
+                                <div className="font-semibold text-white flex items-center gap-1.5">
+                                  <Store className="w-3.5 h-3.5 text-purple-400 shrink-0" />
+                                  <span>{adm.shopName || 'Workshop'}</span>
+                                </div>
+                                <div className="text-[10px] text-slate-400 mt-0.5">
+                                  {adm.shopAddress || 'Local Address'}
+                                </div>
+                              </td>
+
+                              <td className="py-3.5 px-4">
+                                {adm.status === 'ACTIVE' && (
+                                  <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 inline-flex items-center gap-1">
+                                    <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                                    <span>APPROVED / ACTIVE</span>
+                                  </span>
+                                )}
+                                {adm.status === 'PENDING' && (
+                                  <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 inline-flex items-center gap-1 animate-pulse">
+                                    <Clock className="w-3 h-3 text-amber-400" />
+                                    <span>PENDING APPROVAL</span>
+                                  </span>
+                                )}
+                                {adm.status === 'REJECTED' && (
+                                  <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30 inline-flex items-center gap-1">
+                                    <AlertCircle className="w-3 h-3 text-rose-400" />
+                                    <span>REJECTED</span>
+                                  </span>
+                                )}
+                              </td>
+
+                              <td className="py-3.5 px-4 text-right">
+                                <div className="flex items-center justify-end gap-2">
+                                  {adm.status !== 'ACTIVE' && (
+                                    <button
+                                      type="button"
+                                      disabled={isActioning}
+                                      onClick={() => handleAcceptAdmin(adm.id)}
+                                      className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md shadow-emerald-900/30 transition flex items-center gap-1.5 disabled:opacity-50"
+                                      title="Accept and grant workshop admin privileges"
+                                    >
+                                      <UserCheck className="w-3.5 h-3.5" />
+                                      <span>{isActioning ? 'Updating...' : 'Accept Admin'}</span>
+                                    </button>
+                                  )}
+
+                                  {adm.status !== 'REJECTED' && (
+                                    <button
+                                      type="button"
+                                      disabled={isActioning}
+                                      onClick={() => handleRejectAdmin(adm.id)}
+                                      className="px-3 py-1.5 rounded-xl bg-rose-600/90 hover:bg-rose-500 text-white font-bold text-xs shadow-md shadow-rose-900/30 transition flex items-center gap-1.5 disabled:opacity-50"
+                                      title="Reject and block access to workshop controls"
+                                    >
+                                      <UserX className="w-3.5 h-3.5" />
+                                      <span>{isActioning ? 'Updating...' : 'Reject Admin'}</span>
+                                    </button>
+                                  )}
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
                       </tbody>
                     </table>
                   </div>

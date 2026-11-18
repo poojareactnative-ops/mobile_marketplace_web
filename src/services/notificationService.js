@@ -1,12 +1,13 @@
 /**
- * Notification & Partner Verification Alert Service
- * Handles dispatching verification OTP alerts, audio-visual notification pings,
- * and maintaining genuine partner verification audit logs.
+ * SmartFix Live Notification Service
+ * 100% Database-Driven — Syncs directly with Supabase `notifications` table
  */
+
+import { supabaseRest } from '../lib/supabase';
 
 class NotificationService {
   constructor() {
-    this.activeVerifications = new Map();
+    this.memoryCache = [];
   }
 
   // Play a gentle audible notification chime using Web Audio API
@@ -30,7 +31,7 @@ class NotificationService {
         osc.stop(ctx.currentTime + start + duration);
       };
 
-      // Two-tone pleasant notification chime
+      // Two-tone pleasant chime
       playTone(587.33, 0, 0.15); // D5
       playTone(880.00, 0.12, 0.25); // A5
     } catch (e) {
@@ -38,148 +39,108 @@ class NotificationService {
     }
   }
 
-  // 1. Dispatch Genuine Partner Verification Alert (SMS / Email Simulation)
-  async sendPartnerVerificationAlert({ name, phone, email, shopName }) {
-    // Generate secure 4-digit verification code
-    const code = String(Math.floor(1000 + Math.random() * 9000));
-    const recipient = phone || email || 'partner';
-    const cleanKey = String(email || phone || name).toLowerCase().trim();
-
-    const alertPayload = {
-      code,
-      name: name || 'Store Partner',
-      recipient,
-      phone: phone || '',
-      email: email || '',
-      shopName: shopName || 'Accessory Partner Store',
-      timestamp: new Date().toISOString(),
-      message: `[SmartFix Security Alert]: Verification code for genuine store registration of "${shopName || name}" is: ${code}. Please provide this code to the Admin to confirm genuine partner authorization.`,
+  // 1. Add notification directly to Supabase database
+  async addNotificationAlert(alert) {
+    const newAlert = {
+      type: alert.type || 'SYSTEM_ALERT',
+      title: alert.title || 'Platform Notification',
+      message: alert.message || '',
+      recipient_role: alert.recipientRole || null,
+      is_read: false,
     };
 
-    this.activeVerifications.set(cleanKey, alertPayload);
+    // Keep immediate in-memory cache for ultra-fast UI response
+    const cachedAlert = {
+      id: `alert-${Date.now()}`,
+      created_at: new Date().toISOString(),
+      read: false,
+      ...newAlert,
+    };
+    this.memoryCache = [cachedAlert, ...this.memoryCache].slice(0, 50);
 
-    // Play audible notification chime
+    // Audio chime
     this.playNotificationSound();
 
-    // Log to notification alert stream
-    this.addNotificationAlert({
-      type: 'VERIFICATION_ALERT_SENT',
-      title: 'Partner Verification Alert Dispatched',
-      message: `Security verification code sent to ${recipient} (${shopName || name})`,
-      code,
-      timestamp: new Date().toISOString(),
-    });
-
-    return {
-      success: true,
-      code,
-      recipient,
-      message: alertPayload.message,
-      timestamp: alertPayload.timestamp,
-    };
-  }
-
-  // 2. Verify Code
-  verifyPartnerCode(key, inputCode, expectedCode) {
-    const cleanInput = String(inputCode || '').trim();
-    if (expectedCode && cleanInput === String(expectedCode).trim()) {
-      return { verified: true };
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('smartfix_new_notification', { detail: cachedAlert }));
     }
 
-    const cleanKey = String(key || '').toLowerCase().trim();
-    const stored = this.activeVerifications.get(cleanKey);
-    if (stored && stored.code === cleanInput) {
-      return { verified: true };
-    }
-
-    // Also accept Master verification bypass '9922' for instant testing
-    if (cleanInput === '9922') {
-      return { verified: true, bypass: true };
-    }
-
-    return { verified: false, error: 'Incorrect verification code. Please check the code sent to the partner.' };
-  }
-
-  // 3. Add to persistent notification alerts
-  addNotificationAlert(alert) {
-    if (typeof window === 'undefined') return;
     try {
-      const existing = this.getNotificationAlerts();
-      const newAlert = {
-        id: `alert-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
-        read: false,
-        ...alert,
-      };
-      const updated = [newAlert, ...existing].slice(0, 30); // keep last 30 alerts
-      localStorage.setItem('smartfix_notification_alerts', JSON.stringify(updated));
-
-      // Broadcast custom event for reactive UI updates
-      window.dispatchEvent(new CustomEvent('smartfix_new_notification', { detail: newAlert }));
+      const res = await supabaseRest('notifications', {
+        method: 'POST',
+        body: newAlert,
+      });
+      return Array.isArray(res) && res[0] ? res[0] : cachedAlert;
     } catch (e) {
-      console.warn('Could not store notification alert:', e);
+      console.warn('Database notification insert notice:', e.message);
+      return cachedAlert;
     }
   }
 
-  // 4. Get all stored notification alerts
+  // 2. Fetch all notifications from Supabase
+  async fetchNotificationsFromDb(recipientRole = null) {
+    try {
+      let endpoint = 'notifications?select=*&order=created_at.desc&limit=40';
+      if (recipientRole) {
+        endpoint += `&recipient_role=eq.${recipientRole}`;
+      }
+      const data = await supabaseRest(endpoint);
+      if (Array.isArray(data)) {
+        this.memoryCache = data.map(n => ({
+          id: n.id,
+          type: n.type,
+          title: n.title,
+          message: n.message,
+          read: n.is_read,
+          created_at: n.created_at,
+          recipient_role: n.recipient_role,
+        }));
+        return this.memoryCache;
+      }
+    } catch (e) {
+      console.warn('Notifications fetch notice:', e.message);
+    }
+    return this.memoryCache;
+  }
+
+  // 3. Synchronous getter for UI components
   getNotificationAlerts() {
-    if (typeof window === 'undefined') return [];
-    try {
-      const saved = localStorage.getItem('smartfix_notification_alerts');
-      return saved ? JSON.parse(saved) : [];
-    } catch (e) {
-      return [];
-    }
+    return this.memoryCache;
   }
 
-  // 5. Mark alerts as read
-  markAlertsAsRead() {
-    if (typeof window === 'undefined') return;
-    try {
-      const existing = this.getNotificationAlerts();
-      const updated = existing.map((a) => ({ ...a, read: true }));
-      localStorage.setItem('smartfix_notification_alerts', JSON.stringify(updated));
+  // 4. Mark notifications as read in Supabase
+  async markAlertsAsRead() {
+    this.memoryCache = this.memoryCache.map((a) => ({ ...a, read: true }));
+    if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('smartfix_notifications_read'));
+    }
+
+    try {
+      await supabaseRest('notifications?is_read=eq.false', {
+        method: 'PATCH',
+        body: { is_read: true },
+      });
     } catch (e) {
       // ignore
     }
   }
 
-  // 6. Record verified genuine store partner (persists across reloads)
-  markPartnerAsVerified(email, details = {}) {
-    if (typeof window === 'undefined' || !email) return;
-    try {
-      const verifiedMap = this.getVerifiedPartners();
-      const key = String(email).toLowerCase().trim();
-      verifiedMap[key] = {
-        verified: true,
-        verifiedAt: details.verifiedAt || new Date().toISOString(),
-        phone: details.phone || '',
-        name: details.name || '',
-        shopName: details.shopName || '',
-      };
-      localStorage.setItem('smartfix_verified_partners', JSON.stringify(verifiedMap));
-    } catch (e) {
-      console.warn('Could not record verified partner:', e);
+  // 5. Clear all notifications
+  async clearAllNotifications() {
+    this.memoryCache = [];
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('smartfix_notifications_read'));
     }
-  }
 
-  // 7. Get map of all verified genuine partners
-  getVerifiedPartners() {
-    if (typeof window === 'undefined') return {};
     try {
-      const saved = localStorage.getItem('smartfix_verified_partners');
-      return saved ? JSON.parse(saved) : {};
+      await supabaseRest('notifications', {
+        method: 'DELETE',
+      });
     } catch (e) {
-      return {};
+      // ignore
     }
-  }
-
-  // 8. Check if a seller is verified genuine
-  isPartnerVerified(email) {
-    if (!email) return false;
-    const map = this.getVerifiedPartners();
-    return !!map[String(email).toLowerCase().trim()];
   }
 }
 
 export const notificationService = new NotificationService();
+export default notificationService;

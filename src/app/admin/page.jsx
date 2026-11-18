@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import AdminCompleteRepairModal from '../../components/AdminCompleteRepairModal';
 import AdminPayCommissionModal from '../../components/AdminPayCommissionModal';
 import AdminOnboardSellerModal from '../../components/AdminOnboardSellerModal';
+import InvoiceWarrantyModal from '../../components/InvoiceWarrantyModal';
 import NotificationBell from '../../components/NotificationBell';
 import RoleGuard from '../../components/RoleGuard';
 import { supabaseService } from '../../services/supabaseService';
@@ -15,7 +16,7 @@ import {
   MessageSquare, Plus, Search, Filter, RefreshCw, AlertCircle,
   Layers, ArrowRight, IndianRupee, FileText, ChevronRight, Sparkles,
   ShieldCheck, Check, Smartphone, Tag, ShoppingBag, Trash2, ArrowUpRight,
-  Menu, X, LogOut, ArrowLeft, LayoutDashboard, Home, ExternalLink
+  Menu, X, LogOut, ArrowLeft, LayoutDashboard, Home, ExternalLink, Printer, Award
 } from 'lucide-react';
 
 export default function AdminPage() {
@@ -44,6 +45,7 @@ export default function AdminPage() {
   // Modals state
   const [completingJob, setCompletingJob] = useState(null);
   const [payingCommission, setPayingCommission] = useState(null);
+  const [invoiceJob, setInvoiceJob] = useState(null);
   const [isOnboardOpen, setIsOnboardOpen] = useState(false);
   const [isDirectTicketOpen, setIsDirectTicketOpen] = useState(false);
   const [directTicketForm, setDirectTicketForm] = useState({
@@ -605,6 +607,18 @@ export default function AdminPage() {
 
                                 <td className="py-3 px-4 text-right">
                                   <div className="flex items-center justify-end gap-2">
+                                    {isCompleted && (
+                                      <button
+                                        type="button"
+                                        onClick={() => setInvoiceJob(job)}
+                                        className="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-amber-300 border border-amber-500/30 rounded-lg text-xs font-bold transition flex items-center gap-1.5 shadow"
+                                        title="Print Official GST Invoice & 60-Day Warranty Certificate"
+                                      >
+                                        <Award className="w-3.5 h-3.5 text-amber-400" />
+                                        <span>Invoice / Warranty</span>
+                                      </button>
+                                    )}
+
                                     {!isCompleted && job.status !== 'CANCELLED' && (
                                       <>
                                         {job.status === 'PENDING_APPROVAL' && (
@@ -1162,6 +1176,13 @@ export default function AdminPage() {
             </div>
           </div>
         )}
+
+        {/* Official GST Invoice & 60-Day Warranty Certificate Modal */}
+        <InvoiceWarrantyModal
+          isOpen={!!invoiceJob}
+          onClose={() => setInvoiceJob(null)}
+          job={invoiceJob}
+        />
 
       </div>
     </RoleGuard>

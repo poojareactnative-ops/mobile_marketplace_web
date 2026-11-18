@@ -4,7 +4,7 @@ import React, { useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '../context/AuthContext';
-import { ShieldAlert, LogIn, ArrowRight, Lock } from 'lucide-react';
+import { ShieldAlert, LogIn, ArrowRight, Lock, Clock } from 'lucide-react';
 
 export default function RoleGuard({ allowedRoles = [], children }) {
   const router = useRouter();
@@ -69,6 +69,63 @@ export default function RoleGuard({ allowedRoles = [], children }) {
           <LogIn className="w-4 h-4" />
           <span>{isSuperAdminOnly ? 'Access Super Admin Vault' : 'Sign In to Continue'}</span>
         </Link>
+      </div>
+    );
+  }
+
+  // 1.5 Super Admin Approval Guard for Workshop Admins
+  if (role === 'ADMIN' && user?.status === 'PENDING') {
+    return (
+      <div className="max-w-lg w-full mx-auto my-12 p-8 bg-slate-900 border border-amber-500/40 rounded-3xl text-center space-y-4 shadow-2xl">
+        <div className="w-12 h-12 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center mx-auto">
+          <Clock className="w-6 h-6 animate-pulse" />
+        </div>
+        <h2 className="text-xl font-black text-white">Application Pending Super Admin Approval</h2>
+        <p className="text-xs text-slate-400 leading-relaxed">
+          Your Repair Shop Admin account (<strong className="text-white">{user?.shopName || user?.name}</strong>) has been registered and is currently under review by the platform Super Admin. You will gain full workbench access once accepted.
+        </p>
+        <div className="p-3 bg-slate-950 rounded-2xl border border-slate-800 text-[11px] text-slate-400 text-left">
+          <strong className="text-white">Governance Status:</strong> Awaiting platform root acceptance. Super Admin will verify your repair center details.
+        </div>
+        <div className="pt-2 flex items-center justify-center gap-3">
+          <button
+            type="button"
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl text-xs transition"
+          >
+            Refresh Status
+          </button>
+          <button
+            type="button"
+            onClick={() => window.location.href = '/'}
+            className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold rounded-xl text-xs transition"
+          >
+            Back to Home
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (role === 'ADMIN' && user?.status === 'REJECTED') {
+    return (
+      <div className="max-w-lg w-full mx-auto my-12 p-8 bg-slate-900 border border-rose-900/60 rounded-3xl text-center space-y-4 shadow-2xl">
+        <div className="w-12 h-12 rounded-2xl bg-rose-500/20 text-rose-400 flex items-center justify-center mx-auto">
+          <ShieldAlert className="w-6 h-6" />
+        </div>
+        <h2 className="text-xl font-black text-white">Application Rejected by Super Admin</h2>
+        <p className="text-xs text-slate-400 leading-relaxed">
+          Your Repair Shop Admin registration was rejected by the platform Super Admin. If you have questions or require re-consideration, please contact governance support at <span className="text-purple-400 font-mono">superadmin@smartfix.com</span>.
+        </p>
+        <div className="pt-2">
+          <button
+            type="button"
+            onClick={() => window.location.href = '/'}
+            className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl text-xs transition"
+          >
+            Back to Home
+          </button>
+        </div>
       </div>
     );
   }

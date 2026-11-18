@@ -12,8 +12,10 @@ export default function AdminCompleteRepairModal({ isOpen, onClose, job, onCompl
   if (!isOpen || !job) return null;
 
   const billAmount = Number(finalAmount) || 0;
-  const sellerCommission = Math.round(billAmount * 0.02);
-  const adminRemaining = billAmount - sellerCommission;
+  const isReferred = !!job.seller_id;
+  const sellerCommission = isReferred ? Math.round(billAmount * 0.02) : 0;
+  const platformFee = Math.round(billAmount * 0.01);
+  const adminRemaining = billAmount - sellerCommission - platformFee;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -68,25 +70,39 @@ export default function AdminCompleteRepairModal({ isOpen, onClose, job, onCompl
             />
           </div>
 
-          {/* Automatic 2% Commission Live Calculation */}
+          {/* Realistic 3-Way Revenue & Commission Split */}
           <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-2">
-            <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-              Automatic 2% Referral Commission Breakdown
+            <div className="text-[11px] font-black uppercase tracking-wider text-slate-400 flex items-center justify-between">
+              <span>Automated 3-Way Revenue Split</span>
+              <span className="text-[10px] text-purple-400 font-bold">Standard Platform Model</span>
             </div>
+
             <div className="flex justify-between items-center text-xs">
               <span className="text-slate-300">Referring Partner:</span>
               <span className="font-semibold text-white">{job.seller_name || 'Direct / Walk-in Customer'}</span>
             </div>
+
+            {isReferred && (
+              <div className="flex justify-between items-center text-xs">
+                <span className="text-slate-300">Seller Referral Commission (2%):</span>
+                <span className="font-bold text-emerald-400">₹{sellerCommission.toLocaleString('en-IN')}</span>
+              </div>
+            )}
+
             <div className="flex justify-between items-center text-xs">
-              <span className="text-slate-300">Seller Referral Commission (2%):</span>
-              <span className="font-black text-emerald-400 text-sm">₹{sellerCommission.toLocaleString('en-IN')}</span>
+              <span className="text-slate-300">SmartFix Platform Tech Fee (1%):</span>
+              <span className="font-bold text-purple-400">₹{platformFee.toLocaleString('en-IN')}</span>
             </div>
-            <div className="flex justify-between items-center text-xs">
-              <span className="text-slate-300">Admin Shop Remaining (98%):</span>
+
+            <div className="flex justify-between items-center text-xs pt-1.5 border-t border-slate-800">
+              <span className="text-white font-bold">Workshop Net Payout ({isReferred ? '97%' : '99%'}):</span>
               <span className="font-black text-amber-400 text-sm">₹{adminRemaining.toLocaleString('en-IN')}</span>
             </div>
-            <p className="text-[10px] text-slate-500 pt-1 border-t border-slate-800">
-              The 2% commission will be credited to the seller ledger with status PENDING, ready for settlement.
+
+            <p className="text-[10px] text-slate-500 pt-1">
+              {isReferred 
+                ? 'The 2% referral fee will be credited to the seller wallet with status PENDING for settlement.' 
+                : 'Direct customer walk-in (no seller referral fee deducted).'}
             </p>
           </div>
 

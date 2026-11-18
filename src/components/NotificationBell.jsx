@@ -8,16 +8,20 @@ export default function NotificationBell() {
   const [alerts, setAlerts] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
 
-  const loadAlerts = () => {
-    const list = notificationService.getNotificationAlerts();
+  const loadAlerts = async () => {
+    const list = await notificationService.fetchNotificationsFromDb();
     setAlerts(list || []);
   };
 
   useEffect(() => {
     loadAlerts();
 
-    const handleNew = () => loadAlerts();
-    const handleRead = () => loadAlerts();
+    const handleNew = () => {
+      setAlerts(notificationService.getNotificationAlerts());
+    };
+    const handleRead = () => {
+      setAlerts(notificationService.getNotificationAlerts());
+    };
 
     if (typeof window !== 'undefined') {
       window.addEventListener('smartfix_new_notification', handleNew);
@@ -41,11 +45,9 @@ export default function NotificationBell() {
     setIsOpen(!isOpen);
   };
 
-  const handleClear = () => {
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('smartfix_notification_alerts');
-      setAlerts([]);
-    }
+  const handleClear = async () => {
+    await notificationService.clearAllNotifications();
+    setAlerts([]);
   };
 
   return (

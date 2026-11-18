@@ -9,23 +9,27 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Initialize session from storage
+  // Initialize session from storage and sync with Supabase
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem('smartfix_session_user');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (parsed?.role === 'SELLER' && parsed?.email) {
-          const pwdInfo = supabaseService.getSellerPasswordInfo(parsed.email);
-          parsed.isDefaultPassword = pwdInfo.isDefault;
+    async function restoreSession() {
+      try {
+        const saved = localStorage.getItem('smartfix_session_user');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (parsed?.role === 'SELLER' && parsed?.email) {
+            const pwdInfo = await supabaseService.getSellerPasswordInfo(parsed.email);
+            parsed.isDefaultPassword = pwdInfo.isDefault;
+          }
+          setUser(parsed);
         }
-        setUser(parsed);
+      } catch (e) {
+        console.warn('Session load notice:', e);
+      } finally {
+        setLoading(false);
       }
-    } catch (e) {
-      console.warn('Session load notice:', e);
-    } finally {
-      setLoading(false);
     }
+
+    restoreSession();
   }, []);
 
   const saveUserSession = (userData) => {
@@ -83,7 +87,7 @@ export function AuthProvider({ children }) {
     if (!user || !user.email) {
       throw new Error('No authenticated user session found.');
     }
-    const res = supabaseService.updateSellerPassword(user.email, currentPassword, newPassword);
+    const res = await supabaseService.updateSellerPassword(user.email, currentPassword, newPassword);
     const updatedUser = {
       ...user,
       isDefaultPassword: false,
