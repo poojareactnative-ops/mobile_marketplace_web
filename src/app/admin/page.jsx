@@ -184,6 +184,10 @@ export default function AdminPage() {
   const completedRepairsCount = jobs.filter(j => j.status === 'COMPLETED').length;
 
   const pendingCommissionAmount = Number(commissions.summary?.pendingCommission || 0);
+  const paidCommissionAmount = Number(commissions.summary?.paidCommission || 0);
+  // Super Admin 1% Commission on workshop repair volume
+  const superAdminFee = Math.round(totalRevenue * 0.01);
+  const adminNetTakeHome = totalRevenue - superAdminFee - (pendingCommissionAmount + paidCommissionAmount);
 
   const navItems = [
     {
@@ -429,10 +433,20 @@ export default function AdminPage() {
           <main className="p-4 sm:p-6 lg:p-8 space-y-6 flex-1 max-w-7xl w-full mx-auto">
 
             {/* KPI Stat Cards Strip */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3">
               <div className="bg-slate-900/80 border border-slate-800 p-4 rounded-3xl backdrop-blur-md shadow-lg">
-                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Revenue</div>
+                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Gross Volume</div>
                 <div className="text-xl font-black text-white mt-1">₹{totalRevenue.toLocaleString('en-IN')}</div>
+              </div>
+
+              <div className="bg-gradient-to-br from-purple-950/40 to-slate-900/80 border border-purple-500/30 p-4 rounded-3xl backdrop-blur-md shadow-lg">
+                <div className="text-[10px] font-bold text-purple-300 uppercase tracking-wider">Super Admin (1%)</div>
+                <div className="text-xl font-black text-purple-300 mt-1">₹{superAdminFee.toLocaleString('en-IN')}</div>
+              </div>
+
+              <div className="bg-gradient-to-br from-emerald-950/40 to-slate-900/80 border border-emerald-500/30 p-4 rounded-3xl backdrop-blur-md shadow-lg">
+                <div className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider">Net Workshop Income</div>
+                <div className="text-xl font-black text-emerald-400 mt-1">₹{adminNetTakeHome.toLocaleString('en-IN')}</div>
               </div>
 
               <div className="bg-slate-900/80 border border-slate-800 p-4 rounded-3xl backdrop-blur-md shadow-lg">
@@ -442,7 +456,7 @@ export default function AdminPage() {
 
               <div className="bg-slate-900/80 border border-slate-800 p-4 rounded-3xl backdrop-blur-md shadow-lg">
                 <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Completed</div>
-                <div className="text-xl font-black text-emerald-400 mt-1">{completedRepairsCount}</div>
+                <div className="text-xl font-black text-white mt-1">{completedRepairsCount}</div>
               </div>
 
               <div className="bg-slate-900/80 border border-slate-800 p-4 rounded-3xl backdrop-blur-md shadow-lg">
@@ -453,11 +467,6 @@ export default function AdminPage() {
               <div className="bg-slate-900/80 border border-slate-800 p-4 rounded-3xl backdrop-blur-md shadow-lg">
                 <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Partner Stores</div>
                 <div className="text-xl font-black text-teal-400 mt-1">{sellers.length}</div>
-              </div>
-
-              <div className="bg-slate-900/80 border border-slate-800 p-4 rounded-3xl backdrop-blur-md shadow-lg">
-                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Customer Leads</div>
-                <div className="text-xl font-black text-blue-400 mt-1">{inquiries.length}</div>
               </div>
             </div>
 

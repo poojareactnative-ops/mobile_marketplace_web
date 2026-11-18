@@ -129,7 +129,10 @@ export default function SuperAdminPage() {
   // Filtered admins
   const pendingAdminsCount = admins.filter(a => a.status === 'PENDING').length;
   const filteredAdmins = admins.filter((a) => {
-    const matchesStatus = adminStatusFilter === 'ALL' || a.status === adminStatusFilter;
+    const matchesStatus =
+      adminStatusFilter === 'ALL' ||
+      a.status === adminStatusFilter ||
+      (adminStatusFilter === 'REJECTED' && a.status === 'SUSPENDED');
     const q = searchQuery.toLowerCase();
     const matchesSearch =
       !searchQuery ||
@@ -665,29 +668,39 @@ export default function SuperAdminPage() {
                           <th className="py-3 px-4">Accessory Seller Partner</th>
                           <th className="py-3 px-4">Bill Amount</th>
                           <th className="py-3 px-4 text-emerald-400 font-bold">Seller 2%</th>
+                          <th className="py-3 px-4 text-purple-400 font-bold">Super Admin 1%</th>
+                          <th className="py-3 px-4 text-amber-400 font-bold">Admin Net</th>
                           <th className="py-3 px-4">Status</th>
                           <th className="py-3 px-4">Payment Ref</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-800 font-medium">
-                        {filteredCommissions.map((c) => (
-                          <tr key={c.id} className="hover:bg-slate-800/40 transition">
-                            <td className="py-3.5 px-4 font-mono font-bold text-amber-400">{c.ticket_id}</td>
-                            <td className="py-3.5 px-4 text-slate-200">{c.shop_name || 'Repair Partner'}</td>
-                            <td className="py-3.5 px-4 text-slate-200">{c.seller_name || 'Seller Partner'}</td>
-                            <td className="py-3.5 px-4 font-bold text-white">₹{c.final_repair_amount}</td>
-                            <td className="py-3.5 px-4 font-black text-emerald-400">₹{c.commission_amount}</td>
-                            <td className="py-3.5 px-4">
-                              <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase border ${c.status === 'PAID' ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-amber-500/20 text-amber-400 border-amber-500/30'
-                                }`}>
-                                {c.status}
-                              </span>
-                            </td>
-                            <td className="py-3.5 px-4 text-slate-400 font-mono text-[11px]">
-                              {c.payment_reference || '—'}
-                            </td>
-                          </tr>
-                        ))}
+                        {filteredCommissions.map((c) => {
+                          const bill = Number(c.final_repair_amount || 0);
+                          const sellerFee = Number(c.commission_amount || 0);
+                          const superAdminFee = Math.round(bill * 0.01);
+                          const adminNet = bill - sellerFee - superAdminFee;
+                          return (
+                            <tr key={c.id} className="hover:bg-slate-800/40 transition">
+                              <td className="py-3.5 px-4 font-mono font-bold text-amber-400">{c.ticket_id}</td>
+                              <td className="py-3.5 px-4 text-slate-200">{c.shop_name || 'Repair Partner'}</td>
+                              <td className="py-3.5 px-4 text-slate-200">{c.seller_name || 'Seller Partner'}</td>
+                              <td className="py-3.5 px-4 font-bold text-white">₹{bill.toLocaleString('en-IN')}</td>
+                              <td className="py-3.5 px-4 font-black text-emerald-400">₹{sellerFee.toLocaleString('en-IN')}</td>
+                              <td className="py-3.5 px-4 font-black text-purple-400">₹{superAdminFee.toLocaleString('en-IN')}</td>
+                              <td className="py-3.5 px-4 font-black text-amber-400">₹{adminNet.toLocaleString('en-IN')}</td>
+                              <td className="py-3.5 px-4">
+                                <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase border ${c.status === 'PAID' ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-amber-500/20 text-amber-400 border-amber-500/30'
+                                  }`}>
+                                  {c.status}
+                                </span>
+                              </td>
+                              <td className="py-3.5 px-4 text-slate-400 font-mono text-[11px]">
+                                {c.payment_reference || '—'}
+                              </td>
+                            </tr>
+                          );
+                        })}
                       </tbody>
                     </table>
                   </div>
@@ -760,6 +773,8 @@ export default function SuperAdminPage() {
                           <th className="py-3 px-4">Admin Name &amp; Phone</th>
                           <th className="py-3 px-4">Login Email</th>
                           <th className="py-3 px-4">Repair Workshop / Hub</th>
+                          <th className="py-3 px-4">Admin Volume &amp; Net Income</th>
+                          <th className="py-3 px-4 text-purple-400 font-bold">Super Admin 1% Cut</th>
                           <th className="py-3 px-4">Approval Status</th>
                           <th className="py-3 px-4 text-right">Governance Actions</th>
                         </tr>
@@ -795,6 +810,22 @@ export default function SuperAdminPage() {
                               </td>
 
                               <td className="py-3.5 px-4">
+                                <div className="font-bold text-white text-xs">
+                                  ₹{Number(adm.totalVolume || 0).toLocaleString('en-IN')} Gross
+                                </div>
+                                <div className="text-[10px] text-emerald-400 font-semibold mt-0.5">
+                                  ₹{Number(adm.adminNetIncome || 0).toLocaleString('en-IN')} Net ({adm.completedJobs || 0} repairs)
+                                </div>
+                              </td>
+
+                              <td className="py-3.5 px-4 font-mono">
+                                <div className="font-black text-purple-300 text-xs">
+                                  ₹{Number(adm.superAdminCommission || 0).toLocaleString('en-IN')}
+                                </div>
+                                <div className="text-[10px] text-slate-400">1% of volume</div>
+                              </td>
+
+                              <td className="py-3.5 px-4">
                                 {adm.status === 'ACTIVE' && (
                                   <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 inline-flex items-center gap-1">
                                     <CheckCircle2 className="w-3 h-3 text-emerald-400" />
@@ -807,7 +838,7 @@ export default function SuperAdminPage() {
                                     <span>PENDING APPROVAL</span>
                                   </span>
                                 )}
-                                {adm.status === 'REJECTED' && (
+                                {(adm.status === 'REJECTED' || adm.status === 'SUSPENDED') && (
                                   <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30 inline-flex items-center gap-1">
                                     <AlertCircle className="w-3 h-3 text-rose-400" />
                                     <span>REJECTED</span>
@@ -830,7 +861,7 @@ export default function SuperAdminPage() {
                                     </button>
                                   )}
 
-                                  {adm.status !== 'REJECTED' && (
+                                  {adm.status !== 'REJECTED' && adm.status !== 'SUSPENDED' && (
                                     <button
                                       type="button"
                                       disabled={isActioning}

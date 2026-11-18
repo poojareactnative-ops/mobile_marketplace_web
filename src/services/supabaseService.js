@@ -4,6 +4,7 @@
  */
 
 import { supabase, supabaseRest, SUPABASE_URL, SUPABASE_ANON_KEY } from '../lib/supabase.js';
+import { notificationService } from './notificationService.js';
 
 export const supabaseService = {
   // 1. Fetch Repair Jobs
@@ -98,10 +99,25 @@ export const supabaseService = {
     };
 
     // 2. Update repair job in Supabase
-    await supabaseRest(`repair_jobs?id=eq.${jobId}`, {
-      method: 'PATCH',
-      body: updates,
-    });
+    try {
+      await supabaseRest(`repair_jobs?id=eq.${jobId}`, {
+        method: 'PATCH',
+        body: updates,
+      });
+    } catch (patchErr) {
+      if (patchErr.message && (patchErr.message.includes('platform_fee') || patchErr.message.includes('42703') || patchErr.message.includes('PGRST204'))) {
+        console.warn('repair_jobs missing platform_fee columns, retrying without them:', patchErr.message);
+        const fallbackUpdates = { ...updates };
+        delete fallbackUpdates.platform_fee_percent;
+        delete fallbackUpdates.platform_fee_amount;
+        await supabaseRest(`repair_jobs?id=eq.${jobId}`, {
+          method: 'PATCH',
+          body: fallbackUpdates,
+        });
+      } else {
+        throw patchErr;
+      }
+    }
 
     // 3. Insert into repair_commissions ledger if job was referred by a seller
     if (hasSeller) {
@@ -134,7 +150,7 @@ export const supabaseService = {
         message: `1% platform convenience fee (₹${platformFee}) earned on completed ticket ${currentJob?.ticket_id || jobId} (Bill: ₹${amount}).`,
         recipientRole: 'SUPER_ADMIN',
       });
-    } catch (e) {}
+    } catch (e) { }
 
     return { jobId, finalAmount: amount, sellerCommission, platformFee, adminRemaining };
   },
@@ -381,7 +397,7 @@ export const supabaseService = {
         adminId: null,
       };
     }
-    
+
     // Query Supabase profiles table
     try {
       const data = await supabaseRest(`profiles?email=eq.${encodeURIComponent(cleanEmail)}&select=*`);
@@ -392,7 +408,7 @@ export const supabaseService = {
         if (user.password && password && user.password !== password) {
           throw new Error('Incorrect password. Please verify your credentials.');
         }
-        
+
         let shopName = user.shop_name || '';
         let shopId = user.shop_id || null;
 
@@ -554,7 +570,7 @@ export const supabaseService = {
   // 10. Public Authentication: Register (Admins & Customers only)
   async register(userData) {
     const cleanEmail = String(userData.email || '').trim().toLowerCase();
-    
+
     // Business Rule: Sellers cannot self-register directly
     if (userData.role === 'SELLER') {
       throw new Error('Accessory Sellers cannot self-register. A registered Repair Shop Admin must onboard you to partner with their shop.');
@@ -768,18 +784,33 @@ export const supabaseService = {
   // 12.7 Fetch All Registered Repair Shop Admins (with their assigned shops & approval status)
   async getAllAdmins() {
     try {
-      const [admins, shops] = await Promise.all([
+      const [admins, shops, jobs] = await Promise.all([
         supabaseRest('profiles?role=eq.ADMIN&select=*&order=created_at.desc'),
         supabaseRest('shops?select=*'),
+        supabaseRest('repair_jobs?select=id,admin_id,shop_id,status,final_amount,seller_commission_amount,admin_remaining_amount'),
       ]);
 
+      const shopsList = Array.isArray(shops) ? shops : [];
+      const adminsList = Array.isArray(admins) ? admins : [];
+      const jobsList = Array.isArray(jobs) ? jobs : [];
+
       const shopByOwner = {};
-      (Array.isArray(shops) ? shops : []).forEach((s) => {
+      shopsList.forEach((s) => {
         if (s.owner_id) shopByOwner[s.owner_id] = s;
       });
 
-      return (Array.isArray(admins) ? admins : []).map((admin) => {
+      return adminsList.map((admin) => {
         const ownedShop = shopByOwner[admin.id] || null;
+        const adminJobs = jobsList.filter(j => 
+          (j.admin_id === admin.id) || 
+          (ownedShop && j.shop_id === ownedShop.id)
+        );
+        const completedJobs = adminJobs.filter(j => j.status === 'COMPLETED');
+        const totalVolume = completedJobs.reduce((acc, j) => acc + Number(j.final_amount || 0), 0);
+        // 1% Commission to Super Admin from this Admin's repair income
+        const superAdminCommission = Math.round(totalVolume * 0.01);
+        const sellerCommission = completedJobs.reduce((acc, j) => acc + Number(j.seller_commission_amount || 0), 0);
+        const adminNetIncome = totalVolume - superAdminCommission - sellerCommission;
 
         return {
           id: admin.id,
@@ -791,6 +822,12 @@ export const supabaseService = {
           shopId: ownedShop?.id || admin.shop_id || null,
           shopName: ownedShop?.name || admin.shop_name || `${admin.name}'s Repair Center`,
           shopAddress: ownedShop?.address || 'Local Hub',
+          totalJobs: adminJobs.length,
+          completedJobs: completedJobs.length,
+          totalVolume,
+          superAdminCommission,
+          sellerCommission,
+          adminNetIncome,
           created_at: admin.created_at || new Date().toISOString(),
         };
       });
@@ -800,44 +837,96 @@ export const supabaseService = {
     }
   },
 
+  // 12.75 Helper: Get live profile status for session refresh
+  async getProfileStatus(idOrEmail) {
+    if (!idOrEmail) return null;
+    try {
+      const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(idOrEmail);
+      const query = isUUID ? `id=eq.${idOrEmail}` : `email=eq.${encodeURIComponent(String(idOrEmail).toLowerCase().trim())}`;
+      const data = await supabaseRest(`profiles?${query}&select=status`);
+      if (Array.isArray(data) && data[0]?.status) {
+        return data[0].status;
+      }
+    } catch (e) {
+      console.warn('getProfileStatus notice:', e.message);
+    }
+    return null;
+  },
+
   // 12.8 Super Admin: Update Admin Approval Status (Accept / Reject) - 100% Database-Driven
   async updateAdminStatus(adminId, newStatus) {
     if (!adminId) throw new Error('Admin ID is required.');
-    const validStatuses = ['ACTIVE', 'REJECTED', 'PENDING'];
+    const validStatuses = ['ACTIVE', 'REJECTED', 'PENDING', 'SUSPENDED'];
     if (!validStatuses.includes(newStatus)) {
       throw new Error(`Invalid status: ${newStatus}. Must be ACTIVE, REJECTED, or PENDING.`);
     }
 
-    // Direct database update
-    await supabaseRest(`profiles?id=eq.${adminId}`, {
-      method: 'PATCH',
-      body: { 
-        status: newStatus,
-        updated_at: new Date().toISOString(),
-      },
-    });
+    let actualStatus = newStatus;
+    try {
+      // Direct database update
+      await supabaseRest(`profiles?id=eq.${adminId}`, {
+        method: 'PATCH',
+        body: {
+          status: newStatus,
+          updated_at: new Date().toISOString(),
+        },
+      });
+    } catch (err) {
+      // Fallback: If database check constraint profiles_status_check doesn't yet include 'REJECTED',
+      // fallback to 'SUSPENDED' which is supported by the legacy constraint
+      if (newStatus === 'REJECTED' && (err.message?.includes('profiles_status_check') || err.message?.includes('23514'))) {
+        console.warn('profiles_status_check does not allow REJECTED, falling back to SUSPENDED:', err.message);
+        actualStatus = 'SUSPENDED';
+        await supabaseRest(`profiles?id=eq.${adminId}`, {
+          method: 'PATCH',
+          body: {
+            status: 'SUSPENDED',
+            updated_at: new Date().toISOString(),
+          },
+        });
+      } else {
+        throw err;
+      }
+    }
+
+    // Also update associated shop verification status
+    try {
+      await supabaseRest(`shops?owner_id=eq.${adminId}`, {
+        method: 'PATCH',
+        body: {
+          is_verified: actualStatus === 'ACTIVE',
+          updated_at: new Date().toISOString(),
+        },
+      });
+    } catch (shopErr) {
+      console.warn('Shop status update note:', shopErr.message);
+    }
 
     // If current session is this admin, update session
     if (typeof window !== 'undefined') {
       try {
         const sessionUser = JSON.parse(localStorage.getItem('smartfix_session_user') || 'null');
         if (sessionUser && (sessionUser.id === adminId || sessionUser.email === adminId)) {
-          sessionUser.status = newStatus;
+          sessionUser.status = actualStatus;
           localStorage.setItem('smartfix_session_user', JSON.stringify(sessionUser));
           document.cookie = `smartfix_session_user=${encodeURIComponent(JSON.stringify(sessionUser))}; path=/; max-age=604800`;
         }
-      } catch (e) {}
+      } catch (e) { }
     }
 
     // Post audit notification alert
-    await notificationService.addNotificationAlert({
-      type: newStatus === 'ACTIVE' ? 'ADMIN_ACCEPTED' : 'ADMIN_REJECTED',
-      title: newStatus === 'ACTIVE' ? 'Admin Application Approved' : 'Admin Application Rejected',
-      message: `Super Admin ${newStatus === 'ACTIVE' ? 'accepted and activated' : 'rejected'} Repair Shop Admin account (${adminId}).`,
-      recipientRole: 'SUPER_ADMIN',
-    });
+    try {
+      await notificationService.addNotificationAlert({
+        type: actualStatus === 'ACTIVE' ? 'ADMIN_ACCEPTED' : 'ADMIN_REJECTED',
+        title: actualStatus === 'ACTIVE' ? 'Admin Application Approved' : 'Admin Application Rejected',
+        message: `Super Admin ${actualStatus === 'ACTIVE' ? 'accepted and activated' : 'rejected'} Repair Shop Admin account (${adminId}).`,
+        recipientRole: 'SUPER_ADMIN',
+      });
+    } catch (e) {
+      console.warn('Audit notification notice:', e.message);
+    }
 
-    return { success: true, status: newStatus };
+    return { success: true, status: actualStatus };
   },
 
   // 11. Products Management
@@ -1008,7 +1097,7 @@ export const supabaseService = {
         message: `${payoutData.sellerName} requested a payout of ₹${amount} via ${payoutData.paymentMethod || 'UPI'}.`,
         recipientRole: 'ADMIN',
       });
-    } catch (e) {}
+    } catch (e) { }
 
     return Array.isArray(res) && res[0] ? res[0] : newRequest;
   },

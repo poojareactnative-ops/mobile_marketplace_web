@@ -9,7 +9,7 @@ import { ShieldAlert, LogIn, ArrowRight, Lock, Clock } from 'lucide-react';
 export default function RoleGuard({ allowedRoles = [], children }) {
   const router = useRouter();
   const pathname = usePathname();
-  const { user, role, isAuthenticated, loading } = useAuth();
+  const { user, role, isAuthenticated, loading, refreshSession } = useAuth();
 
   const isSuperAdminOnly = allowedRoles.length === 1 && allowedRoles.includes('SUPER_ADMIN');
   
@@ -90,7 +90,10 @@ export default function RoleGuard({ allowedRoles = [], children }) {
         <div className="pt-2 flex items-center justify-center gap-3">
           <button
             type="button"
-            onClick={() => window.location.reload()}
+            onClick={async () => {
+              if (refreshSession) await refreshSession();
+              window.location.reload();
+            }}
             className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl text-xs transition"
           >
             Refresh Status
@@ -107,7 +110,7 @@ export default function RoleGuard({ allowedRoles = [], children }) {
     );
   }
 
-  if (role === 'ADMIN' && user?.status === 'REJECTED') {
+  if (role === 'ADMIN' && (user?.status === 'REJECTED' || user?.status === 'SUSPENDED')) {
     return (
       <div className="max-w-lg w-full mx-auto my-12 p-8 bg-slate-900 border border-rose-900/60 rounded-3xl text-center space-y-4 shadow-2xl">
         <div className="w-12 h-12 rounded-2xl bg-rose-500/20 text-rose-400 flex items-center justify-center mx-auto">

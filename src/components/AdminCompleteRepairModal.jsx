@@ -90,7 +90,7 @@ export default function AdminCompleteRepairModal({ isOpen, onClose, job, onCompl
             )}
 
             <div className="flex justify-between items-center text-xs">
-              <span className="text-slate-300">SmartFix Platform Tech Fee (1%):</span>
+              <span className="text-slate-300">Super Admin Platform Commission (1%):</span>
               <span className="font-bold text-purple-400">₹{platformFee.toLocaleString('en-IN')}</span>
             </div>
 

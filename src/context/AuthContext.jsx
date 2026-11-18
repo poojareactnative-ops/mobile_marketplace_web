@@ -20,6 +20,13 @@ export function AuthProvider({ children }) {
             const pwdInfo = await supabaseService.getSellerPasswordInfo(parsed.email);
             parsed.isDefaultPassword = pwdInfo.isDefault;
           }
+          if (parsed?.role === 'ADMIN' && (parsed?.id || parsed?.email)) {
+            const freshStatus = await supabaseService.getProfileStatus(parsed.id || parsed.email);
+            if (freshStatus && freshStatus !== parsed.status) {
+              parsed.status = freshStatus;
+              saveUserSession(parsed);
+            }
+          }
           setUser(parsed);
         }
       } catch (e) {
@@ -44,6 +51,27 @@ export function AuthProvider({ children }) {
         document.cookie = 'smartfix_session_user=; path=/; max-age=0';
       }
     }
+  };
+
+  // Re-sync current session from Supabase
+  const refreshSession = async () => {
+    try {
+      const saved = localStorage.getItem('smartfix_session_user');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed?.id || parsed?.email) {
+          const freshStatus = await supabaseService.getProfileStatus(parsed.id || parsed.email);
+          if (freshStatus) {
+            parsed.status = freshStatus;
+            saveUserSession(parsed);
+            return parsed;
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('refreshSession notice:', e);
+    }
+    return user;
   };
 
   // 1. Login with email & password
@@ -115,6 +143,7 @@ export function AuthProvider({ children }) {
     register,
     updatePassword,
     logout,
+    refreshSession,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
