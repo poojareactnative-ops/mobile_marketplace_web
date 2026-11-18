@@ -13,10 +13,9 @@ import RoleGuard from '../../components/RoleGuard';
 import { supabaseService } from '../../services/supabaseService';
 import { useAuth } from '../../context/AuthContext';
 import {
-  Wrench, Store, ShieldCheck, User, Plus, Search,
+  Wrench, Store, Plus, Search,
   CheckCircle2, Clock, AlertCircle, ArrowLeft, RefreshCw,
-  LogIn, UserPlus, ShieldAlert, Phone, MapPin, Check,
-  Layers, ArrowRight, DollarSign, FileText, ChevronRight, Sparkles, Filter, MessageSquare
+  LogIn, UserPlus, Phone, MessageSquare
 } from 'lucide-react';
 
 function DashboardContent() {
@@ -516,9 +515,8 @@ function DashboardContent() {
                         <div>
                           <div className="flex items-center gap-2">
                             <span className="font-extrabold text-white text-xs">{inq.customer_name}</span>
-                            <span className={`text-[10px] font-black uppercase px-2 py-0.2 rounded-full border ${
-                              inq.status === 'NEW' ? 'bg-amber-500/20 text-amber-300 border-amber-500/30' : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
-                            }`}>
+                            <span className={`text-[10px] font-black uppercase px-2 py-0.2 rounded-full border ${inq.status === 'NEW' ? 'bg-amber-500/20 text-amber-300 border-amber-500/30' : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
+                              }`}>
                               {inq.status}
                             </span>
                           </div>

@@ -10,10 +10,9 @@ import RoleGuard from '../../components/RoleGuard';
 import { supabaseService } from '../../services/supabaseService';
 import { useAuth } from '../../context/AuthContext';
 import {
-  Store, Clock, CheckCircle2, TrendingUp, Banknote, Smartphone,
-  Wrench, Search, AlertCircle, MessageSquare, Phone, Plus,
-  RefreshCw, DollarSign, ShoppingBag, Trash2, ArrowRight,
-  ShieldCheck, Check, Sparkles, Filter, Mail, KeyRound, AlertTriangle,
+  Store, CheckCircle2, Smartphone, Search, AlertCircle, MessageSquare, Phone, Plus,
+  RefreshCw, IndianRupee, ShoppingBag, Trash2, ArrowRight,
+  ShieldCheck, KeyRound, AlertTriangle,
   UserCheck, Lock, Eye, EyeOff, IndianRupee
 } from 'lucide-react';
 
@@ -244,7 +243,7 @@ export default function SellerPage() {
 
       <RoleGuard allowedRoles={['SELLER', 'SUPER_ADMIN']}>
         <main className="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 flex-1">
-          
+
           {/* DEFAULT PASSWORD ALERT BANNER */}
           {(isDefaultPassword || supabaseService.getSellerPasswordInfo(user?.email)?.isDefault) && (
             <div className="bg-amber-500/10 border border-amber-500/40 text-amber-300 p-4 sm:p-5 rounded-3xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xl">
@@ -367,11 +366,10 @@ export default function SellerPage() {
           <div className="flex flex-wrap items-center gap-2 p-1.5 bg-slate-900 border border-slate-800 rounded-2xl">
             <button
               onClick={() => setActiveTab('REFERRALS')}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition ${
-                activeTab === 'REFERRALS'
-                  ? 'bg-emerald-600 text-white shadow-md font-black'
-                  : 'text-slate-400 hover:text-white'
-              }`}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition ${activeTab === 'REFERRALS'
+                ? 'bg-emerald-600 text-white shadow-md font-black'
+                : 'text-slate-400 hover:text-white'
+                }`}
             >
               <Smartphone className="w-4 h-4" />
               <span>Repair Referrals Queue</span>
@@ -380,24 +378,22 @@ export default function SellerPage() {
 
             <button
               onClick={() => setActiveTab('COMMISSIONS')}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition ${
-                activeTab === 'COMMISSIONS'
-                  ? 'bg-emerald-600 text-white shadow-md font-black'
-                  : 'text-slate-400 hover:text-white'
-              }`}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition ${activeTab === 'COMMISSIONS'
+                ? 'bg-emerald-600 text-white shadow-md font-black'
+                : 'text-slate-400 hover:text-white'
+                }`}
             >
-              <DollarSign className="w-4 h-4" />
+              <IndianRupee className="w-4 h-4" />
               <span>2% Earnings Ledger</span>
               <span className="px-2 py-0.5 rounded-full text-[10px] bg-slate-950/40">₹{pendingCommission}</span>
             </button>
 
             <button
               onClick={() => setActiveTab('PRODUCTS')}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition ${
-                activeTab === 'PRODUCTS'
-                  ? 'bg-emerald-600 text-white shadow-md font-black'
-                  : 'text-slate-400 hover:text-white'
-              }`}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition ${activeTab === 'PRODUCTS'
+                ? 'bg-emerald-600 text-white shadow-md font-black'
+                : 'text-slate-400 hover:text-white'
+                }`}
             >
               <ShoppingBag className="w-4 h-4" />
               <span>My Store Inventory</span>
@@ -406,11 +402,10 @@ export default function SellerPage() {
 
             <button
               onClick={() => setActiveTab('INQUIRIES')}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition ${
-                activeTab === 'INQUIRIES'
-                  ? 'bg-emerald-600 text-white shadow-md font-black'
-                  : 'text-slate-400 hover:text-white'
-              }`}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition ${activeTab === 'INQUIRIES'
+                ? 'bg-emerald-600 text-white shadow-md font-black'
+                : 'text-slate-400 hover:text-white'
+                }`}
             >
               <MessageSquare className="w-4 h-4" />
               <span>Customer Leads</span>
@@ -419,11 +414,10 @@ export default function SellerPage() {
 
             <button
               onClick={() => setActiveTab('TRACKER')}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition ${
-                activeTab === 'TRACKER'
-                  ? 'bg-emerald-600 text-white shadow-md font-black'
-                  : 'text-slate-400 hover:text-white'
-              }`}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition ${activeTab === 'TRACKER'
+                ? 'bg-emerald-600 text-white shadow-md font-black'
+                : 'text-slate-400 hover:text-white'
+                }`}
             >
               <Search className="w-4 h-4" />
               <span>Instant Ticket Tracker</span>
@@ -431,11 +425,10 @@ export default function SellerPage() {
 
             <button
               onClick={() => setActiveTab('PROFILE')}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition ${
-                activeTab === 'PROFILE'
-                  ? 'bg-emerald-600 text-white shadow-md font-black'
-                  : 'text-slate-400 hover:text-white'
-              }`}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition ${activeTab === 'PROFILE'
+                ? 'bg-emerald-600 text-white shadow-md font-black'
+                : 'text-slate-400 hover:text-white'
+                }`}
             >
               <UserCheck className="w-4 h-4" />
               <span>Store Profile &amp; Security</span>
@@ -452,7 +445,7 @@ export default function SellerPage() {
           {/* ============================================================== */}
           {activeTab === 'REFERRALS' && (
             <div className="space-y-4 animate-in fade-in duration-300">
-              
+
               {/* Search & Status Filters */}
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-slate-900 p-4 rounded-2xl border border-slate-800">
                 <div className="relative w-full sm:w-80">
@@ -472,11 +465,10 @@ export default function SellerPage() {
                       key={st}
                       type="button"
                       onClick={() => setStatusFilter(st)}
-                      className={`px-3 py-1.5 rounded-xl font-bold transition ${
-                        statusFilter === st
-                          ? 'bg-emerald-600 text-white shadow'
-                          : 'bg-slate-950 text-slate-400 hover:text-white border border-slate-800'
-                      }`}
+                      className={`px-3 py-1.5 rounded-xl font-bold transition ${statusFilter === st
+                        ? 'bg-emerald-600 text-white shadow'
+                        : 'bg-slate-950 text-slate-400 hover:text-white border border-slate-800'
+                        }`}
                     >
                       {st.replace('_', ' ')}
                     </button>
@@ -560,15 +552,14 @@ export default function SellerPage() {
                               </td>
 
                               <td className="py-3 px-4">
-                                <span className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider border ${
-                                  job.status === 'COMPLETED'
-                                    ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40'
-                                    : job.status === 'IN_PROGRESS'
+                                <span className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider border ${job.status === 'COMPLETED'
+                                  ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40'
+                                  : job.status === 'IN_PROGRESS'
                                     ? 'bg-blue-500/20 text-blue-400 border-blue-500/40'
                                     : job.status === 'ACCEPTED'
-                                    ? 'bg-purple-500/20 text-purple-400 border-purple-500/40'
-                                    : 'bg-amber-500/20 text-amber-400 border-amber-500/40'
-                                }`}>
+                                      ? 'bg-purple-500/20 text-purple-400 border-purple-500/40'
+                                      : 'bg-amber-500/20 text-amber-400 border-amber-500/40'
+                                  }`}>
                                   {job.status.replace('_', ' ')}
                                 </span>
                               </td>
@@ -595,11 +586,10 @@ export default function SellerPage() {
 
                               <td className="py-3 px-4">
                                 {isCompleted ? (
-                                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                                    isPaid
-                                      ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                                      : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
-                                  }`}>
+                                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${isPaid
+                                    ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                                    : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                                    }`}>
                                     {isPaid ? 'PAID TO BANK' : 'PENDING SETTLEMENT'}
                                   </span>
                                 ) : (
@@ -663,7 +653,7 @@ export default function SellerPage() {
 
                 {commissions.data?.length === 0 ? (
                   <div className="p-12 text-center text-slate-500 space-y-2">
-                    <DollarSign className="w-10 h-10 mx-auto text-slate-700" />
+                    <IndianRupee className="w-10 h-10 mx-auto text-slate-700" />
                     <div className="text-sm font-bold text-slate-300">No commission records yet</div>
                     <p className="text-xs text-slate-500">When your referred customers complete repairs at the admin shop, your 2% fees will reflect here.</p>
                   </div>
@@ -692,11 +682,10 @@ export default function SellerPage() {
                                 ₹{Number(c.commission_amount).toLocaleString('en-IN')}
                               </td>
                               <td className="py-3 px-4">
-                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                                  isPaid
-                                    ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                                    : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
-                                }`}>
+                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${isPaid
+                                  ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                                  : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                                  }`}>
                                   {c.status}
                                 </span>
                               </td>

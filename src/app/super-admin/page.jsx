@@ -11,11 +11,10 @@ import { supabaseService } from '../../services/supabaseService';
 import { useAuth } from '../../context/AuthContext';
 import {
   ShieldCheck, Store, Users, Banknote, Clock, TrendingUp, Layers,
-  Wrench, Plus, Search, Filter, RefreshCw, AlertCircle, FileText,
-  DollarSign, ChevronRight, Sparkles, Phone, Mail, MapPin, CheckCircle2,
-  Menu, X, LogOut, ArrowLeft, LayoutDashboard, Home, ExternalLink,
-  Cpu, KeyRound, ArrowUpRight, BarChart3, Check, Smartphone, Shield,
-  Building2, UserCheck, UserX
+  Wrench, Plus, Search, RefreshCw, AlertCircle,
+  IndianRupee, ChevronRight, Sparkles, Phone, Mail, CheckCircle2,
+  Menu, X, LogOut, Home, ExternalLink, ArrowUpRight, BarChart3, Shield,
+  Building2, UserCheck, UserX,
 } from 'lucide-react';
 
 export default function SuperAdminPage() {
@@ -190,7 +189,7 @@ export default function SuperAdminPage() {
     {
       id: 'COMMISSIONS',
       label: '2% Commission Ledger',
-      icon: DollarSign,
+      icon: IndianRupee,
       count: commissions.data?.length || 0,
       countClass: 'bg-amber-500/20 text-amber-300',
     },
@@ -310,8 +309,8 @@ export default function SuperAdminPage() {
                       setIsSidebarOpen(false);
                     }}
                     className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition ${isActive
-                        ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/25'
-                        : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
+                      ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/25'
+                      : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
                       }`}
                   >
                     <div className="flex items-center space-x-3 truncate">
@@ -509,8 +508,8 @@ export default function SuperAdminPage() {
                         type="button"
                         onClick={() => setStatusFilter(st)}
                         className={`px-3 py-1.5 rounded-lg font-bold transition text-xs flex-1 sm:flex-none ${statusFilter === st
-                            ? 'bg-purple-600 text-white shadow-md'
-                            : 'text-slate-400 hover:text-white'
+                          ? 'bg-purple-600 text-white shadow-md'
+                          : 'text-slate-400 hover:text-white'
                           }`}
                       >
                         {st}
@@ -550,7 +549,7 @@ export default function SuperAdminPage() {
                     className="p-5 rounded-2xl bg-slate-900/90 border border-slate-800 hover:border-purple-500/50 transition text-left group"
                   >
                     <div className="flex items-center justify-between mb-2">
-                      <DollarSign className="w-5 h-5 text-amber-400" />
+                      <IndianRupee className="w-5 h-5 text-amber-400" />
                       <ArrowUpRight className="w-4 h-4 text-slate-500 group-hover:text-purple-400 transition" />
                     </div>
                     <div className="text-sm font-bold text-white">2% Commission Audit</div>
@@ -735,11 +734,10 @@ export default function SuperAdminPage() {
                         key={st}
                         type="button"
                         onClick={() => setAdminStatusFilter(st)}
-                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
-                          adminStatusFilter === st
-                            ? 'bg-purple-600 text-white shadow-md'
-                            : 'text-slate-400 hover:text-white'
-                        }`}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${adminStatusFilter === st
+                          ? 'bg-purple-600 text-white shadow-md'
+                          : 'text-slate-400 hover:text-white'
+                          }`}
                       >
                         <span>{st === 'ALL' ? 'All Admins' : st}</span>
                         {st === 'PENDING' && pendingAdminsCount > 0 && (
@@ -760,7 +758,7 @@ export default function SuperAdminPage() {
                     <Building2 className="w-10 h-10 mx-auto text-slate-600" />
                     <p className="font-extrabold text-base text-slate-300">No admins match this filter</p>
                     <p className="text-xs text-slate-500 max-w-md mx-auto">
-                      {adminStatusFilter === 'PENDING' 
+                      {adminStatusFilter === 'PENDING'
                         ? 'There are currently no pending repair shop admin applications awaiting approval.'
                         : 'Registered workshop owners will appear here for governance review.'}
                     </p>
@@ -1105,10 +1103,10 @@ export default function SuperAdminPage() {
                             </td>
                             <td className="py-3.5 px-4">
                               <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase border ${j.status === 'COMPLETED'
-                                  ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
-                                  : j.status === 'IN_PROGRESS'
-                                    ? 'bg-blue-500/20 text-blue-400 border-blue-500/30'
-                                    : 'bg-amber-500/20 text-amber-400 border-amber-500/30'
+                                ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
+                                : j.status === 'IN_PROGRESS'
+                                  ? 'bg-blue-500/20 text-blue-400 border-blue-500/30'
+                                  : 'bg-amber-500/20 text-amber-400 border-amber-500/30'
                                 }`}>
                                 {j.status}
                               </span>

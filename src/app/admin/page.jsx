@@ -720,7 +720,7 @@ export default function AdminPage() {
 
                   {commissions.data?.length === 0 ? (
                     <div className="p-12 text-center text-slate-500 space-y-2">
-                      <DollarSign className="w-10 h-10 mx-auto text-slate-700" />
+                      <IndianRupee className="w-10 h-10 mx-auto text-slate-700" />
                       <div className="text-sm font-bold text-slate-300">No referral commission entries yet</div>
                       <p className="text-xs text-slate-500">When partner sellers refer repairs and you complete the jobs, 2% entries will log here automatically.</p>
                     </div>
