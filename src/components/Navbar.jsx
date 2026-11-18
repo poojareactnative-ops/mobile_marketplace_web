@@ -70,7 +70,7 @@ export default function Navbar() {
               className={`px-3 py-2 rounded-xl transition flex items-center gap-1.5 ${pathname === '/marketplace' ? 'bg-emerald-950/40 text-emerald-400 font-bold border border-emerald-800/40' : 'hover:text-emerald-400 hover:bg-slate-900/60'}`}
             >
               <ShoppingBag className="w-3.5 h-3.5" />
-              <span>Products &amp; Offers</span>
+              <span>Products</span>
             </Link>
             <Link
               href="/aboutme"
@@ -156,7 +156,7 @@ export default function Navbar() {
                         className="w-full text-left px-3 py-2 rounded-xl text-xs text-slate-300 hover:text-white hover:bg-slate-800/80 transition flex items-center gap-2 font-medium"
                       >
                         <ShoppingBag className="w-3.5 h-3.5 text-emerald-400" />
-                        <span>Products &amp; Offers</span>
+                        <span>Products</span>
                       </Link>
                     </div>
 

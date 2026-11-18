@@ -9,11 +9,13 @@ import SellerPayoutRequestModal from '../../components/SellerPayoutRequestModal'
 import RoleGuard from '../../components/RoleGuard';
 import { supabaseService } from '../../services/supabaseService';
 import { useAuth } from '../../context/AuthContext';
+import MultiImageUploader from '../../components/MultiImageUploader';
+import { getProductImages, getProductImage, getWhatsAppInquiryUrl, POPULAR_PRESET_IMAGES } from '../../utils/productImages';
 import {
   Store, CheckCircle2, Smartphone, Search, AlertCircle, MessageSquare, Phone, Plus,
   RefreshCw, IndianRupee, ShoppingBag, Trash2, ArrowRight,
   ShieldCheck, KeyRound, AlertTriangle,
-  UserCheck, Lock, Eye, EyeOff, IndianRupee
+  UserCheck, Lock, Eye, EyeOff
 } from 'lucide-react';
 
 const CATEGORIES = [
@@ -75,6 +77,10 @@ export default function SellerPage() {
     category: 'Chargers & Cables',
     price: '',
     stock: '',
+    image_url: '',
+    images: [],
+    sellerPhone: user?.phone || '',
+    description: '',
   });
   const [productLoading, setProductLoading] = useState(false);
 
@@ -136,11 +142,13 @@ export default function SellerPage() {
       await supabaseService.addProduct({
         ...newProduct,
         sellerId: user?.id,
+        shopId: user?.shopId || null,
+        sellerPhone: newProduct.sellerPhone || user?.phone || null,
         uploaderName: user?.shopName || user?.name || 'Accessory Partner',
         uploaderRole: 'SELLER',
       });
       setIsAddProductOpen(false);
-      setNewProduct({ name: '', brand: '', category: 'Chargers & Cables', price: '', stock: '' });
+      setNewProduct({ name: '', brand: '', category: 'Chargers & Cables', price: '', stock: '', image_url: '', images: [], sellerPhone: user?.phone || '', description: '' });
       await loadData();
       alert('Product published to marketplace successfully!');
     } catch (err) {
@@ -148,6 +156,21 @@ export default function SellerPage() {
     } finally {
       setProductLoading(false);
     }
+  };
+
+  const handleOpenAddProduct = () => {
+    setNewProduct({
+      name: '',
+      brand: '',
+      category: 'Chargers & Cables',
+      price: '',
+      stock: '',
+      image_url: '',
+      images: [],
+      sellerPhone: user?.phone || '',
+      description: '',
+    });
+    setIsAddProductOpen(true);
   };
 
   // Handle Delete Product
@@ -728,7 +751,7 @@ export default function SellerPage() {
 
                 <button
                   type="button"
-                  onClick={() => setIsAddProductOpen(true)}
+                  onClick={handleOpenAddProduct}
                   className="px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold rounded-xl text-xs shadow transition flex items-center gap-1.5 shrink-0"
                 >
                   <Plus className="w-4 h-4" />
@@ -744,7 +767,7 @@ export default function SellerPage() {
                     Start publishing chargers, tempered glass, cables, or phone cases to attract customers in your neighborhood.
                   </p>
                   <button
-                    onClick={() => setIsAddProductOpen(true)}
+                    onClick={handleOpenAddProduct}
                     className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs transition"
                   >
                     Upload First Product
@@ -753,20 +776,37 @@ export default function SellerPage() {
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   {products.map((p) => (
-                    <div key={p.id} className="bg-slate-900 border border-slate-800 hover:border-slate-700 rounded-3xl p-5 shadow-lg flex flex-col justify-between space-y-3 transition">
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="text-[10px] font-bold text-slate-400 uppercase bg-slate-950 px-2 py-0.5 rounded-lg border border-slate-800">
+                    <div key={p.id} className="bg-slate-900 border border-slate-800 hover:border-slate-700 rounded-3xl p-5 shadow-lg flex flex-col justify-between space-y-3 transition overflow-hidden">
+                      <div className="space-y-3">
+                        {/* Product Thumbnail */}
+                        <div className="relative w-full h-40 rounded-2xl overflow-hidden bg-slate-950 border border-slate-800">
+                          <img
+                            src={getProductImage(p)}
+                            alt={p.name}
+                            className="w-full h-full object-cover"
+                            loading="lazy"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent opacity-60" />
+                          <span className="absolute top-2.5 left-2.5 text-[10px] font-bold text-slate-300 uppercase bg-slate-950/90 px-2 py-0.5 rounded-lg border border-slate-700 backdrop-blur-sm">
                             {p.category}
                           </span>
-                          <span className="text-[10px] text-emerald-400 font-bold bg-emerald-500/10 px-2 py-0.5 rounded-full">
-                            ● In Stock: {p.stock}
+                          <span className="absolute top-2.5 right-2.5 text-[10px] text-emerald-400 font-bold bg-slate-950/90 px-2 py-0.5 rounded-full border border-emerald-500/30 backdrop-blur-sm">
+                            ● {p.stock} In Stock
                           </span>
+                          {getProductImages(p).length > 1 && (
+                            <span className="absolute bottom-2.5 right-2.5 text-[9px] font-black text-slate-200 bg-slate-950/90 px-2 py-0.5 rounded-full border border-slate-700 backdrop-blur-sm">
+                              📷 {getProductImages(p).length} photos
+                            </span>
+                          )}
                         </div>
 
                         <div>
-                          <div className="text-[11px] text-amber-400 font-semibold">{p.brand}</div>
-                          <h4 className="font-extrabold text-white text-base mt-0.5 leading-snug">{p.name}</h4>
+                          <div className="text-[11px] text-amber-400 font-semibold">{p.brand || 'Accessories'}</div>
+                          <Link href={`/products/${p.id}`} className="hover:underline">
+                            <h4 className="font-extrabold text-white text-base mt-0.5 leading-snug line-clamp-1 hover:text-emerald-400 transition">
+                              {p.name}
+                            </h4>
+                          </Link>
                         </div>
 
                         <div className="text-2xl font-black text-white pt-1">
@@ -774,12 +814,43 @@ export default function SellerPage() {
                         </div>
                       </div>
 
-                      <div className="pt-3 border-t border-slate-800 flex items-center justify-between text-xs">
-                        <span className="text-slate-500 text-[11px]">Live in Catalog</span>
+                      {/* Action buttons */}
+                      <div className="pt-3 border-t border-slate-800 flex flex-wrap items-center justify-between gap-2 text-xs">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          {/* Test WhatsApp Inquiry Button */}
+                          <a
+                            href={getWhatsAppInquiryUrl({
+                              phone: p.seller_phone || user?.phone,
+                              productName: p.name,
+                              price: p.price,
+                              shopName: user?.shopName,
+                              brand: p.brand,
+                            })}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="px-2.5 py-1.5 bg-[#25D366]/20 hover:bg-[#25D366] text-[#25D366] hover:text-slate-950 font-bold rounded-xl text-[11px] transition flex items-center gap-1 border border-[#25D366]/30 shadow-sm"
+                            title="Test WhatsApp customer inquiry link"
+                          >
+                            <svg className="w-3 h-3 fill-current" viewBox="0 0 24 24">
+                              <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.771-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.312.045-.694.06-2.222-.572-1.828-.757-3.003-2.617-3.094-2.738-.09-.122-.74-1.024-.74-1.953 0-.929.479-1.386.65-1.577.171-.191.373-.239.498-.239.125 0 .25.002.359.007.114.005.267-.043.418.32.155.373.53 1.293.576 1.388.046.096.077.208.016.331-.061.123-.092.2-.183.308-.092.107-.193.24-.275.322-.093.093-.19.194-.082.38.109.186.483.797 1.036 1.29 0.713.636 1.314.833 1.5.926.186.093.295.077.404-.047.109-.123.468-.544.592-.73.125-.187.25-.156.421-.093.171.062 1.089.513 1.276.607.187.094.312.14.359.219.046.078.046.452-.098.857z" />
+                            </svg>
+                            <span>WhatsApp Preview</span>
+                          </a>
+
+                          {/* Live Product Link */}
+                          <Link
+                            href={`/products/${p.id}`}
+                            className="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold rounded-xl text-[11px] transition flex items-center gap-1"
+                          >
+                            <span>View Live</span>
+                            <ArrowRight className="w-3 h-3" />
+                          </Link>
+                        </div>
+
                         <button
                           type="button"
                           onClick={() => handleDeleteProduct(p.id)}
-                          className="text-rose-400 hover:text-rose-300 transition p-1"
+                          className="text-rose-400 hover:text-rose-300 transition p-1.5 rounded-lg hover:bg-rose-500/10"
                           title="Delete Product"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -1211,6 +1282,47 @@ export default function SellerPage() {
                         className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white font-bold focus:outline-none focus:border-emerald-500"
                       />
                     </div>
+                  </div>
+
+                  {/* Seller WhatsApp Number */}
+                  <div>
+                    <label className="block font-bold text-slate-300 mb-1 flex items-center justify-between">
+                      <span>WhatsApp Phone Number</span>
+                      <span className="text-[10px] text-emerald-400 font-semibold">Customer chats land here</span>
+                    </label>
+                    <input
+                      type="tel"
+                      required
+                      value={newProduct.sellerPhone}
+                      onChange={(e) => setNewProduct({ ...newProduct, sellerPhone: e.target.value })}
+                      placeholder="e.g. 9876543210 (10 digits)"
+                      className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white font-mono focus:outline-none focus:border-emerald-500 text-xs"
+                    />
+                  </div>
+
+                  {/* Multi-Image Uploader (Supabase Storage & Multiple Photos) */}
+                  <MultiImageUploader
+                    images={newProduct.images}
+                    onChange={(updatedImages) =>
+                      setNewProduct({
+                        ...newProduct,
+                        images: updatedImages,
+                        image_url: updatedImages[0] || '',
+                      })
+                    }
+                    maxImages={6}
+                  />
+
+                  {/* Product Description */}
+                  <div>
+                    <label className="block font-bold text-slate-300 mb-1">Product Description (Optional)</label>
+                    <textarea
+                      rows="2"
+                      value={newProduct.description}
+                      onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })}
+                      placeholder="Details on compatibility, material, fast charging wattage..."
+                      className="w-full px-3.5 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-emerald-500 text-xs"
+                    />
                   </div>
 
                   <div className="flex justify-end gap-2 pt-2">

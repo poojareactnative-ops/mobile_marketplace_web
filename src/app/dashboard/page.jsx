@@ -480,7 +480,7 @@ function DashboardContent() {
                   <h2 className="text-base font-extrabold text-white">Incoming Customer Inquiries</h2>
                 </div>
                 <p className="text-xs text-slate-400 mt-0.5">
-                  Direct inquiries submitted by customers for your products and repair offers (zero customer account required).
+                  Direct inquiries submitted by customers for your products (zero customer account required).
                 </p>
               </div>
               <div className="flex items-center gap-2">
@@ -498,7 +498,7 @@ function DashboardContent() {
                 <MessageSquare className="w-10 h-10 mx-auto text-slate-600 mb-2" />
                 <div className="text-sm font-bold text-white">No customer queries received yet</div>
                 <p className="text-xs text-slate-400">
-                  When visitors inquire about your products or offers on the marketplace, their messages will appear here.
+                  When visitors inquire about your products on the marketplace, their messages will appear here.
                 </p>
               </div>
             ) : (

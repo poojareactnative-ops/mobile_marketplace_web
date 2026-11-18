@@ -937,30 +937,146 @@ export const supabaseService = {
     }
     try {
       const data = await supabaseRest(endpoint);
-      return Array.isArray(data) ? data : [];
+      const prodList = Array.isArray(data) ? data : [];
+      if (prodList.length === 0) return [];
+
+      // Fetch profiles & shops in parallel to attach real seller WhatsApp phone number
+      try {
+        const [profiles, shops] = await Promise.all([
+          supabaseRest('profiles?select=id,name,phone,email,shop_id'),
+          supabaseRest('shops?select=id,name,phone,address'),
+        ]);
+
+        const profileMap = {};
+        (Array.isArray(profiles) ? profiles : []).forEach((p) => {
+          if (p.id) profileMap[p.id] = p;
+        });
+
+        const shopMap = {};
+        (Array.isArray(shops) ? shops : []).forEach((s) => {
+          if (s.id) shopMap[s.id] = s;
+        });
+
+        return prodList.map((item) => {
+          const seller = item.seller_id ? profileMap[item.seller_id] : null;
+          const targetShopId = item.shop_id || seller?.shop_id;
+          const shop = targetShopId ? shopMap[targetShopId] : null;
+
+          // Priority: direct seller phone > item.seller_phone > shop phone
+          const realPhone = seller?.phone || item.seller_phone || item.phone || shop?.phone || null;
+          const sellerName = seller?.name || item.uploader_name || shop?.name || 'Verified Store';
+
+          return {
+            ...item,
+            seller,
+            shop,
+            seller_phone: realPhone,
+            phone: realPhone,
+            shop_phone: realPhone,
+            uploader_name: sellerName,
+          };
+        });
+      } catch (enrichErr) {
+        console.warn('Enrich products error:', enrichErr.message);
+        return prodList;
+      }
     } catch (e) {
       console.error('Supabase getProducts error:', e.message);
       return [];
     }
   },
 
+  async getProductById(id) {
+    try {
+      const data = await supabaseRest(`products?id=eq.${id}&select=*`);
+      if (Array.isArray(data) && data[0]) {
+        const prod = data[0];
+        // Fetch seller profile or shop to get phone number for WhatsApp
+        if (prod.seller_id) {
+          try {
+            const sellers = await supabaseRest(`profiles?id=eq.${prod.seller_id}&select=id,name,phone,email,shop_id`);
+            if (Array.isArray(sellers) && sellers[0]) {
+              prod.seller = sellers[0];
+            }
+          } catch (e) { }
+        }
+        const targetShopId = prod.shop_id || prod.seller?.shop_id;
+        if (targetShopId) {
+          try {
+            const shops = await supabaseRest(`shops?id=eq.${targetShopId}&select=*`);
+            if (Array.isArray(shops) && shops[0]) {
+              prod.shop = shops[0];
+            }
+          } catch (e) { }
+        }
+        prod.seller_phone = prod.seller?.phone || prod.seller_phone || prod.phone || prod.shop?.phone || null;
+        prod.phone = prod.seller_phone;
+        return prod;
+      }
+    } catch (e) {
+      console.warn('getProductById error:', e.message);
+    }
+    return null;
+  },
+
   async addProduct(productData) {
+    const rawImages = Array.isArray(productData.images) && productData.images.length > 0
+      ? productData.images.filter(Boolean)
+      : (productData.image_url ? [productData.image_url] : []);
+    const primaryUrl = rawImages[0] || productData.image_url || null;
+    const sellerPhone = productData.sellerPhone || productData.seller_phone || productData.phone || null;
+
     const newProduct = {
       name: productData.name,
       brand: productData.brand || '',
       category: productData.category || 'Accessories',
       price: Number(productData.price || 0),
       stock: Number(productData.stock || 0),
+      image_url: primaryUrl,
+      images: rawImages,
+      description: productData.description || null,
       seller_id: productData.sellerId || null,
       shop_id: productData.shopId || null,
+      seller_phone: sellerPhone,
     };
 
-    const res = await supabaseRest('products', {
-      method: 'POST',
-      body: newProduct,
-    });
+    let res;
+    try {
+      // 1. Try inserting with all fields including images array, description, and seller_phone
+      res = await supabaseRest('products', {
+        method: 'POST',
+        body: newProduct,
+      });
+    } catch (err) {
+      const errMsg = (err.message || '').toLowerCase();
+      // If seller_phone or images column is missing in database table, retry without them
+      console.warn('products table insert error, attempting graceful fallback:', err.message);
+      const withoutOptional = { ...newProduct };
+      delete withoutOptional.seller_phone;
+      delete withoutOptional.images;
 
-    return Array.isArray(res) && res[0] ? res[0] : newProduct;
+      try {
+        res = await supabaseRest('products', {
+          method: 'POST',
+          body: withoutOptional,
+        });
+      } catch (innerErr) {
+        // Fallback to core columns
+        const basicFallback = { ...withoutOptional };
+        delete basicFallback.image_url;
+        delete basicFallback.description;
+        res = await supabaseRest('products', {
+          method: 'POST',
+          body: basicFallback,
+        });
+      }
+    }
+
+    const created = Array.isArray(res) && res[0] ? res[0] : newProduct;
+    if (!created.images) created.images = rawImages;
+    if (!created.image_url) created.image_url = primaryUrl;
+    if (!created.seller_phone) created.seller_phone = sellerPhone;
+    return created;
   },
 
   async deleteProduct(productId) {
@@ -1007,7 +1123,7 @@ export const supabaseService = {
       id: `inq-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
       item_type: inquiryData.itemType || 'PRODUCT',
       item_id: String(inquiryData.itemId || ''),
-      item_title: inquiryData.itemTitle || 'Product/Offer',
+      item_title: inquiryData.itemTitle || 'Product',
       shop_id: inquiryData.shopId || null,
       shop_name: inquiryData.shopName || 'Shop Partner',
       owner_role: inquiryData.ownerRole || 'SELLER',

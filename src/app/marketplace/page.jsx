@@ -8,9 +8,10 @@ import { useAuth } from '../../context/AuthContext';
 import { supabaseService } from '../../services/supabaseService';
 import {
   ShoppingBag, Tag, Plus, Search, Filter, Wrench, Store,
-  Sparkles, Trash2, CheckCircle2, ArrowRight, Clock, ShieldCheck, MessageSquare, Percent
+  Sparkles, Trash2, CheckCircle2, ArrowRight, Clock, ShieldCheck
 } from 'lucide-react';
-import CustomerInquiryModal from '../../components/CustomerInquiryModal';
+import MultiImageUploader from '../../components/MultiImageUploader';
+import { getProductImages, getProductImage, getWhatsAppInquiryUrl, POPULAR_PRESET_IMAGES } from '../../utils/productImages';
 
 const CATEGORIES = [
   'All',
@@ -25,11 +26,7 @@ export default function MarketplacePage() {
   const router = useRouter();
   const { user, isAuthenticated } = useAuth();
 
-  // Tab State: 'PRODUCTS' or 'OFFERS'
-  const [activeTab, setActiveTab] = useState('PRODUCTS');
-
   const [products, setProducts] = useState([]);
-  const [offers, setOffers] = useState([]);
   const [loading, setLoading] = useState(true);
 
   // Filters
@@ -45,29 +42,20 @@ export default function MarketplacePage() {
     category: 'Chargers & Cables',
     price: '',
     stock: '',
-  });
-
-  const [isAddOfferOpen, setIsAddOfferOpen] = useState(false);
-  const [newOffer, setNewOffer] = useState({
-    title: '',
+    image_url: '',
+    images: [],
+    sellerPhone: '',
     description: '',
-    discountPercent: 15,
-    validUntil: '',
   });
 
   const [actionLoading, setActionLoading] = useState(false);
-  const [inquiryItem, setInquiryItem] = useState(null);
 
   // Load initial data
   const loadMarketplaceData = async () => {
     try {
       setLoading(true);
-      const [prods, offs] = await Promise.all([
-        supabaseService.getProducts(),
-        supabaseService.getOffers(),
-      ]);
+      const prods = await supabaseService.getProducts();
       setProducts(prods || []);
-      setOffers(offs || []);
     } catch (err) {
       console.error('Failed to load marketplace:', err);
     } finally {
@@ -91,13 +79,26 @@ export default function MarketplacePage() {
       setActionLoading(true);
       await supabaseService.addProduct({
         ...newProduct,
-        uploaderName: user?.shopName || user?.name || (user?.role === 'ADMIN' ? 'Repair Admin' : 'Accessory Seller'),
+        sellerId: user?.id || null,
+        shopId: user?.shopId || null,
+        sellerPhone: newProduct.sellerPhone || user?.phone || null,
+        uploaderName: user?.shopName || user?.name || 'Verified Store',
         uploaderRole: user?.role || 'SELLER',
       });
       setIsAddProductOpen(false);
-      setNewProduct({ name: '', brand: '', category: 'Chargers & Cables', price: '', stock: '' });
+      setNewProduct({
+        name: '',
+        brand: '',
+        category: 'Chargers & Cables',
+        price: '',
+        stock: '',
+        image_url: '',
+        images: [],
+        sellerPhone: '',
+        description: '',
+      });
       await loadMarketplaceData();
-      alert('Product successfully published to marketplace!');
+      alert('Product published successfully to marketplace!');
     } catch (err) {
       alert('Error adding product: ' + err.message);
     } finally {
@@ -106,39 +107,13 @@ export default function MarketplacePage() {
   };
 
   // Handle Delete Product
-  const handleDeleteProduct = async (id) => {
+  const handleDeleteProduct = async (productId) => {
     if (!confirm('Are you sure you want to remove this product?')) return;
     try {
-      await supabaseService.deleteProduct(id);
+      await supabaseService.deleteProduct(productId);
       await loadMarketplaceData();
     } catch (err) {
       alert('Error: ' + err.message);
-    }
-  };
-
-  // Handle Add Offer
-  const handleAddOffer = async (e) => {
-    e.preventDefault();
-    if (!newOffer.title || !newOffer.discountPercent) {
-      alert('Please provide offer title and discount percentage');
-      return;
-    }
-
-    try {
-      setActionLoading(true);
-      await supabaseService.addOffer({
-        ...newOffer,
-        uploaderName: user?.shopName || user?.name || (user?.role === 'ADMIN' ? 'Repair Admin' : 'Accessory Seller'),
-        uploaderRole: user?.role || 'ADMIN',
-      });
-      setIsAddOfferOpen(false);
-      setNewOffer({ title: '', description: '', discountPercent: 15, validUntil: '' });
-      await loadMarketplaceData();
-      alert('Promotional offer published!');
-    } catch (err) {
-      alert('Error adding offer: ' + err.message);
-    } finally {
-      setActionLoading(false);
     }
   };
 
@@ -168,19 +143,18 @@ export default function MarketplacePage() {
       alert('Only registered Sellers and Admins are authorized to upload products.');
       return;
     }
+    setNewProduct({
+      name: '',
+      brand: '',
+      category: 'Chargers & Cables',
+      price: '',
+      stock: '',
+      image_url: '',
+      images: [],
+      sellerPhone: user?.phone || '',
+      description: '',
+    });
     setIsAddProductOpen(true);
-  };
-
-  const handleOpenAddOffer = () => {
-    if (!user) {
-      router.push('/login?redirect=/marketplace');
-      return;
-    }
-    if (!canManage) {
-      alert('Only registered Sellers and Admins are authorized to publish offers.');
-      return;
-    }
-    setIsAddOfferOpen(true);
   };
 
   return (
@@ -189,7 +163,7 @@ export default function MarketplacePage() {
       {/* Top Navbar */}
       <Navbar />
 
-      {/* Hero Header with Separate Tab Controls */}
+      {/* Hero Header */}
       <section className="bg-gradient-to-b from-slate-900 to-slate-950 border-b border-slate-800 py-10 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
         <div className="absolute top-0 right-1/4 w-96 h-96 bg-amber-500/10 blur-3xl pointer-events-none rounded-full" />
         <div className="absolute bottom-0 left-1/4 w-80 h-80 bg-emerald-500/10 blur-3xl pointer-events-none rounded-full" />
@@ -199,370 +173,290 @@ export default function MarketplacePage() {
             <div>
               <div className="inline-flex items-center space-x-2 bg-slate-800/80 border border-slate-700 px-3 py-1 rounded-full text-xs font-semibold text-amber-400 mb-3">
                 <Sparkles className="w-3.5 h-3.5" />
-                <span>
-                  {activeTab === 'PRODUCTS' ? 'Hyperlocal Mobile Accessories' : 'Exclusive Repair Deals & Vouchers'}
-                </span>
+                <span>Hyperlocal Mobile Accessories &amp; Hardware</span>
               </div>
               <h1 className="text-3xl sm:text-4xl font-black text-white tracking-tight">
-                {activeTab === 'PRODUCTS' ? 'Products Catalog' : 'Promotional Offers & Deals'}
+                Products Catalog
               </h1>
               <p className="text-sm text-slate-400 max-w-2xl mt-1.5 leading-relaxed">
-                {activeTab === 'PRODUCTS'
-                  ? 'Explore certified accessories and gear uploaded by verified local accessory sellers and repair shops.'
-                  : 'Exclusive walking-distance repair discounts and deals posted by certified repair hub admins.'}
+                Explore certified accessories, chargers, protectors, and gear uploaded by verified local accessory sellers and repair shops.
               </p>
             </div>
 
             {/* Quick action buttons - ONLY visible for authorized shop staff */}
             {isAuthenticated && canManage && (
               <div className="flex items-center gap-3">
-                {activeTab === 'PRODUCTS' ? (
-                  <button
-                    onClick={handleOpenAddProduct}
-                    className="px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold rounded-xl text-xs shadow-lg shadow-emerald-600/30 flex items-center space-x-1.5 transition"
-                  >
-                    <Plus className="w-4 h-4" />
-                    <span>+ Upload Product</span>
-                  </button>
-                ) : (
-                  <button
-                    onClick={handleOpenAddOffer}
-                    className="px-4 py-2.5 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-slate-950 font-black rounded-xl text-xs shadow-lg shadow-amber-500/30 flex items-center space-x-1.5 transition"
-                  >
-                    <Tag className="w-4 h-4" />
-                    <span>+ Create Offer</span>
-                  </button>
-                )}
+                <button
+                  onClick={handleOpenAddProduct}
+                  className="px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold rounded-xl text-xs shadow-lg shadow-emerald-600/30 flex items-center space-x-1.5 transition"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>+ Upload Product</span>
+                </button>
               </div>
             )}
           </div>
 
-          {/* Clean Segmented Tab Switcher */}
-          <div className="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 border-t border-slate-800/80">
-            <div className="inline-flex p-1.5 bg-slate-900 border border-slate-800 rounded-2xl shadow-inner gap-1">
-              <button
-                type="button"
-                onClick={() => setActiveTab('PRODUCTS')}
-                className={`flex items-center space-x-2.5 px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all ${activeTab === 'PRODUCTS'
-                  ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-lg shadow-emerald-600/25 ring-1 ring-emerald-400/40'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
-                  }`}
-              >
-                <ShoppingBag className="w-4 h-4" />
-                <span>Products</span>
-                <span className={`px-2 py-0.5 text-[10px] font-extrabold rounded-full ${activeTab === 'PRODUCTS' ? 'bg-white/20 text-white' : 'bg-slate-800 text-slate-400'
-                  }`}>
-                  {products.length}
-                </span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setActiveTab('OFFERS')}
-                className={`flex items-center space-x-2.5 px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all ${activeTab === 'OFFERS'
-                  ? 'bg-gradient-to-r from-amber-500 to-orange-600 text-slate-950 font-black shadow-lg shadow-amber-500/25 ring-1 ring-amber-300/40'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
-                  }`}
-              >
-                <Tag className="w-4 h-4" />
-                <span>Exclusive Offers</span>
-                <span className={`px-2 py-0.5 text-[10px] font-extrabold rounded-full ${activeTab === 'OFFERS' ? 'bg-slate-950/30 text-slate-950' : 'bg-slate-800 text-slate-400'
-                  }`}>
-                  {offers.length}
-                </span>
-              </button>
+          {/* Search and Filters Bar */}
+          <div className="pt-2 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 border-t border-slate-800/80">
+            {/* Search Input */}
+            <div className="relative flex-1 max-w-md">
+              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                placeholder="Search products by title, brand, model..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500 transition shadow-inner"
+              />
             </div>
 
-            {/* Quick Tab Summary Status */}
-            <div className="text-xs text-slate-400 flex items-center space-x-2">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span>
-                Viewing {activeTab === 'PRODUCTS' ? `${filteredProducts.length} accessories` : `${offers.length} active promo deals`}
-              </span>
+            {/* Uploader Role Filter */}
+            <div className="flex items-center space-x-2 text-xs">
+              <span className="text-slate-500 font-bold hidden sm:inline">Source:</span>
+              <div className="inline-flex p-1 bg-slate-900 border border-slate-800 rounded-xl">
+                <button
+                  onClick={() => setUploaderFilter('ALL')}
+                  className={`px-3 py-1 rounded-lg font-bold text-xs transition ${uploaderFilter === 'ALL'
+                    ? 'bg-slate-800 text-white shadow'
+                    : 'text-slate-400 hover:text-white'
+                    }`}
+                >
+                  All
+                </button>
+                <button
+                  onClick={() => setUploaderFilter('SELLER')}
+                  className={`px-3 py-1 rounded-lg font-bold text-xs transition flex items-center gap-1 ${uploaderFilter === 'SELLER'
+                    ? 'bg-emerald-600 text-white shadow'
+                    : 'text-slate-400 hover:text-emerald-400'
+                    }`}
+                >
+                  <Store className="w-3 h-3" />
+                  <span>Sellers</span>
+                </button>
+                <button
+                  onClick={() => setUploaderFilter('ADMIN')}
+                  className={`px-3 py-1 rounded-lg font-bold text-xs transition flex items-center gap-1 ${uploaderFilter === 'ADMIN'
+                    ? 'bg-amber-600 text-white shadow'
+                    : 'text-slate-400 hover:text-amber-400'
+                    }`}
+                >
+                  <Wrench className="w-3 h-3" />
+                  <span>Admins</span>
+                </button>
+              </div>
             </div>
+          </div>
+
+          {/* Category Chips Bar */}
+          <div className="flex items-center space-x-2 overflow-x-auto pb-1 scrollbar-none text-xs">
+            <span className="text-slate-500 font-bold shrink-0 flex items-center gap-1 mr-1">
+              <Filter className="w-3 h-3" />
+              <span>Category:</span>
+            </span>
+            {CATEGORIES.map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setSelectedCategory(cat)}
+                className={`px-3.5 py-1.5 rounded-xl font-bold whitespace-nowrap transition-all ${selectedCategory === cat
+                  ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
+                  : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800 hover:border-slate-700'
+                  }`}
+              >
+                {cat}
+              </button>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* Main Container - Displays ONLY the Active Tab Content */}
-      <main className="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1">
+      {/* Main Content Area */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full space-y-8">
 
-        {/* ============================================================== */}
-        {/* TAB 1: PRODUCTS ONLY                                            */}
-        {/* ============================================================== */}
-        {activeTab === 'PRODUCTS' && (
-          <section className="space-y-6 animate-in fade-in duration-300">
-            {/* Filter & Search Bar */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-2 border-b border-slate-800">
-              <div>
-                <h2 className="text-lg font-black text-white flex items-center gap-2">
-                  <ShoppingBag className="w-5 h-5 text-emerald-400" />
-                  <span>Mobile Accessories Catalog</span>
-                </h2>
-                <p className="text-xs text-slate-400 mt-0.5">
-                  Filtered from {products.length} products uploaded by repair shop and accessory partners.
-                </p>
-              </div>
-
-              {/* Source Filter Buttons */}
-              <div className="flex items-center space-x-1.5 bg-slate-900 p-1 rounded-xl border border-slate-800 text-xs">
-                <button
-                  onClick={() => setUploaderFilter('ALL')}
-                  className={`px-3 py-1.5 rounded-lg font-bold transition ${uploaderFilter === 'ALL' ? 'bg-white text-slate-950 shadow' : 'text-slate-400 hover:text-white'
-                    }`}
-                >
-                  All Items
-                </button>
-                <button
-                  onClick={() => setUploaderFilter('ADMIN')}
-                  className={`px-3 py-1.5 rounded-lg font-bold transition ${uploaderFilter === 'ADMIN' ? 'bg-amber-600 text-white shadow' : 'text-slate-400 hover:text-white'
-                    }`}
-                >
-                  🛠️ Repair Centers
-                </button>
-                <button
-                  onClick={() => setUploaderFilter('SELLER')}
-                  className={`px-3 py-1.5 rounded-lg font-bold transition ${uploaderFilter === 'SELLER' ? 'bg-emerald-600 text-white shadow' : 'text-slate-400 hover:text-white'
-                    }`}
-                >
-                  🏪 Accessory Stores
-                </button>
-              </div>
+        {/* PRODUCTS GRID */}
+        <section className="space-y-6 animate-in fade-in duration-300">
+          <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+            <div className="flex items-center space-x-2">
+              <ShoppingBag className="w-5 h-5 text-emerald-400" />
+              <h2 className="text-lg font-black text-white">Available Mobile Accessories &amp; Devices</h2>
             </div>
+            <span className="text-xs text-slate-400">{filteredProducts.length} Items Listed</span>
+          </div>
 
-            {/* Search & Category Filter Bar */}
-            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-              {/* Search Input */}
-              <div className="relative w-full md:w-96">
-                <Search className="w-4 h-4 absolute left-3.5 top-3 text-slate-500" />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search accessories by name, brand..."
-                  className="w-full pl-10 pr-4 py-2 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-amber-500"
-                />
-              </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {filteredProducts.map((prod) => {
+              const isAdmin = prod.uploader_role === 'ADMIN';
+              const prodImages = getProductImages(prod);
+              const coverImg = prodImages[0] || getProductImage(prod);
 
-              {/* Category Pills */}
-              <div className="flex flex-wrap items-center gap-1.5 w-full md:w-auto">
-                {CATEGORIES.map((cat) => (
-                  <button
-                    key={cat}
-                    onClick={() => setSelectedCategory(cat)}
-                    className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${selectedCategory === cat
-                      ? 'bg-amber-500 text-slate-950 shadow font-bold'
-                      : 'bg-slate-900 border border-slate-800 text-slate-400 hover:text-white'
-                      }`}
-                  >
-                    {cat}
-                  </button>
-                ))}
-              </div>
-            </div>
+              return (
+                <div
+                  key={prod.id}
+                  className="bg-slate-900 border border-slate-800 hover:border-slate-700 rounded-3xl p-4 shadow-xl flex flex-col justify-between group transition hover:-translate-y-1 relative overflow-hidden"
+                >
+                  <div className="space-y-3">
+                    {/* Product Image Frame */}
+                    <div className="relative w-full aspect-square rounded-2xl overflow-hidden bg-slate-950 border border-slate-800/80 group-hover:border-slate-700 transition">
+                      <Link href={`/products/${prod.id}`} className="block w-full h-full relative">
+                        <img
+                          src={coverImg}
+                          alt={prod.name}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          loading="lazy"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent opacity-60" />
+                      </Link>
 
-            {/* Products Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredProducts.map((prod) => {
-                const isAdmin = prod.uploader_role === 'ADMIN';
-                return (
-                  <div
-                    key={prod.id}
-                    className="bg-slate-900 border border-slate-800 hover:border-slate-700 rounded-3xl p-5 shadow-xl flex flex-col justify-between group transition hover:-translate-y-0.5"
-                  >
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 bg-slate-950 px-2 py-0.5 rounded-lg border border-slate-800">
-                          {prod.category}
+                      {/* Stock Pill */}
+                      {prod.stock != null && (
+                        <span className="absolute top-2.5 right-2.5 px-2.5 py-0.5 rounded-full text-[10px] font-black bg-slate-950/90 text-emerald-400 border border-emerald-500/30 backdrop-blur-md shadow-md">
+                          {prod.stock > 0 ? `${prod.stock} in stock` : 'Out of stock'}
                         </span>
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${isAdmin
-                          ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
-                          : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
-                          }`}>
-                          {isAdmin ? '🛠️ Certified Repair Center' : '🏪 Verified Store'}
-                        </span>
-                      </div>
+                      )}
 
-                      <div>
-                        <div className="text-[11px] text-amber-400 font-semibold">{prod.brand}</div>
-                        <h3 className="font-extrabold text-white text-base mt-0.5 group-hover:text-amber-300 transition">
+                      {/* Multi-image photo count badge */}
+                      {prodImages.length > 1 && (
+                        <span className="absolute bottom-2.5 right-2.5 px-2 py-0.5 rounded-full text-[10px] font-black bg-slate-950/90 text-slate-200 border border-slate-700 backdrop-blur-md shadow flex items-center gap-1">
+                          <span>📷 {prodImages.length}</span>
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                        {prod.category}
+                      </span>
+                      <span
+                        className={`text-[9px] font-extrabold px-2 py-0.5 rounded-full border ${isAdmin
+                          ? 'bg-amber-500/10 text-amber-300 border-amber-500/30'
+                          : 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30'
+                          }`}
+                      >
+                        {isAdmin ? 'Workshop' : 'Store'}
+                      </span>
+                    </div>
+
+                    <div>
+                      <div className="text-[11px] font-extrabold text-amber-400">{prod.brand}</div>
+                      <Link href={`/products/${prod.id}`} className="block hover:underline">
+                        <h3 className="font-extrabold text-white text-sm line-clamp-2 mt-0.5 group-hover:text-emerald-400 transition">
                           {prod.name}
                         </h3>
-                      </div>
-
-                      <div className="flex items-baseline space-x-2 pt-2">
-                        <span className="text-2xl font-black text-white">
-                          ₹{Number(prod.price).toLocaleString('en-IN')}
-                        </span>
-                        <span className="text-xs text-slate-500 line-through">
-                          ₹{Math.round(Number(prod.price) * 1.25).toLocaleString('en-IN')}
-                        </span>
-                      </div>
+                      </Link>
                     </div>
 
-                    <div className="pt-4 mt-4 border-t border-slate-800 flex items-center justify-between text-xs gap-2">
-                      <div className="flex items-center space-x-1.5 text-slate-400">
-                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                        <span>In Stock: <strong className="text-white">{prod.stock} units</strong></span>
-                      </div>
+                    <div className="flex items-baseline space-x-2 pt-1">
+                      <span className="text-xl font-black text-white">
+                        ₹{Number(prod.price || 0).toLocaleString('en-IN')}
+                      </span>
+                      <span className="text-xs text-slate-500 line-through">
+                        ₹{Math.round(Number(prod.price || 0) * 1.25).toLocaleString('en-IN')}
+                      </span>
+                    </div>
 
-                      <div className="flex items-center gap-2">
+                    {prod.description && (
+                      <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed">
+                        {prod.description}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="pt-4 mt-4 border-t border-slate-800 flex flex-wrap items-center justify-between text-xs gap-2">
+                    <div className="flex items-center space-x-1.5 text-slate-400">
+                      <span className="truncate max-w-[120px] text-[11px] text-slate-400">
+                        {prod.uploader_name || 'Verified Store'}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      {/* WhatsApp Button */}
+                      <a
+                        href={getWhatsAppInquiryUrl({
+                          phone: prod.seller_phone || prod.seller?.phone || prod.phone || prod.shop_phone,
+                          productName: prod.name,
+                          price: prod.price,
+                          shopName: prod.uploader_name || prod.seller?.name,
+                          brand: prod.brand,
+                        })}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-2.5 py-1.5 bg-[#25D366]/20 hover:bg-[#25D366] text-[#25D366] hover:text-slate-950 font-bold rounded-xl text-xs transition flex items-center gap-1 border border-[#25D366]/30 shadow-sm"
+                        title="Inquire on WhatsApp"
+                      >
+                        <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
+                          <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.771-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.312.045-.694.06-2.222-.572-1.828-.757-3.003-2.617-3.094-2.738-.09-.122-.74-1.024-.74-1.953 0-.929.479-1.386.65-1.577.171-.191.373-.239.498-.239.125 0 .25.002.359.007.114.005.267-.043.418.32.155.373.53 1.293.576 1.388.046.096.077.208.016.331-.061.123-.092.2-.183.308-.092.107-.193.24-.275.322-.093.093-.19.194-.082.38.109.186.483.797 1.036 1.29 0.713.636 1.314.833 1.5.926.186.093.295.077.404-.047.109-.123.468-.544.592-.73.125-.187.25-.156.421-.093.171.062 1.089.513 1.276.607.187.094.312.14.359.219.046.078.046.452-.098.857z" />
+                        </svg>
+                        <span>WhatsApp</span>
+                      </a>
+
+                      {/* View Details Link */}
+                      <Link
+                        href={`/products/${prod.id}`}
+                        className="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold rounded-xl text-xs transition flex items-center gap-1"
+                      >
+                        <span>Details</span>
+                        <ArrowRight className="w-3 h-3" />
+                      </Link>
+
+                      {isAuthenticated && canManage && (
                         <button
-                          type="button"
-                          onClick={() => setInquiryItem({ ...prod, itemType: 'PRODUCT' })}
-                          className="px-3 py-1.5 bg-emerald-500/20 hover:bg-emerald-500 text-emerald-300 hover:text-slate-950 font-bold rounded-xl text-xs transition flex items-center gap-1 border border-emerald-500/30"
+                          onClick={() => handleDeleteProduct(prod.id)}
+                          className="text-slate-500 hover:text-rose-400 transition p-1"
+                          title="Delete Product"
                         >
-                          <MessageSquare className="w-3 h-3" />
-                          <span>Send Query</span>
+                          <Trash2 className="w-3.5 h-3.5" />
                         </button>
-
-                        {isAuthenticated && canManage && (
-                          <button
-                            onClick={() => handleDeleteProduct(prod.id)}
-                            className="text-slate-500 hover:text-rose-400 transition p-1"
-                            title="Delete Product"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        )}
-                      </div>
+                      )}
                     </div>
                   </div>
-                );
-              })}
+                </div>
+              );
+            })}
+          </div>
+
+          {filteredProducts.length === 0 && (
+            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-12 text-center text-slate-500 space-y-2">
+              <ShoppingBag className="w-10 h-10 mx-auto text-slate-600 mb-2" />
+              <div className="text-sm font-bold text-white">No products found</div>
+              <p className="text-xs text-slate-400">Try adjusting your search query or category filters.</p>
             </div>
-
-            {filteredProducts.length === 0 && (
-              <div className="bg-slate-900 border border-slate-800 rounded-3xl p-12 text-center text-slate-500 space-y-2">
-                <ShoppingBag className="w-10 h-10 mx-auto text-slate-600 mb-2" />
-                <div className="text-sm font-bold text-white">No products found</div>
-                <p className="text-xs text-slate-400">Try adjusting your search query or category filters.</p>
-              </div>
-            )}
-          </section>
-        )}
-
-        {/* ============================================================== */}
-        {/* TAB 2: EXCLUSIVE OFFERS ONLY                                    */}
-        {/* ============================================================== */}
-        {activeTab === 'OFFERS' && (
-          <section className="space-y-6 animate-in fade-in duration-300">
-            <div className="flex items-center justify-between pb-2 border-b border-slate-800">
-              <div className="flex items-center space-x-2">
-                <Tag className="w-5 h-5 text-amber-400" />
-                <h2 className="text-lg font-black text-white">Active Promotional Deals &amp; Discounts</h2>
-              </div>
-              <span className="text-xs text-slate-400">{offers.length} Active Offers</span>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {offers.map((offer) => {
-                const isAdmin = offer.uploader_role === 'ADMIN';
-                return (
-                  <div
-                    key={offer.id}
-                    className="bg-slate-900 border border-slate-800 hover:border-slate-700 rounded-3xl p-6 relative overflow-hidden shadow-xl flex flex-col justify-between group transition hover:-translate-y-0.5"
-                  >
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <span className="px-3.5 py-1.5 bg-gradient-to-r from-amber-500 to-orange-600 text-slate-950 font-black text-xs rounded-full shadow-md flex items-center gap-1">
-                          <Percent className="w-3 h-3" />
-                          <span>{offer.discount_percent}% OFF</span>
-                        </span>
-                        <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full border ${isAdmin
-                          ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
-                          : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
-                          }`}>
-                          {isAdmin ? '🛠️ Repair Service Deal' : '🏪 Store Promotion'}
-                        </span>
-                      </div>
-
-                      <div>
-                        <h3 className="font-extrabold text-white text-lg group-hover:text-amber-300 transition">
-                          {offer.title}
-                        </h3>
-                        <p className="text-xs text-slate-400 mt-2 leading-relaxed">
-                          {offer.description}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="pt-5 mt-5 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-400 gap-2">
-                      <div className="truncate">
-                        By: <strong className="text-slate-300">{offer.uploader_name || 'Shop Partner'}</strong>
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => setInquiryItem({ ...offer, itemType: 'OFFER' })}
-                          className="px-3.5 py-1.5 bg-amber-500/20 hover:bg-amber-500 text-amber-300 hover:text-slate-950 font-bold rounded-xl text-xs transition flex items-center gap-1 border border-amber-500/30"
-                        >
-                          <MessageSquare className="w-3.5 h-3.5" />
-                          <span>Claim / Send Query</span>
-                        </button>
-
-                        {isAuthenticated && canManage && (
-                          <button
-                            onClick={() => supabaseService.deleteOffer(offer.id).then(loadMarketplaceData)}
-                            className="text-slate-500 hover:text-rose-400 transition p-1"
-                            title="Delete Offer"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            {offers.length === 0 && (
-              <div className="bg-slate-900 border border-slate-800 rounded-3xl p-12 text-center text-slate-500 space-y-2">
-                <Tag className="w-10 h-10 mx-auto text-slate-600 mb-2" />
-                <div className="text-sm font-bold text-white">No active offers available</div>
-                <p className="text-xs text-slate-400">Check back later or check in-store promotions directly via WhatsApp inquiry.</p>
-              </div>
-            )}
-          </section>
-        )}
+          )}
+        </section>
 
       </main>
 
-      {/* MODAL 1: ADD PRODUCT */}
+      {/* MODAL: ADD PRODUCT */}
       {isAddProductOpen && (
         <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-700 rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in-95">
+          <div className="bg-slate-900 border border-slate-700 rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in-95">
             <div className="flex justify-between items-center border-b border-slate-800 pb-3">
               <div>
-                <h3 className="text-base font-extrabold text-white">Upload New Accessory Product</h3>
+                <h3 className="text-base font-extrabold text-white">Upload New Product</h3>
                 <p className="text-xs text-slate-400 mt-0.5">
-                  Uploading as: <strong className="text-amber-400">{user?.name || 'Seller'}</strong> ({user?.role || 'SELLER'})
+                  Publish a product with multi-image gallery stored on Supabase CDN
                 </p>
               </div>
               <button onClick={() => setIsAddProductOpen(false)} className="text-slate-400 hover:text-white text-xl font-bold">&times;</button>
             </div>
 
-            <form onSubmit={handleAddProduct} className="space-y-3 text-xs">
+            <form onSubmit={handleAddProduct} className="space-y-4 text-xs">
               <div>
-                <label className="block font-bold text-slate-300 mb-1">Product Title</label>
+                <label className="block font-bold text-slate-300 mb-1">Product Title *</label>
                 <input
                   type="text"
                   required
                   value={newProduct.name}
                   onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })}
-                  placeholder="e.g. 65W Fast Charger Type-C"
+                  placeholder="e.g. 65W GaN Fast Charger Dual Port"
                   className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-amber-500"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-bold text-slate-300 mb-1">Brand</label>
+                  <label className="block font-bold text-slate-300 mb-1">Brand Name</label>
                   <input
                     type="text"
-                    required
                     value={newProduct.brand}
                     onChange={(e) => setNewProduct({ ...newProduct, brand: e.target.value })}
                     placeholder="e.g. Anker / Spigen"
@@ -574,10 +468,10 @@ export default function MarketplacePage() {
                   <select
                     value={newProduct.category}
                     onChange={(e) => setNewProduct({ ...newProduct, category: e.target.value })}
-                    className="w-full px-3 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-amber-500"
+                    className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-amber-500"
                   >
-                    {CATEGORIES.filter(c => c !== 'All').map(c => (
-                      <option key={c} value={c}>{c}</option>
+                    {CATEGORIES.filter((c) => c !== 'All').map((cat) => (
+                      <option key={cat} value={cat}>{cat}</option>
                     ))}
                   </select>
                 </div>
@@ -585,32 +479,67 @@ export default function MarketplacePage() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-bold text-slate-300 mb-1">Price (₹)</label>
+                  <label className="block font-bold text-slate-300 mb-1">Selling Price (₹) *</label>
                   <input
                     type="number"
                     required
-                    min="1"
                     value={newProduct.price}
                     onChange={(e) => setNewProduct({ ...newProduct, price: e.target.value })}
-                    placeholder="999"
+                    placeholder="e.g. 999"
                     className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white font-bold focus:outline-none focus:border-amber-500"
                   />
                 </div>
                 <div>
-                  <label className="block font-bold text-slate-300 mb-1">Stock Quantity</label>
+                  <label className="block font-bold text-slate-300 mb-1">Stock Units</label>
                   <input
                     type="number"
-                    required
-                    min="1"
                     value={newProduct.stock}
                     onChange={(e) => setNewProduct({ ...newProduct, stock: e.target.value })}
-                    placeholder="25"
+                    placeholder="e.g. 20"
                     className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white font-bold focus:outline-none focus:border-amber-500"
                   />
                 </div>
               </div>
 
-              <div className="flex justify-end space-x-2 pt-2">
+              <div>
+                <label className="block font-bold text-slate-300 mb-1">Seller WhatsApp Contact Number</label>
+                <input
+                  type="tel"
+                  value={newProduct.sellerPhone}
+                  onChange={(e) => setNewProduct({ ...newProduct, sellerPhone: e.target.value })}
+                  placeholder="e.g. +91 98450 11223 (Customer queries will route directly here)"
+                  className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-amber-500"
+                />
+                <span className="text-[10px] text-slate-500">
+                  Customers who click &quot;Inquire on WhatsApp&quot; will send messages directly to this number.
+                </span>
+              </div>
+
+              {/* Multi-Image Uploader Component */}
+              <div className="pt-2 border-t border-slate-800">
+                <MultiImageUploader
+                  images={newProduct.images}
+                  onChange={(imgs) => setNewProduct({
+                    ...newProduct,
+                    images: imgs,
+                    image_url: imgs[0] || '',
+                  })}
+                  sellerId={user?.id || 'admin'}
+                />
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-300 mb-1">Product Description</label>
+                <textarea
+                  rows="3"
+                  value={newProduct.description}
+                  onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })}
+                  placeholder="Describe specifications, warranty, compatibility details..."
+                  className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-amber-500"
+                />
+              </div>
+
+              <div className="flex justify-end space-x-2 pt-2 border-t border-slate-800">
                 <button
                   type="button"
                   onClick={() => setIsAddProductOpen(false)}
@@ -631,96 +560,6 @@ export default function MarketplacePage() {
         </div>
       )}
 
-      {/* MODAL 2: ADD OFFER */}
-      {isAddOfferOpen && (
-        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-700 rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in-95">
-            <div className="flex justify-between items-center border-b border-slate-800 pb-3">
-              <div>
-                <h3 className="text-base font-extrabold text-white">Create Promotional Offer</h3>
-                <p className="text-xs text-slate-400 mt-0.5">
-                  Publish a special discount deal for customers
-                </p>
-              </div>
-              <button onClick={() => setIsAddOfferOpen(false)} className="text-slate-400 hover:text-white text-xl font-bold">&times;</button>
-            </div>
-
-            <form onSubmit={handleAddOffer} className="space-y-3 text-xs">
-              <div>
-                <label className="block font-bold text-slate-300 mb-1">Offer Headline</label>
-                <input
-                  type="text"
-                  required
-                  value={newOffer.title}
-                  onChange={(e) => setNewOffer({ ...newOffer, title: e.target.value })}
-                  placeholder="e.g. Festival Screen Replacement Special"
-                  className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-amber-500"
-                />
-              </div>
-
-              <div>
-                <label className="block font-bold text-slate-300 mb-1">Description / Terms</label>
-                <textarea
-                  rows="2"
-                  required
-                  value={newOffer.description}
-                  onChange={(e) => setNewOffer({ ...newOffer, description: e.target.value })}
-                  placeholder="e.g. Flat 15% off on all display replacements this week"
-                  className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-amber-500"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-bold text-slate-300 mb-1">Discount %</label>
-                  <input
-                    type="number"
-                    required
-                    min="1"
-                    max="90"
-                    value={newOffer.discountPercent}
-                    onChange={(e) => setNewOffer({ ...newOffer, discountPercent: Number(e.target.value) })}
-                    className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white font-bold focus:outline-none focus:border-amber-500"
-                  />
-                </div>
-                <div>
-                  <label className="block font-bold text-slate-300 mb-1">Valid Days</label>
-                  <input
-                    type="number"
-                    defaultValue={30}
-                    className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white font-bold focus:outline-none focus:border-amber-500"
-                  />
-                </div>
-              </div>
-
-              <div className="flex justify-end space-x-2 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setIsAddOfferOpen(false)}
-                  className="px-4 py-2 rounded-xl text-slate-300 hover:bg-slate-800 font-bold"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={actionLoading}
-                  className="px-5 py-2 rounded-xl font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-lg"
-                >
-                  {actionLoading ? 'Publishing...' : 'Publish Offer'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Customer Inquiry Modal (Zero Login Required) */}
-      <CustomerInquiryModal
-        isOpen={!!inquiryItem}
-        onClose={() => setInquiryItem(null)}
-        item={inquiryItem}
-      />
-
       {/* Footer */}
       <footer className="border-t border-slate-800 bg-slate-900/80 py-8 text-xs text-slate-400">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -729,7 +568,7 @@ export default function MarketplacePage() {
               ⚡
             </div>
             <div>
-              <span className="font-extrabold text-white">SmartFix Hub Marketplace</span> &mdash; Products &amp; Offers by Admin &amp; Sellers
+              <span className="font-extrabold text-white">SmartFix Hub Marketplace</span> &mdash; Products by Verified Sellers
             </div>
           </div>
           <div className="flex items-center space-x-4 text-slate-500 text-[11px]">

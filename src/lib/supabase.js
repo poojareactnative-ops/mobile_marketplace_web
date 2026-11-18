@@ -8,15 +8,28 @@ const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGci
 
 let supabaseClient = null;
 
-try {
-  const { createClient } = require('@supabase/supabase-js');
-  if (createClient) {
-    supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+export function getSupabase() {
+  if (supabaseClient) return supabaseClient;
+  try {
+    const { createClient } = require('@supabase/supabase-js');
+    if (createClient) {
+      supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    }
+  } catch (e) {
+    supabaseClient = null;
   }
-} catch (e) {
-  // @supabase/supabase-js not installed in node_modules yet, fallback to direct REST
-  supabaseClient = null;
+  return supabaseClient;
 }
+
+// Proxy wrapper ensures lazy evaluation without forcing webpack to create vendor-chunks/@supabase.js
+export const supabase = new Proxy({}, {
+  get(target, prop) {
+    const client = getSupabase();
+    if (!client) return undefined;
+    const val = client[prop];
+    return typeof val === 'function' ? val.bind(client) : val;
+  }
+});
 
 /**
  * Universal PostgREST REST client wrapper for Supabase
@@ -59,7 +72,6 @@ export async function supabaseRest(endpoint, options = {}) {
   }
 }
 
-export const supabase = supabaseClient;
 export { SUPABASE_URL, SUPABASE_ANON_KEY };
 export default supabase;
 

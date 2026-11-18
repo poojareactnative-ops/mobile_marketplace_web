@@ -1,17 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
 import Link from 'next/link';
 import Navbar from '../components/Navbar';
-import CommissionCalculator from '../components/CommissionCalculator';
 import NearbyMarketplace from '../components/NearbyMarketplace';
-import OffersCarousel from '../components/OffersCarousel';
-import { supabaseService } from '../services/supabaseService';
-import {
-  Wrench, Store, ShieldCheck, User, ArrowRight, CheckCircle2,
-  Smartphone, Search, Shield, ChevronRight, Sparkles, Percent,
-  Layers, Check, Clock, TrendingUp, Compass, MapPin
-} from 'lucide-react';
 
 export default function LandingPage() {
   return (
@@ -20,9 +11,8 @@ export default function LandingPage() {
       {/* 1. TOP NAVBAR */}
       <Navbar />
 
-      {/* 2. FULL-WIDTH HERO OFFERS CAROUSEL */}
+      {/* 2. FULL-WIDTH HERO FEATURED PRODUCTS SHOWCASE */}
       <section className="w-full relative overflow-hidden">
-        <OffersCarousel />
       </section>
 
       {/* 2.5 HYPERLOCAL NEARBY MARKETPLACE (1–2 KM RADIUS) */}

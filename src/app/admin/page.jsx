@@ -35,7 +35,6 @@ export default function AdminPage() {
   const [sellers, setSellers] = useState([]);
   const [inquiries, setInquiries] = useState([]);
   const [products, setProducts] = useState([]);
-  const [offers, setOffers] = useState([]);
   const [loading, setLoading] = useState(true);
 
   // Filters & Search
@@ -62,20 +61,18 @@ export default function AdminPage() {
   const loadData = useCallback(async () => {
     try {
       setLoading(true);
-      const [j, c, s, inq, prods, offs] = await Promise.all([
+      const [j, c, s, inq, prods] = await Promise.all([
         supabaseService.getRepairJobs({ adminId: user?.id }),
         supabaseService.getCommissions({ adminId: user?.id }),
         supabaseService.getAffiliatedSellers(user?.id),
         supabaseService.getInquiries({ ownerRole: 'ADMIN' }),
         supabaseService.getProducts(),
-        supabaseService.getOffers(),
       ]);
       setJobs(j || []);
       setCommissions(c || { data: [], summary: {} });
       setSellers(s || []);
       setInquiries(inq || []);
       setProducts((prods || []).filter(p => p.uploader_role === 'ADMIN'));
-      setOffers((offs || []).filter(o => o.uploader_role === 'ADMIN'));
     } catch (err) {
       console.error('Failed to load admin repair jobs:', err);
     } finally {
@@ -220,9 +217,9 @@ export default function AdminPage() {
     },
     {
       id: 'MARKETPLACE',
-      label: 'Catalog & Offers',
+      label: 'Products Catalog',
       icon: ShoppingBag,
-      count: products.length + offers.length,
+      count: products.length,
       countClass: 'bg-slate-800 text-slate-400',
     },
   ];
@@ -978,9 +975,9 @@ export default function AdminPage() {
               <div className="space-y-6 animate-in fade-in duration-300">
                 <div className="bg-slate-900 border border-slate-800 p-6 rounded-3xl shadow-xl flex items-center justify-between">
                   <div>
-                    <h3 className="font-extrabold text-white text-base">Shop Marketplace Catalog &amp; Offers</h3>
+                    <h3 className="font-extrabold text-white text-base">Shop Marketplace Products</h3>
                     <p className="text-xs text-slate-400 mt-1">
-                      Manage accessories and repair discounts visible to customers within 1–2 km.
+                      Manage mobile accessories visible to customers within 1–2 km.
                     </p>
                   </div>
                   <Link
@@ -992,60 +989,30 @@ export default function AdminPage() {
                   </Link>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Products */}
+                <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 space-y-4">
+                  <h4 className="font-bold text-white text-sm flex items-center gap-2 border-b border-slate-800 pb-3">
+                    <ShoppingBag className="w-4 h-4 text-emerald-400" />
+                    <span>My Uploaded Products ({products.length})</span>
+                  </h4>
 
-                  {/* Products */}
-                  <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 space-y-4">
-                    <h4 className="font-bold text-white text-sm flex items-center gap-2 border-b border-slate-800 pb-3">
-                      <ShoppingBag className="w-4 h-4 text-emerald-400" />
-                      <span>My Uploaded Products ({products.length})</span>
-                    </h4>
-
-                    {products.length === 0 ? (
-                      <div className="p-8 text-center text-slate-500 text-xs">No products uploaded yet.</div>
-                    ) : (
-                      <div className="space-y-2">
-                        {products.map(p => (
-                          <div key={p.id} className="p-3 bg-slate-950 rounded-2xl border border-slate-800 flex items-center justify-between text-xs">
-                            <div>
-                              <div className="font-bold text-white">{p.name}</div>
-                              <div className="text-[11px] text-slate-400">{p.brand} &bull; ₹{p.price}</div>
-                            </div>
-                            <span className="text-[10px] text-emerald-400 font-bold bg-emerald-500/10 px-2 py-0.5 rounded-full">
-                              {p.stock} in stock
-                            </span>
+                  {products.length === 0 ? (
+                    <div className="p-8 text-center text-slate-500 text-xs">No products uploaded yet.</div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {products.map(p => (
+                        <div key={p.id} className="p-3 bg-slate-950 rounded-2xl border border-slate-800 flex items-center justify-between text-xs">
+                          <div>
+                            <div className="font-bold text-white">{p.name}</div>
+                            <div className="text-[11px] text-slate-400">{p.brand} &bull; ₹{p.price}</div>
                           </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Offers */}
-                  <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 space-y-4">
-                    <h4 className="font-bold text-white text-sm flex items-center gap-2 border-b border-slate-800 pb-3">
-                      <Tag className="w-4 h-4 text-amber-400" />
-                      <span>My Active Promo Offers ({offers.length})</span>
-                    </h4>
-
-                    {offers.length === 0 ? (
-                      <div className="p-8 text-center text-slate-500 text-xs">No active offers yet.</div>
-                    ) : (
-                      <div className="space-y-2">
-                        {offers.map(o => (
-                          <div key={o.id} className="p-3 bg-slate-950 rounded-2xl border border-slate-800 flex items-center justify-between text-xs">
-                            <div>
-                              <div className="font-bold text-white">{o.title}</div>
-                              <div className="text-[11px] text-slate-400">{o.description}</div>
-                            </div>
-                            <span className="text-xs font-black text-amber-400 bg-amber-500/10 px-2.5 py-1 rounded-full">
-                              {o.discount_percent}% OFF
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
+                          <span className="text-[10px] text-emerald-400 font-bold bg-emerald-500/10 px-2 py-0.5 rounded-full">
+                            {p.stock} in stock
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             )}

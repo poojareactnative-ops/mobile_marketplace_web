@@ -3,19 +3,16 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import {
-  MapPin, Navigation, Tag, ShoppingBag, Wrench, Store,
-  Search, Filter, CheckCircle2, Phone, Sparkles, ChevronRight,
-  Sliders, AlertCircle, ArrowRight, ShieldCheck, Compass, Info, Check, MessageSquare
+  MapPin, Navigation, Compass, Filter, Search, Tag, Phone,
+  Clock, ShieldCheck, CheckCircle2, ArrowRight, Store, Sparkles, ShoppingBag
 } from 'lucide-react';
-import CustomerInquiryModal from './CustomerInquiryModal';
-import { calculateDistanceKm, formatDistance } from '../utils/geolocation';
 import { supabaseService } from '../services/supabaseService';
+import { getProductImage, getProductImages, getWhatsAppInquiryUrl } from '../utils/productImages';
 
 export default function NearbyMarketplace() {
-  // 1. Live Coordinates & Location state
-  const [userCoords, setUserCoords] = useState({ lat: 12.9716, lng: 77.5946 });
-  const [locationLabel, setLocationLabel] = useState('Central District');
-  const [isLiveGps, setIsLiveGps] = useState(false);
+  // 1. Geolocation State
+  const [userCoords, setUserCoords] = useState({ lat: 12.9716, lng: 77.5946 }); // Default: Central City Hub
+  const [userAddress, setUserAddress] = useState('Central Commercial District');
   const [gpsLoading, setGpsLoading] = useState(false);
   const [gpsError, setGpsError] = useState('');
   const [areaFilter, setAreaFilter] = useState('');
@@ -24,17 +21,12 @@ export default function NearbyMarketplace() {
   const [radiusKm, setRadiusKm] = useState(2.0);
 
   // 3. Filter state
-  const [activeTab, setActiveTab] = useState('ALL'); // 'ALL' | 'OFFERS' | 'PRODUCTS'
   const [roleFilter, setRoleFilter] = useState('ALL'); // 'ALL' | 'ADMIN' | 'SELLER'
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
 
-  // 4. Modal state for Customer Inquiry (Zero login required)
-  const [inquiryItem, setInquiryItem] = useState(null);
-
-  // 5. Pure Live Supabase Data (ZERO static / dummy mock data)
+  // 4. Pure Live Supabase Products & Shops Data
   const [shops, setShops] = useState([]);
-  const [offers, setOffers] = useState([]);
   const [products, setProducts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -42,15 +34,13 @@ export default function NearbyMarketplace() {
   const loadMarketplaceData = async () => {
     try {
       setIsLoading(true);
-      const [liveShops, liveProds, liveOffs] = await Promise.all([
+      const [liveShops, liveProds] = await Promise.all([
         supabaseService.getShops(),
         supabaseService.getProducts(),
-        supabaseService.getOffers(),
       ]);
 
       setShops(Array.isArray(liveShops) ? liveShops : []);
       setProducts(Array.isArray(liveProds) ? liveProds : []);
-      setOffers(Array.isArray(liveOffs) ? liveOffs : []);
     } catch (err) {
       console.warn('Live Supabase marketplace sync error:', err.message);
     } finally {
@@ -77,27 +67,42 @@ export default function NearbyMarketplace() {
         const liveLat = position.coords.latitude;
         const liveLng = position.coords.longitude;
         setUserCoords({ lat: liveLat, lng: liveLng });
-        setIsLiveGps(true);
-        setLocationLabel(`GPS Location (${liveLat.toFixed(4)}, ${liveLng.toFixed(4)})`);
+        setUserAddress(`GPS Location (${liveLat.toFixed(4)}, ${liveLng.toFixed(4)})`);
         setGpsLoading(false);
       },
-      (error) => {
+      (err) => {
         setGpsLoading(false);
-        let errorMsg = 'Could not retrieve your live GPS location.';
-        if (error.code === 1) {
-          errorMsg = 'Location permission was denied. You can filter by area search below.';
-        } else if (error.code === 2) {
-          errorMsg = 'GPS position unavailable. Please check your network connection.';
-        } else if (error.code === 3) {
-          errorMsg = 'GPS request timed out.';
-        }
-        setGpsError(errorMsg);
+        setGpsError('GPS permission denied or unavailable. Using default city coordinates.');
       },
-      { enableHighAccuracy: true, timeout: 8000, maximumAge: 30000 }
+      { timeout: 10000, enableHighAccuracy: true }
     );
   };
 
-  // Build shop lookup map
+  // Exact Haversine formula
+  const calculateDistanceKm = (lat1, lon1, lat2, lon2) => {
+    if (lat1 == null || lon1 == null || lat2 == null || lon2 == null) return 1.0;
+    const R = 6371; // Earth radius in km
+    const dLat = ((lat2 - lat1) * Math.PI) / 180;
+    const dLon = ((lon2 - lon1) * Math.PI) / 180;
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return Number((R * c).toFixed(2));
+  };
+
+  // Format distance
+  const formatDistance = (km) => {
+    if (km < 1) {
+      return `${Math.round(km * 1000)} m away`;
+    }
+    return `${km.toFixed(1)} km away`;
+  };
+
+  // Shop lookup map
   const shopMap = useMemo(() => {
     const map = {};
     shops.forEach((s) => {
@@ -106,40 +111,11 @@ export default function NearbyMarketplace() {
     return map;
   }, [shops]);
 
-  // Combine real products and real offers with calculated distance
+  // Combine real products with calculated distance
   const itemsWithDistance = useMemo(() => {
-    const list = [];
-
-    // 1. Process Live Offers
-    offers.forEach((offer) => {
-      const shop = shopMap[offer.shop_id] || null;
-      let distance = 0.8; // Default nearby estimate if shop has no explicit lat/lng yet
-      if (shop?.latitude != null && shop?.longitude != null) {
-        distance = calculateDistanceKm(
-          userCoords.lat,
-          userCoords.lng,
-          Number(shop.latitude),
-          Number(shop.longitude)
-        );
-      }
-
-      list.push({
-        ...offer,
-        itemType: 'OFFER',
-        distanceKm: distance,
-        role: offer.uploader_role || 'ADMIN',
-        shop: shop || {
-          name: offer.uploader_name || 'Verified Repair Hub',
-          address: 'Local Partner Center',
-          phone: '+91 98450 11223',
-          rating: '4.8',
-        },
-      });
-    });
-
-    // 2. Process Live Products
-    products.forEach((product) => {
-      const shop = shopMap[product.shop_id] || null;
+    return products.map((product) => {
+      const shop = product.shop || shopMap[product.shop_id] || (product.seller?.shop_id && shopMap[product.seller.shop_id]) || null;
+      const sellerRealPhone = product.seller_phone || product.seller?.phone || product.phone || shop?.phone || '';
       let distance = 1.2; // Default nearby estimate if shop has no explicit lat/lng yet
       if (shop?.latitude != null && shop?.longitude != null) {
         distance = calculateDistanceKm(
@@ -150,22 +126,20 @@ export default function NearbyMarketplace() {
         );
       }
 
-      list.push({
+      return {
         ...product,
-        itemType: 'PRODUCT',
         distanceKm: distance,
         role: product.uploader_role || 'SELLER',
+        seller_phone: sellerRealPhone,
         shop: shop || {
-          name: product.uploader_name || 'Verified Accessory Store',
+          name: product.uploader_name || product.seller?.name || 'Verified Accessory Store',
           address: 'Local Partner Shop',
-          phone: '+91 98451 22334',
+          phone: sellerRealPhone,
           rating: '4.9',
         },
-      });
+      };
     });
-
-    return list;
-  }, [offers, products, shopMap, userCoords]);
+  }, [products, shopMap, userCoords]);
 
   // Apply strict radius filter, search, category, role, and area filters
   const filteredItems = useMemo(() => {
@@ -173,42 +147,42 @@ export default function NearbyMarketplace() {
       // 1. Strict Geofence Radius
       if (item.distanceKm > radiusKm) return false;
 
-      // 2. Tab Filter: ALL | OFFERS | PRODUCTS
-      if (activeTab === 'OFFERS' && item.itemType !== 'OFFER') return false;
-      if (activeTab === 'PRODUCTS' && item.itemType !== 'PRODUCT') return false;
-
-      // 3. Role Filter: ALL | ADMIN | SELLER
+      // 2. Role Filter: ALL | ADMIN | SELLER
       if (roleFilter !== 'ALL' && item.role !== roleFilter) return false;
 
-      // 4. Category Filter
+      // 3. Category Filter
       if (selectedCategory !== 'All') {
-        const itemCat = item.category || (item.itemType === 'OFFER' ? 'Repair Deals' : 'Accessories');
+        const itemCat = item.category || 'Accessories';
         if (itemCat !== selectedCategory) return false;
       }
 
-      // 5. Search Query
+      // 4. Search Query
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
-        const titleMatch = (item.title || item.name || '').toLowerCase().includes(q);
+        const titleMatch = (item.name || '').toLowerCase().includes(q);
         const descMatch = (item.description || item.brand || '').toLowerCase().includes(q);
         const shopMatch = (item.shop?.name || '').toLowerCase().includes(q);
         if (!titleMatch && !descMatch && !shopMatch) return false;
       }
 
-      // 6. Area / Street text search
+      // 5. Area / Street text search
       if (areaFilter.trim()) {
         const a = areaFilter.toLowerCase();
         const addressMatch = (item.shop?.address || '').toLowerCase().includes(a);
-        const shopMatch = (item.shop?.name || '').toLowerCase().includes(a);
-        if (!addressMatch && !shopMatch) return false;
+        if (!addressMatch) return false;
       }
 
       return true;
     }).sort((a, b) => (a.distanceKm || 0) - (b.distanceKm || 0));
-  }, [itemsWithDistance, radiusKm, activeTab, roleFilter, selectedCategory, searchQuery, areaFilter]);
+  }, [itemsWithDistance, radiusKm, roleFilter, selectedCategory, searchQuery, areaFilter]);
 
-  const nearbyAdminCount = itemsWithDistance.filter(i => i.role === 'ADMIN' && i.distanceKm <= radiusKm).length;
-  const nearbySellerCount = itemsWithDistance.filter(i => i.role === 'SELLER' && i.distanceKm <= radiusKm).length;
+  const uniqueShopsCount = useMemo(() => {
+    const set = new Set();
+    filteredItems.forEach(i => {
+      if (i.shop?.name) set.add(i.shop.name);
+    });
+    return set.size;
+  }, [filteredItems]);
 
   return (
     <section id="nearby" className="py-20 px-4 sm:px-6 lg:px-8 border-b border-slate-800/80 bg-slate-950 relative overflow-hidden">
@@ -225,12 +199,16 @@ export default function NearbyMarketplace() {
             <div className="inline-flex items-center space-x-2 bg-slate-900 border border-slate-800 px-3.5 py-1 rounded-full text-xs font-semibold text-slate-300 shadow-md">
               <Compass className="w-3.5 h-3.5 text-amber-400 animate-spin" style={{ animationDuration: '8s' }} />
               <span className="bg-gradient-to-r from-amber-400 to-emerald-400 bg-clip-text text-transparent font-bold">
-                Nearby Services (1–2 km Radius)
+                Nearby Products &amp; Stores (1–2 km Radius)
               </span>
             </div>
 
+            <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tight">
+              Hyperlocal Mobile Marketplace
+            </h2>
+
             <p className="text-sm text-slate-400 leading-relaxed">
-              Explore verified repair centers, original accessories, and exclusive local discounts from trusted neighborhood shops strictly within{' '}
+              Explore genuine smartphone accessories, cables, chargers, and protectors from verified neighborhood shops strictly within{' '}
               <strong className="text-white underline decoration-amber-500 decoration-2 underline-offset-4">
                 1–2 km of your location
               </strong>.
@@ -239,27 +217,111 @@ export default function NearbyMarketplace() {
 
           {/* Quick metric pill */}
           <div className="flex items-center gap-3 bg-slate-900/80 border border-slate-800 p-3 rounded-2xl shrink-0 backdrop-blur-md">
-            <div className="text-center px-3 border-r border-slate-800">
-              <div className="text-xl font-black text-amber-400">{nearbyAdminCount}</div>
-              <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Repair Deals</div>
+            <div className="text-center px-4 border-r border-slate-800">
+              <div className="text-xl font-black text-emerald-400">{filteredItems.length}</div>
+              <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Products</div>
             </div>
-            <div className="text-center px-3 border-r border-slate-800">
-              <div className="text-xl font-black text-emerald-400">{nearbySellerCount}</div>
-              <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Accessories</div>
+            <div className="text-center px-4 border-r border-slate-800">
+              <div className="text-xl font-black text-amber-400">{uniqueShopsCount}</div>
+              <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Local Stores</div>
             </div>
-            <div className="text-center px-3">
-              <div className="text-xl font-black text-white">{filteredItems.length}</div>
-              <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Within {radiusKm} km</div>
+            <div className="text-center px-4">
+              <div className="text-xl font-black text-white">{radiusKm} km</div>
+              <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Radius Limit</div>
             </div>
           </div>
         </div>
 
-        {/* 3. PRODUCTS & OFFERS DISPLAY GRID */}
+        {/* 2. GEOFENCE RADIAL CONTROLS BAR */}
+        <div className="bg-slate-900/90 border border-slate-800 rounded-3xl p-5 sm:p-6 backdrop-blur-xl space-y-5 shadow-2xl">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
+
+            {/* GPS Location Status Pill */}
+            <div className="md:col-span-4 flex items-center space-x-3 bg-slate-950 p-2.5 rounded-2xl border border-slate-800">
+              <div className="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">
+                <MapPin className="w-4 h-4" />
+              </div>
+              <div className="truncate text-xs">
+                <div className="font-extrabold text-white truncate">{userAddress}</div>
+                <div className="text-[10px] text-slate-400">GPS Coordinates: {userCoords.lat.toFixed(3)}, {userCoords.lng.toFixed(3)}</div>
+              </div>
+            </div>
+
+            {/* Detect Real GPS Button */}
+            <div className="md:col-span-3">
+              <button
+                type="button"
+                onClick={handleDetectLiveLocation}
+                disabled={gpsLoading}
+                className="w-full py-2.5 px-4 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white font-extrabold rounded-2xl text-xs transition flex items-center justify-center space-x-2 border border-slate-700 disabled:opacity-50 shadow-md"
+              >
+                <Navigation className={`w-3.5 h-3.5 text-amber-400 ${gpsLoading ? 'animate-spin' : ''}`} />
+                <span>{gpsLoading ? 'Locating...' : 'Use My Live GPS'}</span>
+              </button>
+            </div>
+
+            {/* Strict Radius Switcher */}
+            <div className="md:col-span-5 flex items-center justify-end space-x-1.5 bg-slate-950/80 p-1.5 rounded-2xl border border-slate-800">
+              <span className="text-[11px] font-bold text-slate-400 px-2 shrink-0">Radius:</span>
+              {[1.0, 1.5, 2.0].map((r) => (
+                <button
+                  key={r}
+                  type="button"
+                  onClick={() => setRadiusKm(r)}
+                  className={`flex-1 py-1.5 px-3 rounded-xl font-black text-xs transition duration-200 ${radiusKm === r
+                    ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 shadow-md'
+                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+                    }`}
+                >
+                  {r.toFixed(1)} km
+                </button>
+              ))}
+            </div>
+
+          </div>
+
+          {gpsError && (
+            <div className="text-xs text-rose-400 bg-rose-950/30 border border-rose-900/50 p-2.5 rounded-xl font-medium">
+              ⚠️ {gpsError}
+            </div>
+          )}
+
+          {/* Search Filters Row */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-12 gap-3 pt-3 border-t border-slate-800">
+
+            {/* Keyword Search */}
+            <div className="md:col-span-7 relative">
+              <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
+              <input
+                type="text"
+                placeholder="Search products by title, brand (e.g. Fast Charger, Armor Case)..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
+              />
+            </div>
+
+            {/* Local Street/Area filter */}
+            <div className="md:col-span-5 relative">
+              <MapPin className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
+              <input
+                type="text"
+                placeholder="Filter by street or plaza name..."
+                value={areaFilter}
+                onChange={(e) => setAreaFilter(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
+              />
+            </div>
+
+          </div>
+        </div>
+
+        {/* 3. PRODUCTS DISPLAY GRID */}
         <div className="space-y-6">
 
           <div className="flex items-center justify-between text-xs text-slate-400 px-1">
             <span>
-              Showing <strong className="text-white">{filteredItems.length} verified listings</strong> within a <strong className="text-amber-400">{radiusKm} km radius</strong>.
+              Showing <strong className="text-white">{filteredItems.length} verified products</strong> within a <strong className="text-amber-400">{radiusKm} km radius</strong>.
             </span>
             <span className="hidden sm:inline text-slate-500">
               Sorted by closest distance
@@ -280,24 +342,19 @@ export default function NearbyMarketplace() {
             /* Cards Grid */
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredItems.map((item) => {
-                const isAdmin = item.role === 'ADMIN';
-                const isOffer = item.itemType === 'OFFER';
                 const distanceText = formatDistance(item.distanceKm);
 
                 return (
                   <div
-                    key={`${item.itemType}-${item.id}`}
+                    key={`prod-${item.id}`}
                     className="bento-card rounded-3xl p-6 shadow-xl flex flex-col justify-between group transition relative overflow-hidden backdrop-blur-xl border border-slate-800 hover:border-slate-700"
                   >
                     {/* Subtle color highlight ribbon */}
-                    <div
-                      className={`absolute top-0 right-0 w-36 h-36 rounded-bl-full pointer-events-none transition opacity-30 ${isAdmin ? 'bg-amber-500/25' : 'bg-emerald-500/25'
-                        }`}
-                    />
+                    <div className="absolute top-0 right-0 w-36 h-36 rounded-bl-full pointer-events-none transition opacity-30 bg-emerald-500/25" />
 
                     <div className="space-y-4">
 
-                      {/* Top Row: Distance Badge & Role Pill */}
+                      {/* Top Row: Distance Badge & Store Pill */}
                       <div className="flex items-center justify-between gap-2">
                         {/* Distance Pill */}
                         <span className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full text-xs font-black bg-slate-950 border border-slate-700 text-white shadow-inner">
@@ -305,59 +362,61 @@ export default function NearbyMarketplace() {
                           <span>{distanceText}</span>
                         </span>
 
-                        {/* Category Badge */}
-                        <span
-                          className={`text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full border ${isAdmin
-                            ? 'bg-amber-500/15 text-amber-300 border-amber-500/40'
-                            : 'bg-emerald-500/15 text-emerald-300 border-emerald-500/40'
-                            }`}
-                        >
-                          {isAdmin ? '🛠️ Certified Repair Center' : '🏪 Verified Store'}
+                        {/* Store Badge */}
+                        <span className="text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full border bg-emerald-500/15 text-emerald-300 border-emerald-500/40">
+                          🏪 Verified Store
                         </span>
                       </div>
 
-                      {/* Title & Tagline */}
-                      <div>
-                        {isOffer ? (
-                          <div className="space-y-1.5">
-                            <div className="inline-block px-2.5 py-0.5 rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-black text-xs shadow-md">
-                              {item.discount_percent}% OFF DEAL
-                            </div>
-                            <h3 className="font-extrabold text-white text-base leading-snug group-hover:text-amber-300 transition">
-                              {item.title}
-                            </h3>
-                            <p className="text-xs text-slate-400 leading-relaxed mt-1 line-clamp-2">
-                              {item.description}
-                            </p>
-                          </div>
-                        ) : (
-                          <div className="space-y-1.5">
-                            <div className="text-[11px] font-bold text-amber-400 uppercase tracking-wider">
-                              {item.brand || 'Accessories'} &bull; {item.category || 'General'}
-                            </div>
-                            <h3 className="font-extrabold text-white text-base leading-snug group-hover:text-amber-300 transition">
-                              {item.name}
-                            </h3>
-                            <div className="flex items-baseline space-x-2 pt-1">
-                              <span className="text-2xl font-black text-white">
-                                ₹{Number(item.price || 0).toLocaleString('en-IN')}
-                              </span>
-                              {item.stock != null && (
-                                <span className="text-[10px] text-emerald-400 font-bold">
-                                  {item.stock} in stock
-                                </span>
-                              )}
-                            </div>
-                          </div>
+                      {/* Product Image */}
+                      <div className="relative w-full h-44 rounded-2xl overflow-hidden bg-slate-900 border border-slate-800/80 group-hover:border-slate-700 transition">
+                        <Link href={`/products/${item.id}`} className="block w-full h-full relative">
+                          <img
+                            src={getProductImage(item)}
+                            alt={item.name}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                            loading="lazy"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent opacity-60" />
+                        </Link>
+                        {item.stock != null && (
+                          <span className="absolute top-2.5 right-2.5 px-2.5 py-0.5 rounded-full text-[10px] font-black bg-slate-950/90 text-emerald-400 border border-emerald-500/30 backdrop-blur-md shadow-md">
+                            {item.stock > 0 ? `${item.stock} in stock` : 'Out of stock'}
+                          </span>
                         )}
+                        {getProductImages(item).length > 1 && (
+                          <span className="absolute bottom-2.5 right-2.5 px-2 py-0.5 rounded-full text-[10px] font-black bg-slate-950/90 text-slate-200 border border-slate-700 backdrop-blur-md shadow flex items-center gap-1">
+                            <span>📷 {getProductImages(item).length} photos</span>
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Title & Pricing */}
+                      <div className="space-y-1.5">
+                        <div className="text-[11px] font-bold text-amber-400 uppercase tracking-wider">
+                          {item.brand || 'Accessories'} &bull; {item.category || 'General'}
+                        </div>
+                        <Link href={`/products/${item.id}`} className="block hover:underline">
+                          <h3 className="font-extrabold text-white text-base leading-snug group-hover:text-emerald-400 transition">
+                            {item.name}
+                          </h3>
+                        </Link>
+                        <div className="flex items-baseline space-x-2 pt-1">
+                          <span className="text-2xl font-black text-white">
+                            ₹{Number(item.price || 0).toLocaleString('en-IN')}
+                          </span>
+                          <span className="text-xs text-slate-500 line-through">
+                            ₹{Math.round(Number(item.price || 0) * 1.25).toLocaleString('en-IN')}
+                          </span>
+                        </div>
                       </div>
 
                       {/* Shop Identity & Physical Location Info */}
                       <div className="bg-slate-950/80 border border-slate-800/80 rounded-2xl p-3 text-xs space-y-1.5">
                         <div className="flex items-center justify-between">
                           <span className="font-extrabold text-slate-200 truncate flex items-center gap-1.5">
-                            {isAdmin ? <Wrench className="w-3.5 h-3.5 text-amber-400" /> : <Store className="w-3.5 h-3.5 text-emerald-400" />}
-                            <span>{item.shop?.name || 'Local Shop Partner'}</span>
+                            <Store className="w-3.5 h-3.5 text-emerald-400" />
+                            <span>{item.uploader_name || item.shop?.name || 'Accessory Store'}</span>
                           </span>
                           <span className="text-[10px] font-bold text-slate-400">
                             ⭐ {item.shop?.rating || '4.8'}
@@ -372,26 +431,41 @@ export default function NearbyMarketplace() {
                     </div>
 
                     {/* Card Bottom CTA */}
-                    <div className="pt-4 mt-4 border-t border-slate-800/80 flex items-center justify-between gap-2 text-xs">
+                    <div className="pt-4 mt-4 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-2 text-xs">
                       <div className="text-slate-400 text-[11px]">
-                        {isOffer ? (
-                          <span className="text-amber-400 font-semibold">{item.valid_until || 'Limited Deal'}</span>
-                        ) : (
-                          <span className="text-emerald-400 font-semibold">Available</span>
-                        )}
+                        <span className="text-emerald-400 font-semibold">Available In Store</span>
                       </div>
 
-                      <button
-                        type="button"
-                        onClick={() => setInquiryItem(item)}
-                        className={`px-4 py-2 font-black rounded-xl text-xs transition flex items-center space-x-1.5 shadow-lg transform hover:-translate-y-0.5 ${isAdmin
-                          ? 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 shadow-amber-500/20'
-                          : 'bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 shadow-emerald-500/20'
-                          }`}
-                      >
-                        <MessageSquare className="w-3.5 h-3.5" />
-                        <span>Send Query</span>
-                      </button>
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        {/* WhatsApp Direct Chat Button */}
+                        <a
+                          href={getWhatsAppInquiryUrl({
+                            phone: item.seller_phone || item.seller?.phone || item.phone || item.shop?.phone,
+                            productName: item.name,
+                            price: item.price,
+                            shopName: item.uploader_name || item.shop?.name,
+                            brand: item.brand,
+                          })}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="px-3 py-1.5 bg-[#25D366]/20 hover:bg-[#25D366] text-[#25D366] hover:text-slate-950 font-bold rounded-xl text-xs transition flex items-center space-x-1.5 border border-[#25D366]/40 shadow-sm"
+                          title="Chat directly on WhatsApp"
+                        >
+                          <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
+                            <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.771-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.312.045-.694.06-2.222-.572-1.828-.757-3.003-2.617-3.094-2.738-.09-.122-.74-1.024-.74-1.953 0-.929.479-1.386.65-1.577.171-.191.373-.239.498-.239.125 0 .25.002.359.007.114.005.267-.043.418.32.155.373.53 1.293.576 1.388.046.096.077.208.016.331-.061.123-.092.2-.183.308-.092.107-.193.24-.275.322-.093.093-.19.194-.082.38.109.186.483.797 1.036 1.29 0.713.636 1.314.833 1.5.926.186.093.295.077.404-.047.109-.123.468-.544.592-.73.125-.187.25-.156.421-.093.171.062 1.089.513 1.276.607.187.094.312.14.359.219.046.078.046.452-.098.857z" />
+                          </svg>
+                          <span>WhatsApp</span>
+                        </a>
+
+                        {/* Product Detail Page Link */}
+                        <Link
+                          href={`/products/${item.id}`}
+                          className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold rounded-xl text-xs transition flex items-center space-x-1"
+                        >
+                          <span>Details</span>
+                          <ArrowRight className="w-3 h-3" />
+                        </Link>
+                      </div>
                     </div>
 
                   </div>
@@ -403,20 +477,20 @@ export default function NearbyMarketplace() {
           {/* Genuine Empty State when no items exist */}
           {!isLoading && filteredItems.length === 0 && (
             <div className="bg-slate-900 border border-slate-800 rounded-3xl p-12 text-center text-slate-400 space-y-4 max-w-xl mx-auto shadow-2xl">
-              <div className="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center mx-auto">
-                <Compass className="w-7 h-7" />
+              <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto">
+                <ShoppingBag className="w-7 h-7" />
               </div>
               <div>
-                <h3 className="text-base font-extrabold text-white">No Live Listings Found Within {radiusKm} km</h3>
+                <h3 className="text-base font-extrabold text-white">No Products Found Within {radiusKm} km</h3>
                 <p className="text-xs text-slate-400 mt-1 leading-relaxed">
-                  There are currently no active repair offers or mobile accessories matching your criteria in this geofence radius.
+                  There are currently no mobile accessories matching your search criteria in this geofence radius.
                 </p>
               </div>
               <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
                 <button
                   type="button"
                   onClick={() => setRadiusKm(2.0)}
-                  className="px-5 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-xl text-xs transition shadow-lg"
+                  className="px-5 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black rounded-xl text-xs transition shadow-lg"
                 >
                   Expand Radius to 2.0 km
                 </button>
@@ -424,7 +498,7 @@ export default function NearbyMarketplace() {
                   href="/marketplace"
                   className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold rounded-xl text-xs transition"
                 >
-                  Browse Full Marketplace Catalog
+                  Browse Full Marketplace
                 </Link>
               </div>
             </div>
@@ -433,13 +507,6 @@ export default function NearbyMarketplace() {
         </div>
 
       </div>
-
-      {/* 5. CUSTOMER INQUIRY MODAL (NO LOGIN REQUIRED) */}
-      <CustomerInquiryModal
-        isOpen={!!inquiryItem}
-        onClose={() => setInquiryItem(null)}
-        item={inquiryItem}
-      />
 
     </section>
   );

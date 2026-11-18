@@ -64,7 +64,7 @@ export default function AboutMePage() {
               className="px-7 py-4 bg-slate-900/90 hover:bg-slate-800 border border-slate-700/80 text-amber-400 font-bold rounded-2xl text-sm transition flex items-center space-x-2 shadow-lg backdrop-blur-md transform hover:-translate-y-0.5"
             >
               <Store className="w-4 h-4 text-amber-400" />
-              <span>Browse Catalog &amp; Offers</span>
+              <span>Browse Products Catalog</span>
             </Link>
           </div>
 
