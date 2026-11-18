@@ -120,3 +120,34 @@ Is this item currently available in stock for direct pickup or local delivery?`;
 
   return `https://wa.me/${targetPhone}?text=${encodeURIComponent(message)}`;
 }
+
+export function getWhatsAppRepairTrackingUrl({
+  customerPhone,
+  customerName,
+  ticketId,
+  deviceBrand,
+  deviceModel,
+  problemDescription,
+  shopName,
+  status,
+}) {
+  const targetPhone = formatWhatsAppPhone(customerPhone);
+  const cleanTicket = String(ticketId || '').trim().toUpperCase();
+  const trackUrl = typeof window !== 'undefined'
+    ? `${window.location.origin}/track?ticket=${cleanTicket}`
+    : `https://smartfixhub.com/track?ticket=${cleanTicket}`;
+
+  const message = 
+`Hello ${customerName || 'Customer'}! 👋
+Your mobile repair request is registered on *SmartFix Hub*:
+
+🎫 *Tracking ID:* ${cleanTicket}
+📱 *Device:* ${deviceBrand || ''} ${deviceModel || ''}
+${problemDescription ? `🔧 *Issue:* ${problemDescription}\n` : ''}${shopName ? `🏪 *Assigned Workshop:* ${shopName}\n` : ''}${status ? `📊 *Current Status:* ${status}\n` : ''}
+🔍 *Track Live Status & Diagnostic Milestones:*
+👉 ${trackUrl}
+
+Keep this Tracking ID handy. You can check repair updates, technician notes, and download your warranty invoice anytime.`;
+
+  return `https://wa.me/${targetPhone}?text=${encodeURIComponent(message)}`;
+}

@@ -10,7 +10,7 @@ import RoleGuard from '../../components/RoleGuard';
 import { supabaseService } from '../../services/supabaseService';
 import { useAuth } from '../../context/AuthContext';
 import MultiImageUploader from '../../components/MultiImageUploader';
-import { getProductImages, getProductImage, getWhatsAppInquiryUrl, POPULAR_PRESET_IMAGES } from '../../utils/productImages';
+import { getProductImages, getProductImage, getWhatsAppInquiryUrl, getWhatsAppRepairTrackingUrl, POPULAR_PRESET_IMAGES } from '../../utils/productImages';
 import {
   Store, CheckCircle2, Smartphone, Search, AlertCircle, MessageSquare, Phone, Plus,
   RefreshCw, IndianRupee, ShoppingBag, Trash2, ArrowRight,
@@ -119,7 +119,7 @@ export default function SellerPage() {
 
   // Handle Create Referral
   const handleCreateReferral = async (data) => {
-    await supabaseService.createRepairReferral({
+    const res = await supabaseService.createRepairReferral({
       ...data,
       sellerId: user?.id,
       sellerName: user?.shopName || user?.name || 'Seller Partner',
@@ -127,6 +127,7 @@ export default function SellerPage() {
       shopId: user?.shopId || null,
     });
     await loadData();
+    return res;
   };
 
   // Handle Add Product
@@ -539,6 +540,7 @@ export default function SellerPage() {
                           <th className="py-3.5 px-4">Final Bill</th>
                           <th className="py-3.5 px-4">Your 2% Cut</th>
                           <th className="py-3.5 px-4">Payout Status</th>
+                          <th className="py-3.5 px-4 text-right">Send Ticket</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-800/80 font-medium">
@@ -617,6 +619,34 @@ export default function SellerPage() {
                                   </span>
                                 ) : (
                                   <span className="text-slate-500 text-[10px]">&mdash;</span>
+                                )}
+                              </td>
+
+                              <td className="py-3 px-4 text-right">
+                                {job.customer_phone ? (
+                                  <a
+                                    href={getWhatsAppRepairTrackingUrl({
+                                      customerPhone: job.customer_phone,
+                                      customerName: job.customer_name,
+                                      ticketId: job.ticket_id,
+                                      deviceBrand: job.device_brand,
+                                      deviceModel: job.device_model,
+                                      problemDescription: job.problem_description,
+                                      shopName: user?.shopName,
+                                      status: job.status,
+                                    })}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-[#25D366]/20 hover:bg-[#25D366] text-[#25D366] hover:text-slate-950 font-bold rounded-xl text-xs transition border border-[#25D366]/30 shadow-sm"
+                                    title="Send Tracking ID to Customer WhatsApp"
+                                  >
+                                    <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
+                                      <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.771-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.312.045-.694.06-2.222-.572-1.828-.757-3.003-2.617-3.094-2.738-.09-.122-.74-1.024-.74-1.953 0-.929.479-1.386.65-1.577.171-.191.373-.239.498-.239.125 0 .25.002.359.007.114.005.267-.043.418.32.155.373.53 1.293.576 1.388.046.096.077.208.016.331-.061.123-.092.2-.183.308-.092.107-.193.24-.275.322-.093.093-.19.194-.082.38.109.186.483.797 1.036 1.29 0.713.636 1.314.833 1.5.926.186.093.295.077.404-.047.109-.123.468-.544.592-.73.125-.187.25-.156.421-.093.171.062 1.089.513 1.276.607.187.094.312.14.359.219.046.078.046.452-.098.857z" />
+                                    </svg>
+                                    <span>WhatsApp</span>
+                                  </a>
+                                ) : (
+                                  <span className="text-slate-600 text-xs">&mdash;</span>
                                 )}
                               </td>
                             </tr>

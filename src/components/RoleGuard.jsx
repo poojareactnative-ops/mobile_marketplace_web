@@ -162,10 +162,10 @@ export default function RoleGuard({ allowedRoles = [], children }) {
 
         <div className="flex items-center justify-center gap-3 pt-2">
           <Link
-            href="/dashboard"
+            href={role === 'CUSTOMER' ? '/track' : '/dashboard'}
             className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl text-xs transition"
           >
-            Go to Your Dashboard
+            {role === 'CUSTOMER' ? 'Go to Repair Tracker' : 'Go to Your Dashboard'}
           </Link>
           <Link
             href={`/login?redirect=${encodeURIComponent(pathname)}`}

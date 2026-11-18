@@ -116,3 +116,54 @@ body {
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
+
+/* Animated Footer Wave Animations */
+@keyframes waveFlowSlow {
+  0% {
+    transform: translateX(0) translateZ(0) scaleY(1);
+  }
+  50% {
+    transform: translateX(-25%) translateZ(0) scaleY(1.08);
+  }
+  100% {
+    transform: translateX(-50%) translateZ(0) scaleY(1);
+  }
+}
+
+@keyframes waveFlowFast {
+  0% {
+    transform: translateX(0) translateZ(0) scaleY(1);
+  }
+  50% {
+    transform: translateX(-35%) translateZ(0) scaleY(0.92);
+  }
+  100% {
+    transform: translateX(-70%) translateZ(0) scaleY(1);
+  }
+}
+
+@keyframes floatGentle {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+.animate-wave-slow {
+  animation: waveFlowSlow 24s cubic-bezier(0.36, 0.45, 0.63, 0.53) infinite;
+}
+
+.animate-wave-medium {
+  animation: waveFlowFast 16s cubic-bezier(0.36, 0.45, 0.63, 0.53) infinite;
+}
+
+.animate-float-slow {
+  animation: floatGentle 5s ease-in-out infinite;
+}
+
+.animate-float-delayed {
+  animation: floatGentle 6s ease-in-out 2.5s infinite;
+}
+

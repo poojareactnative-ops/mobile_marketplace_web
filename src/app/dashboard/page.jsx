@@ -31,6 +31,8 @@ function DashboardContent() {
         router.replace('/seller');
       } else if (role === 'SUPER_ADMIN') {
         router.replace('/super-admin');
+      } else if (role === 'CUSTOMER') {
+        router.replace('/track');
       }
     }
   }, [isAuthenticated, authLoading, role, router]);

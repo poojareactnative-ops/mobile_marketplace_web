@@ -5,7 +5,7 @@ import ProtectedLayout from '../../components/ProtectedLayout';
 
 export default function DashboardLayout({ children }) {
   return (
-    <ProtectedLayout allowedRoles={['ADMIN', 'SELLER', 'SUPER_ADMIN']}>
+    <ProtectedLayout allowedRoles={['ADMIN', 'SELLER', 'SUPER_ADMIN', 'CUSTOMER']}>
       {children}
     </ProtectedLayout>
   );

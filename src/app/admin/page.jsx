@@ -11,6 +11,7 @@ import NotificationBell from '../../components/NotificationBell';
 import RoleGuard from '../../components/RoleGuard';
 import { supabaseService } from '../../services/supabaseService';
 import { useAuth } from '../../context/AuthContext';
+import { getWhatsAppRepairTrackingUrl } from '../../utils/productImages';
 import {
   Wrench, Store, Clock, UserPlus, CheckCircle2, Phone, Mail,
   MessageSquare, Plus, Search, Filter, RefreshCw, AlertCircle,
@@ -658,11 +659,20 @@ export default function AdminPage() {
 
                                     {job.customer_phone && (
                                       <a
-                                        href={`https://wa.me/${job.customer_phone.replace(/\D/g, '')}?text=${encodeURIComponent(`Hello ${job.customer_name}, regarding your device repair ticket (${job.ticket_id}) at ${user?.shopName || 'our repair center'}: `)}`}
+                                        href={getWhatsAppRepairTrackingUrl({
+                                          customerPhone: job.customer_phone,
+                                          customerName: job.customer_name,
+                                          ticketId: job.ticket_id,
+                                          deviceBrand: job.device_brand,
+                                          deviceModel: job.device_model,
+                                          problemDescription: job.problem_description,
+                                          shopName: user?.shopName,
+                                          status: job.status,
+                                        })}
                                         target="_blank"
                                         rel="noreferrer"
                                         className="p-1.5 text-emerald-400 hover:text-emerald-300 bg-emerald-950/50 border border-emerald-800/60 rounded-lg transition"
-                                        title="WhatsApp Customer"
+                                        title="WhatsApp Tracking ID & Live Link to Customer"
                                       >
                                         <MessageSquare className="w-3.5 h-3.5" />
                                       </a>
