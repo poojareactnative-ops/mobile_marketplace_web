@@ -581,10 +581,26 @@ export const supabaseService = {
       is_default_password: false,
     };
 
-    const res = await supabaseRest('profiles', {
-      method: 'POST',
-      body: newUser,
-    });
+    let res;
+    try {
+      res = await supabaseRest('profiles', {
+        method: 'POST',
+        body: newUser,
+      });
+    } catch (err) {
+      if (err.message && (err.message.includes('is_default_password') || err.message.includes('password') || err.message.includes('PGRST204') || err.message.includes('42703'))) {
+        console.warn('Profiles table missing password columns. Retrying without password/is_default_password fields:', err.message);
+        const fallbackUser = { ...newUser };
+        delete fallbackUser.password;
+        delete fallbackUser.is_default_password;
+        res = await supabaseRest('profiles', {
+          method: 'POST',
+          body: fallbackUser,
+        });
+      } else {
+        throw err;
+      }
+    }
 
     const createdUser = Array.isArray(res) && res[0] ? res[0] : newUser;
 
@@ -657,10 +673,26 @@ export const supabaseService = {
       is_default_password: true,
     };
 
-    const res = await supabaseRest('profiles', {
-      method: 'POST',
-      body: newSeller,
-    });
+    let res;
+    try {
+      res = await supabaseRest('profiles', {
+        method: 'POST',
+        body: newSeller,
+      });
+    } catch (err) {
+      if (err.message && (err.message.includes('is_default_password') || err.message.includes('password') || err.message.includes('PGRST204') || err.message.includes('42703'))) {
+        console.warn('Profiles table missing password columns. Retrying seller onboarding without password/is_default_password:', err.message);
+        const fallbackSeller = { ...newSeller };
+        delete fallbackSeller.password;
+        delete fallbackSeller.is_default_password;
+        res = await supabaseRest('profiles', {
+          method: 'POST',
+          body: fallbackSeller,
+        });
+      } else {
+        throw err;
+      }
+    }
 
     const created = Array.isArray(res) && res[0] ? res[0] : newSeller;
     created.shopName = sellerData.shopName || `${created.name} Accessories`;
