@@ -120,6 +120,12 @@ BEGIN
     IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'repair_jobs' AND column_name = 'platform_fee_amount') THEN
         ALTER TABLE repair_jobs ADD COLUMN platform_fee_amount NUMERIC(12, 2) NOT NULL DEFAULT 0.00;
     END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'repair_jobs' AND column_name = 'image_url') THEN
+        ALTER TABLE repair_jobs ADD COLUMN image_url TEXT;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'repair_jobs' AND column_name = 'images') THEN
+        ALTER TABLE repair_jobs ADD COLUMN images TEXT[] DEFAULT '{}';
+    END IF;
 END $$;
 
 CREATE INDEX IF NOT EXISTS idx_repair_jobs_ticket_id ON repair_jobs(ticket_id);

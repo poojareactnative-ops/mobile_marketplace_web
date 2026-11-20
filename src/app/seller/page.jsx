@@ -6,11 +6,12 @@ import Navbar from '../../components/Navbar';
 import SellerReferralModal from '../../components/SellerReferralModal';
 import ResetDefaultPasswordModal from '../../components/ResetDefaultPasswordModal';
 import SellerPayoutRequestModal from '../../components/SellerPayoutRequestModal';
+import ImageLightboxModal from '../../components/ImageLightboxModal';
 import RoleGuard from '../../components/RoleGuard';
 import { supabaseService } from '../../services/supabaseService';
 import { useAuth } from '../../context/AuthContext';
 import MultiImageUploader from '../../components/MultiImageUploader';
-import { getProductImages, getProductImage, getWhatsAppInquiryUrl, getWhatsAppRepairTrackingUrl, POPULAR_PRESET_IMAGES } from '../../utils/productImages';
+import { getProductImages, getProductImage, getWhatsAppInquiryUrl, getWhatsAppRepairTrackingUrl, getRepairJobImages, POPULAR_PRESET_IMAGES } from '../../utils/productImages';
 import {
   Store, CheckCircle2, Smartphone, Search, AlertCircle, MessageSquare, Phone, Plus,
   RefreshCw, IndianRupee, ShoppingBag, Trash2, ArrowRight,
@@ -89,6 +90,10 @@ export default function SellerPage() {
   const [trackedJob, setTrackedJob] = useState(null);
   const [trackingError, setTrackingError] = useState('');
   const [trackingLoading, setTrackingLoading] = useState(false);
+
+  // Lightbox Image Viewer State
+  const [lightboxImages, setLightboxImages] = useState([]);
+  const [lightboxTitle, setLightboxTitle] = useState('Device Photos');
 
   // Load seller data
   const loadData = useCallback(async () => {
@@ -188,14 +193,14 @@ export default function SellerPage() {
   // Dedicated Ticket tracking
   const handleTrackTicket = async (e) => {
     e?.preventDefault();
-    const cleanTicket = ticketInput.trim().toUpperCase();
+    const cleanTicket = ticketInput.trim().replace(/[\u2010-\u2015\u2212]/g, '-').toUpperCase();
     if (!cleanTicket) return;
 
     try {
       setTrackingLoading(true);
       setTrackingError('');
       setTrackedJob(null);
-      const res = await supabaseService.trackTicket(cleanTicket);
+      const res = await supabaseService.trackRepair(cleanTicket);
       setTrackedJob(res);
     } catch (err) {
       setTrackingError(err.message || 'Ticket not found');
@@ -547,6 +552,7 @@ export default function SellerPage() {
                         {filteredJobs.map((job) => {
                           const isCompleted = job.status === 'COMPLETED';
                           const isPaid = job.commission_status === 'PAID';
+                          const jobImages = getRepairJobImages(job);
                           return (
                             <tr key={job.id} className="hover:bg-slate-800/30 transition">
                               <td className="py-3 px-4">
@@ -568,11 +574,31 @@ export default function SellerPage() {
                               </td>
 
                               <td className="py-3 px-4 max-w-xs">
-                                <div className="font-bold text-slate-200">
-                                  {job.device_brand} &bull; {job.device_model}
-                                </div>
-                                <div className="text-[11px] text-slate-400 truncate mt-0.5">
-                                  {job.problem_description}
+                                <div className="flex items-start gap-2.5">
+                                  {jobImages.length > 0 && (
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setLightboxImages(jobImages);
+                                        setLightboxTitle(`${job.ticket_id} • ${job.device_brand} ${job.device_model} Photos`);
+                                      }}
+                                      className="relative group shrink-0 rounded-xl overflow-hidden border border-slate-700 w-11 h-11 bg-slate-950 hover:border-emerald-400 transition shadow"
+                                      title="Click to view device intake photos"
+                                    >
+                                      <img src={jobImages[0]} alt="device" className="w-full h-full object-cover group-hover:scale-110 transition duration-200" />
+                                      <span className="absolute bottom-0 inset-x-0 bg-black/85 text-[8px] font-bold text-emerald-300 text-center py-0.5">
+                                        📷 {jobImages.length}
+                                      </span>
+                                    </button>
+                                  )}
+                                  <div className="min-w-0">
+                                    <div className="font-bold text-slate-200">
+                                      {job.device_brand} &bull; {job.device_model}
+                                    </div>
+                                    <div className="text-[11px] text-slate-400 truncate mt-0.5">
+                                      {job.problem_description}
+                                    </div>
+                                  </div>
                                 </div>
                               </td>
 
@@ -1020,6 +1046,31 @@ export default function SellerPage() {
                         <strong className="text-sm font-black">₹{trackedJob.seller_commission_amount}</strong>
                       </div>
                     )}
+
+                    {/* Attached Intake Photos */}
+                    {getRepairJobImages(trackedJob).length > 0 && (
+                      <div className="pt-2 border-t border-slate-800">
+                        <div className="text-[10px] uppercase font-bold text-slate-400 mb-2 flex items-center gap-1.5">
+                          <Smartphone className="w-3.5 h-3.5 text-emerald-400" />
+                          <span>Intake Condition Photos ({getRepairJobImages(trackedJob).length}):</span>
+                        </div>
+                        <div className="flex items-center gap-2 overflow-x-auto">
+                          {getRepairJobImages(trackedJob).map((img, idx) => (
+                            <button
+                              key={idx}
+                              type="button"
+                              onClick={() => {
+                                setLightboxImages(getRepairJobImages(trackedJob));
+                                setLightboxTitle(`${trackedJob.ticket_id} • ${trackedJob.device_brand} ${trackedJob.device_model} Photos`);
+                              }}
+                              className="w-14 h-14 rounded-xl overflow-hidden border border-slate-700 hover:border-emerald-400 shrink-0 transition"
+                            >
+                              <img src={img} alt="intake" className="w-full h-full object-cover" />
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -1398,6 +1449,14 @@ export default function SellerPage() {
             onSuccess={() => {
               loadData();
             }}
+          />
+
+          {/* Fullscreen Image Lightbox Modal */}
+          <ImageLightboxModal
+            isOpen={lightboxImages.length > 0}
+            onClose={() => setLightboxImages([])}
+            images={lightboxImages}
+            title={lightboxTitle}
           />
 
         </main>

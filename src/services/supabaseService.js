@@ -23,10 +23,24 @@ export const supabaseService = {
     }
   },
 
-  // 2. Create Repair Referral by Seller
+  // 2. Create Repair Referral by Seller or Admin Walk-In
   async createRepairReferral(referralData) {
     // Generate sequential or random ticket code
     const ticketCode = `REP-${Math.floor(1000 + Math.random() * 9000)}`;
+
+    const rawImages = Array.isArray(referralData.images)
+      ? referralData.images.filter(Boolean)
+      : referralData.image_url
+      ? [referralData.image_url]
+      : [];
+    const primaryImageUrl = rawImages[0] || referralData.image_url || null;
+
+    // Append intake photos to notes for guaranteed storage even if DB columns aren't migrated
+    let combinedNotes = referralData.notes || '';
+    if (rawImages.length > 0) {
+      const photosTag = `[Intake Photos]: ${JSON.stringify(rawImages)}`;
+      combinedNotes = combinedNotes ? `${combinedNotes} ${photosTag}` : photosTag;
+    }
 
     const newJob = {
       ticket_id: ticketCode,
@@ -46,15 +60,48 @@ export const supabaseService = {
       seller_commission_amount: 0,
       admin_remaining_amount: 0,
       commission_status: 'NOT_APPLICABLE',
-      notes: null,
+      image_url: primaryImageUrl,
+      images: rawImages,
+      notes: combinedNotes || null,
     };
 
-    const res = await supabaseRest('repair_jobs', {
-      method: 'POST',
-      body: newJob,
-    });
+    try {
+      const res = await supabaseRest('repair_jobs', {
+        method: 'POST',
+        body: newJob,
+      });
 
-    return Array.isArray(res) && res[0] ? res[0] : newJob;
+      const saved = Array.isArray(res) && res[0] ? res[0] : newJob;
+      return {
+        ...saved,
+        images: rawImages,
+        image_url: primaryImageUrl,
+      };
+    } catch (postErr) {
+      if (
+        postErr.message &&
+        (postErr.message.includes('image_url') ||
+          postErr.message.includes('images') ||
+          postErr.message.includes('42703') ||
+          postErr.message.includes('PGRST204'))
+      ) {
+        console.warn('repair_jobs missing image columns in database, retrying with fallback notes:', postErr.message);
+        const fallbackJob = { ...newJob };
+        delete fallbackJob.image_url;
+        delete fallbackJob.images;
+        const res = await supabaseRest('repair_jobs', {
+          method: 'POST',
+          body: fallbackJob,
+        });
+        const saved = Array.isArray(res) && res[0] ? res[0] : fallbackJob;
+        return {
+          ...saved,
+          images: rawImages,
+          image_url: primaryImageUrl,
+        };
+      }
+      throw postErr;
+    }
   },
 
   // 3. Admin updates repair status
@@ -214,12 +261,37 @@ export const supabaseService = {
     };
   },
 
-  // 7. Track Repair by Ticket ID (Public / Customer)
+  // 7. Track Repair by Ticket ID (Public / Customer / Seller)
   async trackRepair(ticketId) {
-    const cleanId = String(ticketId).trim().toUpperCase();
-    const data = await supabaseRest(`repair_jobs?ticket_id=eq.${cleanId}&select=*`);
-    if (Array.isArray(data) && data[0]) return data[0];
+    if (!ticketId) throw new Error('Please enter a ticket code');
+    // Normalize en-dash, em-dash, minus signs, whitespace, and uppercase
+    const cleanId = String(ticketId).trim().replace(/[\u2010-\u2015\u2212]/g, '-').toUpperCase();
+    const fullId = cleanId.startsWith('REP-') ? cleanId : `REP-${cleanId}`;
+
+    let data = null;
+    try {
+      data = await supabaseRest(`repair_jobs?ticket_id=eq.${encodeURIComponent(cleanId)}&select=*`);
+      if (Array.isArray(data) && data[0]) return data[0];
+    } catch (e) {
+      // ignore
+    }
+
+    // Try with fullId if cleanId didn't have REP- prefix
+    if (fullId !== cleanId) {
+      try {
+        data = await supabaseRest(`repair_jobs?ticket_id=eq.${encodeURIComponent(fullId)}&select=*`);
+        if (Array.isArray(data) && data[0]) return data[0];
+      } catch (e) {
+        // ignore
+      }
+    }
+
     throw new Error(`No repair ticket found matching '${ticketId}'`);
+  },
+
+  // Alias for trackRepair
+  async trackTicket(ticketId) {
+    return this.trackRepair(ticketId);
   },
 
   // 8. Super Admin Platform Overview

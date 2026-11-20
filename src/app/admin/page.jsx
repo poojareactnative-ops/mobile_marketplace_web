@@ -7,17 +7,20 @@ import AdminCompleteRepairModal from '../../components/AdminCompleteRepairModal'
 import AdminPayCommissionModal from '../../components/AdminPayCommissionModal';
 import AdminOnboardSellerModal from '../../components/AdminOnboardSellerModal';
 import InvoiceWarrantyModal from '../../components/InvoiceWarrantyModal';
+import ImageLightboxModal from '../../components/ImageLightboxModal';
 import NotificationBell from '../../components/NotificationBell';
 import RoleGuard from '../../components/RoleGuard';
 import { supabaseService } from '../../services/supabaseService';
 import { useAuth } from '../../context/AuthContext';
-import { getWhatsAppRepairTrackingUrl } from '../../utils/productImages';
+import { getWhatsAppRepairTrackingUrl, getRepairJobImages } from '../../utils/productImages';
+import { uploadProductImageFile, fileToDataUrl } from '../../services/storageService';
 import {
   Wrench, Store, Clock, UserPlus, CheckCircle2, Phone, Mail,
   MessageSquare, Plus, Search, Filter, RefreshCw, AlertCircle,
   Layers, ArrowRight, IndianRupee, FileText, ChevronRight, Sparkles,
   ShieldCheck, Check, Smartphone, Tag, ShoppingBag, Trash2, ArrowUpRight,
-  Menu, X, LogOut, ArrowLeft, LayoutDashboard, Home, ExternalLink, Printer, Award
+  Menu, X, LogOut, ArrowLeft, LayoutDashboard, Home, ExternalLink, Printer, Award,
+  Camera, Image as ImageIcon, UploadCloud, Loader2
 } from 'lucide-react';
 
 export default function AdminPage() {
@@ -56,7 +59,38 @@ export default function AdminPage() {
     problemDescription: '',
     estimatedCost: '',
   });
+  const [directTicketPhotos, setDirectTicketPhotos] = useState([]);
+  const [directTicketUploading, setDirectTicketUploading] = useState(false);
+  const directFileInputRef = React.useRef(null);
   const [directTicketLoading, setDirectTicketLoading] = useState(false);
+
+  // Lightbox Image Viewer State
+  const [lightboxImages, setLightboxImages] = useState([]);
+  const [lightboxTitle, setLightboxTitle] = useState('Device Photos');
+
+  const handleDirectPhotoUpload = async (fileList) => {
+    if (!fileList || fileList.length === 0) return;
+    const files = Array.from(fileList);
+    const availableSlots = 4 - directTicketPhotos.length;
+    if (availableSlots <= 0) return;
+
+    setDirectTicketUploading(true);
+    const newUrls = [];
+    for (const file of files.slice(0, availableSlots)) {
+      try {
+        const uploaded = await uploadProductImageFile(file, { folder: 'repair_intake' });
+        if (uploaded?.url) newUrls.push(uploaded.url);
+      } catch (err) {
+        try {
+          const dataUrl = await fileToDataUrl(file);
+          newUrls.push(dataUrl);
+        } catch (convErr) {}
+      }
+    }
+    setDirectTicketPhotos((prev) => [...prev, ...newUrls]);
+    setDirectTicketUploading(false);
+    if (directFileInputRef.current) directFileInputRef.current.value = '';
+  };
 
   // Load all admin data
   const loadData = useCallback(async () => {
@@ -136,8 +170,11 @@ export default function AdminPage() {
         shopId: user?.shopId || null,
         sellerId: null,
         sellerName: 'Direct Walk-In (Admin Hub)',
+        images: directTicketPhotos,
+        image_url: directTicketPhotos[0] || null,
       });
       setIsDirectTicketOpen(false);
+      setDirectTicketPhotos([]);
       setDirectTicketForm({
         customerName: '',
         customerPhone: '',
@@ -535,6 +572,7 @@ export default function AdminPage() {
                           {filteredJobs.map((job) => {
                             const isCompleted = job.status === 'COMPLETED';
                             const isReferred = !!job.seller_id;
+                            const jobImages = getRepairJobImages(job);
                             return (
                               <tr key={job.id} className="hover:bg-slate-800/30 transition">
                                 <td className="py-3 px-4">
@@ -556,11 +594,31 @@ export default function AdminPage() {
                                 </td>
 
                                 <td className="py-3 px-4 max-w-xs">
-                                  <div className="font-bold text-slate-200">
-                                    {job.device_brand} &bull; {job.device_model}
-                                  </div>
-                                  <div className="text-[11px] text-slate-400 truncate mt-0.5" title={job.problem_description}>
-                                    {job.problem_description}
+                                  <div className="flex items-start gap-2.5">
+                                    {jobImages.length > 0 && (
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          setLightboxImages(jobImages);
+                                          setLightboxTitle(`${job.ticket_id} • ${job.device_brand} ${job.device_model} Condition Photos`);
+                                        }}
+                                        className="relative group shrink-0 rounded-xl overflow-hidden border border-slate-700 w-11 h-11 bg-slate-950 hover:border-amber-400 transition shadow"
+                                        title="Click to view device intake photos"
+                                      >
+                                        <img src={jobImages[0]} alt="device" className="w-full h-full object-cover group-hover:scale-110 transition duration-200" />
+                                        <span className="absolute bottom-0 inset-x-0 bg-black/85 text-[8px] font-bold text-amber-300 text-center py-0.5">
+                                          📷 {jobImages.length}
+                                        </span>
+                                      </button>
+                                    )}
+                                    <div className="min-w-0">
+                                      <div className="font-bold text-slate-200">
+                                        {job.device_brand} &bull; {job.device_model}
+                                      </div>
+                                      <div className="text-[11px] text-slate-400 truncate mt-0.5" title={job.problem_description}>
+                                        {job.problem_description}
+                                      </div>
+                                    </div>
                                   </div>
                                 </td>
 
@@ -1054,9 +1112,11 @@ export default function AdminPage() {
         />
 
         {isDirectTicketOpen && (
-          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-            <div className="bg-slate-900 border border-slate-700 rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in-95">
-              <div className="flex justify-between items-center border-b border-slate-800 pb-3">
+          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto animate-in fade-in">
+            <div className="bg-slate-900 border border-slate-700 rounded-t-3xl sm:rounded-3xl max-w-lg w-full max-h-[92vh] sm:max-h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-in slide-in-from-bottom-4 sm:zoom-in-95 duration-200">
+              <div className="w-12 h-1.5 bg-slate-700/80 rounded-full mx-auto sm:hidden mt-2.5 mb-1" />
+              
+              <div className="flex justify-between items-center border-b border-slate-800 px-5 py-4 shrink-0">
                 <div>
                   <h3 className="text-base font-extrabold text-white">Log Walk-In Customer Repair</h3>
                   <p className="text-xs text-slate-400 mt-0.5">Creates a direct repair order for customer at your front desk</p>
@@ -1064,8 +1124,8 @@ export default function AdminPage() {
                 <button onClick={() => setIsDirectTicketOpen(false)} className="text-slate-400 hover:text-white text-xl font-bold">&times;</button>
               </div>
 
-              <form onSubmit={handleCreateDirectTicket} className="space-y-3 text-xs">
-                <div className="grid grid-cols-2 gap-3">
+              <form onSubmit={handleCreateDirectTicket} className="flex-1 overflow-y-auto p-5 space-y-3.5 text-xs">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
                     <label className="block font-bold text-slate-300 mb-1">Customer Full Name</label>
                     <input
@@ -1142,10 +1202,74 @@ export default function AdminPage() {
                   />
                 </div>
 
+                {/* Direct Walk-In Device Photos */}
+                <div className="bg-slate-950/80 p-3 rounded-2xl border border-slate-800 space-y-2">
+                  <div className="flex items-center justify-between text-[11px]">
+                    <span className="font-bold text-slate-300 flex items-center gap-1.5">
+                      <Camera className="w-3.5 h-3.5 text-amber-400" />
+                      <span>Device Intake Photos</span>
+                    </span>
+                    <span className="text-slate-500 font-mono text-[10px]">
+                      {directTicketPhotos.length}/4
+                    </span>
+                  </div>
+
+                  {directTicketPhotos.length > 0 && (
+                    <div className="grid grid-cols-4 gap-2">
+                      {directTicketPhotos.map((url, idx) => (
+                        <div key={idx} className="relative aspect-square rounded-xl overflow-hidden border border-slate-700 bg-slate-900 group">
+                          <img src={url} alt="Walkin Intake" className="w-full h-full object-cover" />
+                          <button
+                            type="button"
+                            onClick={() => setDirectTicketPhotos((prev) => prev.filter((_, i) => i !== idx))}
+                            className="absolute top-1 right-1 p-1 bg-black/80 hover:bg-rose-600 text-white rounded-full transition shadow"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {directTicketPhotos.length < 4 && (
+                    <div>
+                      <input
+                        ref={directFileInputRef}
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        onChange={(e) => handleDirectPhotoUpload(e.target.files)}
+                        className="hidden"
+                      />
+                      <button
+                        type="button"
+                        disabled={directTicketUploading}
+                        onClick={() => directFileInputRef.current?.click()}
+                        className="w-full py-2 px-3 border border-dashed border-slate-700 hover:border-amber-500/60 rounded-xl bg-slate-900/50 hover:bg-slate-900 text-slate-400 hover:text-amber-400 flex items-center justify-center gap-2 transition text-xs font-semibold"
+                      >
+                        {directTicketUploading ? (
+                          <>
+                            <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-400" />
+                            <span>Uploading photo...</span>
+                          </>
+                        ) : (
+                          <>
+                            <UploadCloud className="w-3.5 h-3.5" />
+                            <span>Attach Condition Photos</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  )}
+                </div>
+
                 <div className="flex justify-end gap-2 pt-2">
                   <button
                     type="button"
-                    onClick={() => setIsDirectTicketOpen(false)}
+                    onClick={() => {
+                      setIsDirectTicketOpen(false);
+                      setDirectTicketPhotos([]);
+                    }}
                     className="px-4 py-2 rounded-xl text-slate-400 hover:bg-slate-800 font-bold"
                   >
                     Cancel
@@ -1168,6 +1292,14 @@ export default function AdminPage() {
           isOpen={!!invoiceJob}
           onClose={() => setInvoiceJob(null)}
           job={invoiceJob}
+        />
+
+        {/* Fullscreen Image Lightbox Modal */}
+        <ImageLightboxModal
+          isOpen={lightboxImages.length > 0}
+          onClose={() => setLightboxImages([])}
+          images={lightboxImages}
+          title={lightboxTitle}
         />
 
       </div>

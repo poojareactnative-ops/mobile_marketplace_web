@@ -151,3 +151,67 @@ Keep this Tracking ID handy. You can check repair updates, technician notes, and
 
   return `https://wa.me/${targetPhone}?text=${encodeURIComponent(message)}`;
 }
+
+/**
+ * Extracts all intake inspection and device condition photos from a repair job
+ * Reads from job.images, job.image_url, and fallback notes format
+ */
+export function getRepairJobImages(job) {
+  if (!job) return [];
+  const list = [];
+
+  // 1. Array format in job.images
+  if (Array.isArray(job.images) && job.images.length > 0) {
+    job.images.filter(Boolean).forEach((img) => {
+      if (typeof img === 'string' && img.trim() && !list.includes(img.trim())) {
+        list.push(img.trim());
+      }
+    });
+  } else if (typeof job.images === 'string' && job.images.trim()) {
+    try {
+      const parsed = JSON.parse(job.images);
+      if (Array.isArray(parsed)) {
+        parsed.filter(Boolean).forEach((img) => {
+          if (typeof img === 'string' && img.trim() && !list.includes(img.trim())) {
+            list.push(img.trim());
+          }
+        });
+      }
+    } catch {
+      job.images.split(',').forEach((img) => {
+        const clean = img.trim();
+        if (clean && !list.includes(clean)) list.push(clean);
+      });
+    }
+  }
+
+  // 2. Single image_url field
+  if (job.image_url && typeof job.image_url === 'string' && job.image_url.trim()) {
+    const cleanUrl = job.image_url.trim();
+    if (!list.includes(cleanUrl)) {
+      list.unshift(cleanUrl);
+    }
+  }
+
+  // 3. Fallback: Parse from notes [Intake Photos]: [...]
+  if (job.notes && typeof job.notes === 'string') {
+    const match = job.notes.match(/\[Intake Photos\]:\s*(\[.*?\])/);
+    if (match && match[1]) {
+      try {
+        const parsed = JSON.parse(match[1]);
+        if (Array.isArray(parsed)) {
+          parsed.forEach((img) => {
+            if (typeof img === 'string' && img.trim() && !list.includes(img.trim())) {
+              list.push(img.trim());
+            }
+          });
+        }
+      } catch (e) {
+        // ignore
+      }
+    }
+  }
+
+  return list;
+}
+

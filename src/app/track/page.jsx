@@ -6,10 +6,12 @@ import Navbar from '../../components/Navbar';
 import { supabaseService } from '../../services/supabaseService';
 import { 
   Search, Wrench, Smartphone, CheckCircle2, Clock, 
-  ShieldCheck, ArrowRight, Store, FileText, Award, Printer, Phone 
+  ShieldCheck, ArrowRight, Store, FileText, Award, Printer, Phone,
+  Camera, ZoomIn
 } from 'lucide-react';
 import InvoiceWarrantyModal from '../../components/InvoiceWarrantyModal';
-import { getWhatsAppRepairTrackingUrl } from '../../utils/productImages';
+import ImageLightboxModal from '../../components/ImageLightboxModal';
+import { getWhatsAppRepairTrackingUrl, getRepairJobImages } from '../../utils/productImages';
 
 function TrackPageContent() {
   const searchParams = useSearchParams();
@@ -20,6 +22,8 @@ function TrackPageContent() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [isInvoiceOpen, setIsInvoiceOpen] = useState(false);
+  const [lightboxImages, setLightboxImages] = useState([]);
+  const [lightboxTitle, setLightboxTitle] = useState('Device Photos');
 
   const runTrack = async (idToSearch) => {
     const clean = String(idToSearch || '').trim();
@@ -219,6 +223,43 @@ function TrackPageContent() {
             </div>
           )}
 
+          {/* Verified Device Intake Condition Photos */}
+          {getRepairJobImages(job).length > 0 && (
+            <div className="p-4 bg-slate-950/90 rounded-2xl border border-slate-800 space-y-3">
+              <div className="flex items-center justify-between text-xs">
+                <div className="text-[11px] font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+                  <Camera className="w-4 h-4" />
+                  <span>Verified Device Intake Photos ({getRepairJobImages(job).length})</span>
+                </div>
+                <span className="text-[10px] text-slate-500">Tap photo to enlarge</span>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {getRepairJobImages(job).map((photoUrl, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => {
+                      setLightboxImages(getRepairJobImages(job));
+                      setLightboxTitle(`${job.ticket_id} • Intake Photo ${idx + 1}`);
+                    }}
+                    className="relative group aspect-square rounded-xl overflow-hidden border border-slate-700 hover:border-amber-400 bg-slate-900 shadow-md transition"
+                  >
+                    <img
+                      src={photoUrl}
+                      alt={`Intake photo ${idx + 1}`}
+                      className="w-full h-full object-cover group-hover:scale-105 transition duration-200"
+                    />
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition">
+                      <span className="p-1.5 rounded-full bg-slate-900/80 text-white shadow">
+                        <ZoomIn className="w-4 h-4" />
+                      </span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Bill Summary Banner */}
           <div className="bg-gradient-to-r from-slate-950 to-slate-900 p-5 rounded-2xl border border-slate-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
@@ -277,6 +318,14 @@ function TrackPageContent() {
         isOpen={isInvoiceOpen}
         onClose={() => setIsInvoiceOpen(false)}
         job={job}
+      />
+
+      {/* Fullscreen Image Lightbox Modal */}
+      <ImageLightboxModal
+        isOpen={lightboxImages.length > 0}
+        onClose={() => setLightboxImages([])}
+        images={lightboxImages}
+        title={lightboxTitle}
       />
     </main>
   );
