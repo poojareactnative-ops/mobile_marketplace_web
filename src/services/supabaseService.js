@@ -35,6 +35,30 @@ export const supabaseService = {
       : [];
     const primaryImageUrl = rawImages[0] || referralData.image_url || null;
 
+    // Resolve assigned Workshop / Admin Phone for WhatsApp alerts
+    let adminPhone = referralData.adminPhone || null;
+    let shopName = referralData.shopName || null;
+    if (!adminPhone && referralData.shopId) {
+      try {
+        const s = await supabaseRest(`shops?id=eq.${referralData.shopId}&select=phone,name`);
+        if (Array.isArray(s) && s[0]) {
+          adminPhone = s[0].phone;
+          if (!shopName) shopName = s[0].name;
+        }
+      } catch (e) {}
+    }
+    if (!adminPhone && referralData.adminId) {
+      try {
+        const p = await supabaseRest(`profiles?id=eq.${referralData.adminId}&select=phone,name`);
+        if (Array.isArray(p) && p[0]) {
+          adminPhone = p[0].phone;
+        }
+      } catch (e) {}
+    }
+    if (!adminPhone) {
+      adminPhone = '+91 98450 11223';
+    }
+
     // Append intake photos to notes for guaranteed storage even if DB columns aren't migrated
     let combinedNotes = referralData.notes || '';
     if (rawImages.length > 0) {
@@ -65,6 +89,16 @@ export const supabaseService = {
       notes: combinedNotes || null,
     };
 
+    // Trigger Admin in-app notification alert
+    try {
+      await notificationService.addNotificationAlert({
+        type: 'NEW_REPAIR_REFERRAL',
+        title: `🚨 New Repair Referral (${ticketCode})`,
+        message: `${newJob.seller_name || 'Partner Seller'} referred ${newJob.customer_name}'s ${newJob.device_brand} ${newJob.device_model}. Issue: ${newJob.problem_description}.`,
+        recipientRole: 'ADMIN',
+      });
+    } catch (e) {}
+
     try {
       const res = await supabaseRest('repair_jobs', {
         method: 'POST',
@@ -76,6 +110,8 @@ export const supabaseService = {
         ...saved,
         images: rawImages,
         image_url: primaryImageUrl,
+        admin_phone: adminPhone,
+        shop_name: shopName,
       };
     } catch (postErr) {
       if (
@@ -98,6 +134,8 @@ export const supabaseService = {
           ...saved,
           images: rawImages,
           image_url: primaryImageUrl,
+          admin_phone: adminPhone,
+          shop_name: shopName,
         };
       }
       throw postErr;
@@ -812,6 +850,26 @@ export const supabaseService = {
     } catch (e) {
       console.error('Supabase getShops error:', e.message);
       return [];
+    }
+  },
+
+  async getShopById(shopId) {
+    if (!shopId) return null;
+    try {
+      const data = await supabaseRest(`shops?id=eq.${shopId}&select=*`);
+      return Array.isArray(data) && data[0] ? data[0] : null;
+    } catch (e) {
+      return null;
+    }
+  },
+
+  async getProfileById(profileId) {
+    if (!profileId) return null;
+    try {
+      const data = await supabaseRest(`profiles?id=eq.${profileId}&select=*`);
+      return Array.isArray(data) && data[0] ? data[0] : null;
+    } catch (e) {
+      return null;
     }
   },
 

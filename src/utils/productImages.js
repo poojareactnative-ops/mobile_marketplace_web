@@ -152,6 +152,54 @@ Keep this Tracking ID handy. You can check repair updates, technician notes, and
   return `https://wa.me/${targetPhone}?text=${encodeURIComponent(message)}`;
 }
 
+export function getWhatsAppAdminRepairAlertUrl({
+  adminPhone,
+  ticketId,
+  customerName,
+  customerPhone,
+  deviceBrand,
+  deviceModel,
+  problemDescription,
+  estimatedCost,
+  sellerName,
+  sellerPhone,
+  notes,
+}) {
+  const targetPhone = formatWhatsAppPhone(adminPhone || '919845011223');
+  const cleanTicket = String(ticketId || '').trim().toUpperCase();
+  const trackUrl = typeof window !== 'undefined'
+    ? `${window.location.origin}/track?ticket=${cleanTicket}`
+    : `https://smartfixhub.com/track?ticket=${cleanTicket}`;
+  const adminUrl = typeof window !== 'undefined'
+    ? `${window.location.origin}/admin`
+    : `https://smartfixhub.com/admin`;
+
+  const estNum = Number(estimatedCost || 0);
+  const sellerCut = Math.round(estNum * 0.02);
+
+  const message = 
+`🚨 *NEW REPAIR JOB ALERT (SmartFix Hub)* 🚨
+
+A partner store has dispatched a new customer repair referral:
+
+🎫 *Ticket ID:* ${cleanTicket}
+🏪 *Referring Partner:* ${sellerName || 'Partner Store'}${sellerPhone ? ` (${sellerPhone})` : ''}
+👤 *Customer:* ${customerName || 'Customer'} (${customerPhone || 'N/A'})
+📱 *Device:* ${deviceBrand || ''} ${deviceModel || ''}
+🔧 *Reported Issue:* ${problemDescription || 'N/A'}
+💰 *Estimated Cost:* ₹${estNum.toLocaleString('en-IN')}${estNum > 0 ? ` (2% Seller Commission: ₹${sellerCut})` : ''}
+${notes ? `📋 *Intake Condition:* ${notes}\n` : ''}
+👉 *Open in Admin Workshop Console:*
+${adminUrl}
+
+🔍 *Live Customer Tracker:*
+${trackUrl}
+
+Please assign a technician bay and acknowledge receipt in your Admin console.`;
+
+  return `https://wa.me/${targetPhone}?text=${encodeURIComponent(message)}`;
+}
+
 /**
  * Extracts all intake inspection and device condition photos from a repair job
  * Reads from job.images, job.image_url, and fallback notes format

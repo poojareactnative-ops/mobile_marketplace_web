@@ -11,12 +11,12 @@ import RoleGuard from '../../components/RoleGuard';
 import { supabaseService } from '../../services/supabaseService';
 import { useAuth } from '../../context/AuthContext';
 import MultiImageUploader from '../../components/MultiImageUploader';
-import { getProductImages, getProductImage, getWhatsAppInquiryUrl, getWhatsAppRepairTrackingUrl, getRepairJobImages, POPULAR_PRESET_IMAGES } from '../../utils/productImages';
+import { getProductImages, getProductImage, getWhatsAppInquiryUrl, getWhatsAppRepairTrackingUrl, getWhatsAppAdminRepairAlertUrl, getRepairJobImages, POPULAR_PRESET_IMAGES } from '../../utils/productImages';
 import {
   Store, CheckCircle2, Smartphone, Search, AlertCircle, MessageSquare, Phone, Plus,
   RefreshCw, IndianRupee, ShoppingBag, Trash2, ArrowRight,
   ShieldCheck, KeyRound, AlertTriangle,
-  UserCheck, Lock, Eye, EyeOff
+  UserCheck, Lock, Eye, EyeOff, Wrench
 } from 'lucide-react';
 
 const CATEGORIES = [
@@ -95,6 +95,9 @@ export default function SellerPage() {
   const [lightboxImages, setLightboxImages] = useState([]);
   const [lightboxTitle, setLightboxTitle] = useState('Device Photos');
 
+  // Assigned Admin Workshop Profile for alerts
+  const [assignedAdmin, setAssignedAdmin] = useState(null);
+
   // Load seller data
   const loadData = useCallback(async () => {
     try {
@@ -109,6 +112,16 @@ export default function SellerPage() {
       setCommissions(comm || { data: [], summary: {} });
       setInquiries(inq || []);
       setProducts((prods || []).filter(p => p.uploader_name === user?.shopName || p.seller_id === user?.id));
+
+      // Resolve assigned Admin Workshop profile / phone
+      let adminData = null;
+      if (user?.shopId) {
+        adminData = await supabaseService.getShopById(user.shopId);
+      }
+      if (!adminData && user?.adminId) {
+        adminData = await supabaseService.getProfileById(user.adminId);
+      }
+      setAssignedAdmin(adminData);
     } catch (err) {
       console.error('Failed to load seller repair jobs:', err);
     } finally {
@@ -128,8 +141,10 @@ export default function SellerPage() {
       ...data,
       sellerId: user?.id,
       sellerName: user?.shopName || user?.name || 'Seller Partner',
+      sellerPhone: user?.phone || null,
       adminId: user?.adminId || null,
       shopId: user?.shopId || null,
+      adminPhone: assignedAdmin?.phone || user?.adminPhone || null,
     });
     await loadData();
     return res;
@@ -649,31 +664,53 @@ export default function SellerPage() {
                               </td>
 
                               <td className="py-3 px-4 text-right">
-                                {job.customer_phone ? (
+                                <div className="flex items-center justify-end gap-1.5 flex-wrap">
+                                  {job.customer_phone && (
+                                    <a
+                                      href={getWhatsAppRepairTrackingUrl({
+                                        customerPhone: job.customer_phone,
+                                        customerName: job.customer_name,
+                                        ticketId: job.ticket_id,
+                                        deviceBrand: job.device_brand,
+                                        deviceModel: job.device_model,
+                                        problemDescription: job.problem_description,
+                                        shopName: user?.shopName,
+                                        status: job.status,
+                                      })}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-[#25D366]/20 hover:bg-[#25D366] text-[#25D366] hover:text-slate-950 font-bold rounded-xl text-xs transition border border-[#25D366]/30 shadow-sm"
+                                      title="Send Tracking ID to Customer WhatsApp"
+                                    >
+                                      <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
+                                        <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.771-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.312.045-.694.06-2.222-.572-1.828-.757-3.003-2.617-3.094-2.738-.09-.122-.74-1.024-.74-1.953 0-.929.479-1.386.65-1.577.171-.191.373-.239.498-.239.125 0 .25.002.359.007.114.005.267-.043.418.32.155.373.53 1.293.576 1.388.046.096.077.208.016.331-.061.123-.092.2-.183.308-.092.107-.193.24-.275.322-.093.093-.19.194-.082.38.109.186.483.797 1.036 1.29 0.713.636 1.314.833 1.5.926.186.093.295.077.404-.047.109-.123.468-.544.592-.73.125-.187.25-.156.421-.093.171.062 1.089.513 1.276.607.187.094.312.14.359.219.046.078.046.452-.098.857z" />
+                                      </svg>
+                                      <span>Customer</span>
+                                    </a>
+                                  )}
                                   <a
-                                    href={getWhatsAppRepairTrackingUrl({
-                                      customerPhone: job.customer_phone,
-                                      customerName: job.customer_name,
+                                    href={getWhatsAppAdminRepairAlertUrl({
+                                      adminPhone: job.admin_phone || assignedAdmin?.phone || user?.adminPhone || '+91 98450 11223',
                                       ticketId: job.ticket_id,
+                                      customerName: job.customer_name,
+                                      customerPhone: job.customer_phone,
                                       deviceBrand: job.device_brand,
                                       deviceModel: job.device_model,
                                       problemDescription: job.problem_description,
-                                      shopName: user?.shopName,
-                                      status: job.status,
+                                      estimatedCost: job.estimated_cost,
+                                      sellerName: job.seller_name || user?.shopName,
+                                      sellerPhone: user?.phone,
+                                      notes: job.notes,
                                     })}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-[#25D366]/20 hover:bg-[#25D366] text-[#25D366] hover:text-slate-950 font-bold rounded-xl text-xs transition border border-[#25D366]/30 shadow-sm"
-                                    title="Send Tracking ID to Customer WhatsApp"
+                                    className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-amber-500/20 hover:bg-amber-500 text-amber-300 hover:text-slate-950 font-bold rounded-xl text-xs transition border border-amber-500/30 shadow-sm"
+                                    title="Alert Admin Workshop on WhatsApp"
                                   >
-                                    <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
-                                      <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.771-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.312.045-.694.06-2.222-.572-1.828-.757-3.003-2.617-3.094-2.738-.09-.122-.74-1.024-.74-1.953 0-.929.479-1.386.65-1.577.171-.191.373-.239.498-.239.125 0 .25.002.359.007.114.005.267-.043.418.32.155.373.53 1.293.576 1.388.046.096.077.208.016.331-.061.123-.092.2-.183.308-.092.107-.193.24-.275.322-.093.093-.19.194-.082.38.109.186.483.797 1.036 1.29 0.713.636 1.314.833 1.5.926.186.093.295.077.404-.047.109-.123.468-.544.592-.73.125-.187.25-.156.421-.093.171.062 1.089.513 1.276.607.187.094.312.14.359.219.046.078.046.452-.098.857z" />
-                                    </svg>
-                                    <span>WhatsApp</span>
+                                    <Wrench className="w-3.5 h-3.5" />
+                                    <span>Admin Alert</span>
                                   </a>
-                                ) : (
-                                  <span className="text-slate-600 text-xs">&mdash;</span>
-                                )}
+                                </div>
                               </td>
                             </tr>
                           );
@@ -1283,6 +1320,7 @@ export default function SellerPage() {
             onSubmit={handleCreateReferral}
             currentSeller={user}
             sellerUser={user}
+            adminPhone={assignedAdmin?.phone || user?.adminPhone || '+91 98450 11223'}
           />
 
           {/* ============================================================== */}

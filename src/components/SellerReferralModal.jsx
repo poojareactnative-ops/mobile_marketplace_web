@@ -1,12 +1,12 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { 
   Send, AlertCircle, ShieldCheck, CheckSquare, Square, Smartphone, 
   CheckCircle2, Camera, Image as ImageIcon, Trash2, UploadCloud, Loader2, 
   X, Copy, Check, Sparkles, User, Phone, IndianRupee, ArrowRight, Wrench
 } from 'lucide-react';
-import { getWhatsAppRepairTrackingUrl } from '../utils/productImages';
+import { getWhatsAppRepairTrackingUrl, getWhatsAppAdminRepairAlertUrl } from '../utils/productImages';
 import { uploadProductImageFile, fileToDataUrl } from '../services/storageService';
 
 // Popular Indian smartphone brands for quick 1-tap mobile selection
@@ -19,6 +19,7 @@ export default function SellerReferralModal({
   onSubmit,
   currentSeller,
   sellerUser,
+  adminPhone,
 }) {
   const [form, setForm] = useState({
     customerName: '',
@@ -47,6 +48,15 @@ export default function SellerReferralModal({
   const [error, setError] = useState('');
   const [createdJob, setCreatedJob] = useState(null);
   const [copiedTicket, setCopiedTicket] = useState(false);
+
+  // Target Admin Phone for WhatsApp Alert (editable if needed)
+  const [targetAdminPhone, setTargetAdminPhone] = useState('');
+
+  useEffect(() => {
+    if (createdJob) {
+      setTargetAdminPhone(createdJob.admin_phone || adminPhone || sellerUser?.adminPhone || currentSeller?.adminPhone || '+91 98450 11223');
+    }
+  }, [createdJob, adminPhone, sellerUser, currentSeller]);
 
   if (!isOpen) return null;
 
@@ -298,30 +308,91 @@ export default function SellerReferralModal({
                 </div>
               )}
 
-              {/* Primary WhatsApp Share Button */}
-              <div className="space-y-2 pt-1">
-                <a
-                  href={getWhatsAppRepairTrackingUrl({
-                    customerPhone: createdJob.customer_phone,
-                    customerName: createdJob.customer_name,
-                    ticketId: createdJob.ticket_id,
-                    deviceBrand: createdJob.device_brand,
-                    deviceModel: createdJob.device_model,
-                    problemDescription: createdJob.problem_description,
-                    shopName: seller?.shopName || 'SmartFix Partner',
-                  })}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full py-3.5 px-4 bg-[#25D366] hover:bg-[#20ba59] text-slate-950 font-black rounded-2xl text-xs sm:text-sm transition flex items-center justify-center gap-2.5 shadow-xl shadow-emerald-600/30 transform hover:-translate-y-0.5"
-                >
-                  <svg className="w-5 h-5 fill-current shrink-0" viewBox="0 0 24 24">
-                    <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.771-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.312.045-.694.06-2.222-.572-1.828-.757-3.003-2.617-3.094-2.738-.09-.122-.74-1.024-.74-1.953 0-.929.479-1.386.65-1.577.171-.191.373-.239.498-.239.125 0 .25.002.359.007.114.005.267-.043.418.32.155.373.53 1.293.576 1.388.046.096.077.208.016.331-.061.123-.092.2-.183.308-.092.107-.193.24-.275.322-.093.093-.19.194-.082.38.109.186.483.797 1.036 1.29 0.713.636 1.314.833 1.5.926.186.093.295.077.404-.047.109-.123.468-.544.592-.73.125-.187.25-.156.421-.093.171.062 1.089.513 1.276.607.187.094.312.14.359.219.046.078.046.452-.098.857z" />
-                  </svg>
-                  <span>Send Ticket ({createdJob.ticket_id}) on WhatsApp</span>
-                </a>
-                <p className="text-[11px] text-slate-400">
-                  Sends customer their live tracking link and estimated cost.
-                </p>
+              {/* Dual Action WhatsApp Dispatch: Customer & Admin Workshop */}
+              <div className="space-y-3 pt-2">
+                
+                {/* 1. Customer Notification Button */}
+                <div className="p-3 bg-slate-900/90 rounded-2xl border border-slate-800 text-left space-y-1.5 shadow-sm">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                      <User className="w-3.5 h-3.5 text-emerald-400" />
+                      <span>1. Customer Tracking WhatsApp</span>
+                    </span>
+                    <span className="text-[10px] font-mono text-slate-400">{createdJob.customer_phone}</span>
+                  </div>
+                  <a
+                    href={getWhatsAppRepairTrackingUrl({
+                      customerPhone: createdJob.customer_phone,
+                      customerName: createdJob.customer_name,
+                      ticketId: createdJob.ticket_id,
+                      deviceBrand: createdJob.device_brand,
+                      deviceModel: createdJob.device_model,
+                      problemDescription: createdJob.problem_description,
+                      shopName: seller?.shopName || 'SmartFix Partner',
+                    })}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full py-3 px-4 bg-[#25D366] hover:bg-[#20ba59] text-slate-950 font-black rounded-xl text-xs sm:text-sm transition flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/20 transform hover:-translate-y-0.5"
+                  >
+                    <svg className="w-4 h-4 fill-current shrink-0" viewBox="0 0 24 24">
+                      <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.771-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.312.045-.694.06-2.222-.572-1.828-.757-3.003-2.617-3.094-2.738-.09-.122-.74-1.024-.74-1.953 0-.929.479-1.386.65-1.577.171-.191.373-.239.498-.239.125 0 .25.002.359.007.114.005.267-.043.418.32.155.373.53 1.293.576 1.388.046.096.077.208.016.331-.061.123-.092.2-.183.308-.092.107-.193.24-.275.322-.093.093-.19.194-.082.38.109.186.483.797 1.036 1.29 0.713.636 1.314.833 1.5.926.186.093.295.077.404-.047.109-.123.468-.544.592-.73.125-.187.25-.156.421-.093.171.062 1.089.513 1.276.607.187.094.312.14.359.219.046.078.046.452-.098.857z" />
+                    </svg>
+                    <span>Send Tracking ID ({createdJob.ticket_id}) to Customer</span>
+                  </a>
+                </div>
+
+                {/* 2. Admin Workshop Notification Button */}
+                <div className="p-3 bg-amber-950/40 rounded-2xl border border-amber-500/40 text-left space-y-2 shadow-sm">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-black uppercase tracking-wider text-amber-300 flex items-center gap-1.5">
+                      <Wrench className="w-3.5 h-3.5 text-amber-400" />
+                      <span>2. Alert Admin Workshop on WhatsApp</span>
+                    </span>
+                    <span className="text-[10px] font-bold text-amber-400/80">
+                      Technician Bay Alert
+                    </span>
+                  </div>
+
+                  {/* Target Admin Phone input (editable if needed) */}
+                  <div className="flex items-center gap-2 bg-slate-950/70 p-1.5 rounded-xl border border-slate-800">
+                    <label className="text-[10px] font-bold text-slate-400 shrink-0">Admin Workshop Phone:</label>
+                    <input
+                      type="text"
+                      value={targetAdminPhone}
+                      onChange={(e) => setTargetAdminPhone(e.target.value)}
+                      placeholder="+91 98450 11223"
+                      className="flex-1 px-2 py-0.5 bg-transparent border-0 text-white font-mono text-[11px] focus:outline-none"
+                    />
+                  </div>
+
+                  <a
+                    href={getWhatsAppAdminRepairAlertUrl({
+                      adminPhone: targetAdminPhone || createdJob.admin_phone || adminPhone || seller?.adminPhone || '+91 98450 11223',
+                      ticketId: createdJob.ticket_id,
+                      customerName: createdJob.customer_name,
+                      customerPhone: createdJob.customer_phone,
+                      deviceBrand: createdJob.device_brand,
+                      deviceModel: createdJob.device_model,
+                      problemDescription: createdJob.problem_description,
+                      estimatedCost: createdJob.estimated_cost,
+                      sellerName: seller?.shopName || seller?.name || 'Partner Store',
+                      sellerPhone: seller?.phone || null,
+                      notes: createdJob.notes,
+                    })}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full py-3 px-4 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-black rounded-xl text-xs sm:text-sm transition flex items-center justify-center gap-2 shadow-lg shadow-amber-500/25 transform hover:-translate-y-0.5"
+                  >
+                    <svg className="w-4 h-4 fill-current shrink-0" viewBox="0 0 24 24">
+                      <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.771-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.312.045-.694.06-2.222-.572-1.828-.757-3.003-2.617-3.094-2.738-.09-.122-.74-1.024-.74-1.953 0-.929.479-1.386.65-1.577.171-.191.373-.239.498-.239.125 0 .25.002.359.007.114.005.267-.043.418.32.155.373.53 1.293.576 1.388.046.096.077.208.016.331-.061.123-.092.2-.183.308-.092.107-.193.24-.275.322-.093.093-.19.194-.082.38.109.186.483.797 1.036 1.29 0.713.636 1.314.833 1.5.926.186.093.295.077.404-.047.109-.123.468-.544.592-.73.125-.187.25-.156.421-.093.171.062 1.089.513 1.276.607.187.094.312.14.359.219.046.078.046.452-.098.857z" />
+                    </svg>
+                    <span>Send Intake Alert to Admin on WhatsApp</span>
+                  </a>
+                  <p className="text-[10px] text-slate-400 text-center">
+                    Alerts workshop manager of ticket ID, fault details, and incoming intake unit.
+                  </p>
+                </div>
+
               </div>
             </div>
 
