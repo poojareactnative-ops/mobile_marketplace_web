@@ -121,6 +121,56 @@ Is this item currently available in stock for direct pickup or local delivery?`;
   return `https://wa.me/${targetPhone}?text=${encodeURIComponent(message)}`;
 }
 
+/**
+ * Cleans and formats pre-repair intake inspection notes for WhatsApp display.
+ * Strips raw image JSON arrays and presents diagnostic items with clean bullets/emojis.
+ */
+export function formatIntakeNotesForWhatsApp(rawNotes) {
+  if (!rawNotes || typeof rawNotes !== 'string') return '';
+
+  // 1. Remove raw [Intake Photos]: [...]
+  let text = rawNotes.replace(/\[Intake Photos\]:\s*\[.*?\]/gi, '').trim();
+
+  // If empty after stripping photos, return empty
+  if (!text) return '';
+
+  // 2. Format pre-repair intake inspection summary if present
+  // e.g. [Pre-Repair Intake Inspection]: Powers On: YES, Display Touch: WORKING, Cameras: OK, Biometrics/FaceID: OK, Body Condition: scratch.
+  if (text.includes('[Pre-Repair Intake Inspection]:')) {
+    const content = text.replace(/\[Pre-Repair Intake Inspection\]:\s*/i, '').trim();
+    // Split key-value pairs by comma followed by a key: pattern
+    const parts = content.split(/,\s*(?=[A-Za-z\s/]+:)/);
+    const bullets = parts.map((part) => {
+      const splitIdx = part.indexOf(':');
+      if (splitIdx === -1) return `• ${part.trim()}`;
+      const key = part.slice(0, splitIdx).trim();
+      const val = part.slice(splitIdx + 1).trim();
+
+      let icon = '•';
+      const cleanVal = val.replace(/\.$/, '').toUpperCase();
+      if (cleanVal.includes('YES') || cleanVal.includes('WORKING') || cleanVal.includes('OK') || cleanVal.includes('MINT')) {
+        icon = '✅';
+      } else if (
+        cleanVal.includes('NO') ||
+        cleanVal.includes('FAULTY') ||
+        cleanVal.includes('BROKEN') ||
+        cleanVal.includes('FAILED') ||
+        cleanVal.includes('CRACKED') ||
+        cleanVal.includes('HEAVY')
+      ) {
+        icon = '⚠️';
+      } else {
+        icon = '🔹';
+      }
+      return `${icon} *${key}:* ${val.replace(/\.$/, '')}`;
+    });
+    return bullets.join('\n');
+  }
+
+  // Fallback: standard plain note without pre-repair tag
+  return text;
+}
+
 export function getWhatsAppRepairTrackingUrl({
   customerPhone,
   customerName,
@@ -137,17 +187,35 @@ export function getWhatsAppRepairTrackingUrl({
     ? `${window.location.origin}/track?ticket=${cleanTicket}`
     : `https://smartfixhub.com/track?ticket=${cleanTicket}`;
 
-  const message = 
-`Hello ${customerName || 'Customer'}! 👋
-Your mobile repair request is registered on *SmartFix Hub*:
+  const cleanBrand = (deviceBrand || '').trim();
+  const cleanModel = (deviceModel || '').trim();
+  const fullDevice = [cleanBrand, cleanModel].filter(Boolean).join(' ') || 'Mobile Device';
+  const cleanStatus = status || 'Job Registered / In Inspection';
 
-🎫 *Tracking ID:* ${cleanTicket}
-📱 *Device:* ${deviceBrand || ''} ${deviceModel || ''}
-${problemDescription ? `🔧 *Issue:* ${problemDescription}\n` : ''}${shopName ? `🏪 *Assigned Workshop:* ${shopName}\n` : ''}${status ? `📊 *Current Status:* ${status}\n` : ''}
-🔍 *Track Live Status & Diagnostic Milestones:*
+  const message =
+`📱 *SMARTFIX HUB • REPAIR ACKNOWLEDGMENT*
+━━━━━━━━━━━━━━━━━━━━
+
+Hello *${customerName || 'Valued Customer'}* 👋,
+Your device repair request has been registered and scheduled with our certified engineering lab.
+
+📋 *JOB TICKET SUMMARY*
+━━━━━━━━━━━━━━━━━━━━
+▫️ *Ticket ID:* \`${cleanTicket}\`
+▫️ *Device:* *${fullDevice}*
+${problemDescription ? `▫️ *Reported Issue:* ${problemDescription}\n` : ''}${shopName ? `▫️ *Assigned Workshop:* ${shopName}\n` : ''}▫️ *Current Status:* 🟡 *${cleanStatus}*
+
+🔍 *TRACK LIVE STATUS & DIAGNOSTICS*
+━━━━━━━━━━━━━━━━━━━━
+View real-time workshop milestones, technician inspection logs, and invoice updates anytime:
 👉 ${trackUrl}
 
-Keep this Tracking ID handy. You can check repair updates, technician notes, and download your warranty invoice anytime.`;
+🛡️ *OUR SERVICE COMMITMENT*
+• 100% Genuine Certified OEM Parts
+• Up to 90 Days Workshop Warranty
+• Safe & Secure Data Privacy Protocol
+
+_Please keep your Ticket ID (${cleanTicket}) handy for any inquiry or pickup at the store._`;
 
   return `https://wa.me/${targetPhone}?text=${encodeURIComponent(message)}`;
 }
@@ -174,28 +242,48 @@ export function getWhatsAppAdminRepairAlertUrl({
     ? `${window.location.origin}/admin`
     : `https://smartfixhub.com/admin`;
 
+  const cleanBrand = (deviceBrand || '').trim();
+  const cleanModel = (deviceModel || '').trim();
+  const fullDevice = [cleanBrand, cleanModel].filter(Boolean).join(' ') || 'Mobile Device';
+
   const estNum = Number(estimatedCost || 0);
   const sellerCut = Math.round(estNum * 0.02);
 
-  const message = 
-`🚨 *NEW REPAIR JOB ALERT (SmartFix Hub)* 🚨
+  const formattedNotes = formatIntakeNotesForWhatsApp(notes);
 
-A partner store has dispatched a new customer repair referral:
+  const message =
+`🚨 *NEW REPAIR JOB ALERT* 🚨
+*SmartFix Workshop Dispatch*
+━━━━━━━━━━━━━━━━━━━━
 
-🎫 *Ticket ID:* ${cleanTicket}
-🏪 *Referring Partner:* ${sellerName || 'Partner Store'}${sellerPhone ? ` (${sellerPhone})` : ''}
-👤 *Customer:* ${customerName || 'Customer'} (${customerPhone || 'N/A'})
-📱 *Device:* ${deviceBrand || ''} ${deviceModel || ''}
-🔧 *Reported Issue:* ${problemDescription || 'N/A'}
-💰 *Estimated Cost:* ₹${estNum.toLocaleString('en-IN')}${estNum > 0 ? ` (2% Seller Commission: ₹${sellerCut})` : ''}
-${notes ? `📋 *Intake Condition:* ${notes}\n` : ''}
-👉 *Open in Admin Workshop Console:*
-${adminUrl}
+A partner store has dispatched a new customer repair referral to your workshop queue:
 
-🔍 *Live Customer Tracker:*
-${trackUrl}
+🎫 *JOB DETAILS*
+━━━━━━━━━━━━━━━━━━━━
+▪️ *Ticket ID:* \`${cleanTicket}\`
+▪️ *Device:* *${fullDevice}*
+▪️ *Reported Issue:* ${problemDescription || 'Diagnosis Required'}
+▪️ *Est. Repair Quote:* *₹${estNum.toLocaleString('en-IN')}*
+▪️ *Partner Referral (2%):* ₹${sellerCut.toLocaleString('en-IN')}
 
-Please assign a technician bay and acknowledge receipt in your Admin console.`;
+👤 *CUSTOMER CONTACT*
+━━━━━━━━━━━━━━━━━━━━
+▪️ *Name:* ${customerName || 'Customer'}
+▪️ *Phone:* 📞 ${customerPhone || 'N/A'}
+
+🏪 *REFERRING PARTNER*
+━━━━━━━━━━━━━━━━━━━━
+▪️ *Store / Seller:* ${sellerName || 'Partner Store'}
+${sellerPhone ? `▪️ *Contact:* 📞 ${sellerPhone}\n` : ''}${formattedNotes ? `\n📋 *PRE-REPAIR INTAKE CHECKLIST*\n━━━━━━━━━━━━━━━━━━━━\n${formattedNotes}\n` : ''}
+⚡ *QUICK WORKSHOP ACTIONS*
+━━━━━━━━━━━━━━━━━━━━
+🔧 *Open in Admin Workshop Console:*
+👉 ${adminUrl}
+
+📱 *Live Customer Tracking Page:*
+👉 ${trackUrl}
+
+_Please review incoming inspection notes/photos, assign technician bay, and confirm ticket reception._`;
 
   return `https://wa.me/${targetPhone}?text=${encodeURIComponent(message)}`;
 }
