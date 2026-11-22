@@ -38,26 +38,28 @@ export default function Navbar() {
   const dashboardLabel = role === 'ADMIN' ? 'Admin Hub' : (role === 'SELLER' ? 'Seller Workbench' : (role === 'SUPER_ADMIN' ? 'Super Admin Audit' : 'My Workbench'));
 
   return (
-    <header className="sticky top-0 z-40 bg-slate-950/85 backdrop-blur-xl border-b border-slate-800/80 text-white shadow-2xl">
-
+    <header className="sticky top-0 z-40 bg-slate-950/90 backdrop-blur-xl border-b border-slate-800/80 text-white shadow-2xl">
 
       {/* Main Nav Header */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
 
-          {/* Logo & Brand */}
+          {/* Logo & Brand (Clean Modern Tech) */}
           <Link href="/" className="flex items-center space-x-3 group">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-amber-500 via-orange-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-amber-500/25 group-hover:scale-105 transition">
-              <Wrench className="w-5 h-5 text-slate-950 font-black" />
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-amber-500 via-orange-500 to-amber-600 flex items-center justify-center text-slate-950 font-black shadow-lg shadow-amber-500/20 group-hover:scale-105 transition">
+              <Wrench className="w-4 h-4 text-slate-950 font-black" />
             </div>
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center gap-1.5">
               <span className="font-black text-lg tracking-tight text-white group-hover:text-amber-400 transition">
-                SmartFix Hub
+                SmartFix<span className="text-amber-400">Hub</span>
+              </span>
+              <span className="hidden sm:inline-block px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                1–2 km Labs
               </span>
             </div>
           </Link>
 
-          {/* Navigation Links */}
+          {/* Navigation Links (Clean & Sleek) */}
           <nav className="hidden md:flex items-center space-x-1 text-xs font-semibold text-slate-300">
             <Link
               href="/"
@@ -73,11 +75,18 @@ export default function Navbar() {
               <span>Products</span>
             </Link>
             <Link
+              href="/track"
+              className={`px-3 py-2 rounded-xl transition flex items-center gap-1.5 ${pathname === '/track' ? 'bg-cyan-950/40 text-cyan-400 font-bold border border-cyan-800/40' : 'hover:text-cyan-400 hover:bg-slate-900/60'}`}
+            >
+              <Search className="w-3.5 h-3.5" />
+              <span>Track Repair</span>
+            </Link>
+            <Link
               href="/aboutme"
               className={`px-3 py-2 rounded-xl transition flex items-center gap-1.5 ${pathname === '/aboutme' || pathname === '/about' ? 'bg-amber-500/15 text-amber-400 font-bold border border-amber-500/30' : 'hover:text-amber-400 hover:bg-slate-900/60'}`}
             >
               <User className="w-3.5 h-3.5" />
-              <span>About Me</span>
+              <span>About</span>
             </Link>
 
             {/* Dashboard ONLY visible when authenticated as shop staff */}
