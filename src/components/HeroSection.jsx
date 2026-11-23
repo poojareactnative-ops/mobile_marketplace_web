@@ -3,10 +3,17 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { 
-  Wrench, ShieldCheck, Cpu, ArrowRight, Search, 
-  MapPin, CheckCircle2, Clock, Zap, Smartphone, 
-  Store, ShoppingBag, BatteryCharging, Sparkles, MessageSquare
+import {
+  Search,
+  MapPin,
+  ShieldCheck,
+  Clock,
+  Zap,
+  ShoppingBag,
+  MessageSquare,
+  Star,
+  CheckCircle2,
+  Sparkles
 } from 'lucide-react';
 
 export default function HeroSection() {
@@ -29,414 +36,455 @@ export default function HeroSection() {
   };
 
   return (
-    <section className="relative w-full overflow-hidden bg-slate-950 text-slate-100 pt-10 sm:pt-16 pb-20 lg:pb-28 border-b border-slate-900 bg-studio-grid selection:bg-amber-500 selection:text-slate-950">
-      
-      {/* Background ambient lighting */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[400px] bg-amber-500/10 rounded-full blur-[150px] pointer-events-none" />
-      <div className="absolute top-1/3 right-10 w-80 h-80 bg-emerald-500/10 rounded-full blur-[130px] pointer-events-none" />
-      <div className="absolute bottom-10 left-10 w-96 h-96 bg-indigo-500/10 rounded-full blur-[140px] pointer-events-none" />
+    <section className="relative w-full overflow-hidden bg-[#f1f3f6] dark:bg-slate-950 text-slate-900 dark:text-slate-100 py-6 sm:py-10 px-3 sm:px-6 lg:px-8 transition-colors duration-200">
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 space-y-16">
+      {/* MAIN HERO CANVAS WITH ROUNDED FRAME */}
+      <div className="">
 
-        {/* 1. HERO HEADER: TITLE, PUNCHY COPY & QUICK TICKET SEARCH */}
-        <div className="text-center max-w-3xl mx-auto space-y-5">
-          
-          {/* Top Pill Badge */}
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-900/90 border border-slate-800 text-xs font-semibold text-slate-300 shadow-lg backdrop-blur-md">
-            <span className="flex h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="text-amber-400 font-bold">1–2 km Verified Labs</span>
-            <span className="text-slate-600">•</span>
-            <span>45-Min Express Diagnostics</span>
+        {/* Ambient Pulsing Background Glow */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2
+          w-[750px] h-[520px]
+          bg-gradient-to-tr from-amber-500/10 via-indigo-500/10 to-emerald-500/10
+          dark:from-amber-500/15 dark:via-indigo-500/15 dark:to-emerald-500/15
+          rounded-full blur-[140px] pointer-events-none"
+        />
+
+        {/* ANIMATED ORBITAL RINGS & RADAR PULSES */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+
+          {/* Sonar Radar Wave 1 */}
+          <div className="absolute top-[60%] sm:top-[58%] left-1/2
+            w-[320px] sm:w-[380px] h-[320px] sm:h-[380px]
+            rounded-full border border-amber-500/25 dark:border-amber-400/20
+            animate-sonar-1"
+          />
+
+          {/* Sonar Radar Wave 2 */}
+          <div className="absolute top-[60%] sm:top-[58%] left-1/2
+            w-[320px] sm:w-[380px] h-[320px] sm:h-[380px]
+            rounded-full border border-indigo-500/25 dark:border-indigo-400/20
+            animate-sonar-2"
+          />
+
+          {/* 1. Inner Ring (360px) - Rotating Clockwise with Emerald Satellite */}
+          <div className="
+            absolute top-[60%] sm:top-[58%] left-1/2
+            w-[280px] sm:w-[360px]
+            h-[280px] sm:h-[360px]
+            rounded-full
+            border border-dashed border-slate-300/80 dark:border-slate-700/80
+            animate-orbit-slow
+          ">
+            {/* Satellite Beacon (Emerald) */}
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_10px_#10b981] animate-ping" />
+              <span className="absolute w-2 h-2 rounded-full bg-emerald-400" />
+              <span className="absolute -top-5 px-1.5 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-[8px] font-mono font-bold text-emerald-600 dark:text-emerald-400 backdrop-blur-md whitespace-nowrap">
+                OEM 100%
+              </span>
+            </div>
           </div>
 
-          {/* Main Title */}
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight leading-[1.1]">
-            Fast Smartphone Repairs &amp; <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-orange-400 to-amber-500">
-              Genuine Accessories Near You
+          {/* 2. Middle Ring (560px) - Rotating Counter-Clockwise with Amber Satellite */}
+          <div className="
+            absolute top-[60%] sm:top-[58%] left-1/2
+            w-[460px] sm:w-[560px]
+            h-[460px] sm:h-[560px]
+            rounded-full
+            border border-slate-200/70 dark:border-slate-800/80
+            animate-orbit-reverse
+          ">
+            {/* Satellite Beacon (Amber) */}
+            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 flex items-center justify-center">
+              <span className="w-3 h-3 rounded-full bg-amber-500 shadow-[0_0_12px_#f59e0b] animate-beacon" />
+              <span className="absolute -bottom-5 px-1.5 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-[8px] font-mono font-bold text-amber-600 dark:text-amber-400 backdrop-blur-md whitespace-nowrap">
+                45m Bay
+              </span>
+            </div>
+
+            {/* Satellite Beacon (Indigo) */}
+            <div className="absolute top-1/2 left-0 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center">
+              <span className="w-2 h-2 rounded-full bg-indigo-500 shadow-[0_0_10px_#6366f1]" />
+            </div>
+          </div>
+
+          {/* 3. Outer Ring (800px) - Rotating Clockwise with Cyan Satellite */}
+          <div className="
+            absolute top-[60%] sm:top-[58%] left-1/2
+            w-[680px] sm:w-[800px]
+            h-[680px] sm:h-[800px]
+            rounded-full
+            border border-dashed border-slate-200/50 dark:border-slate-800/50
+            animate-orbit-slower
+          ">
+            {/* Satellite Beacon (Cyan) */}
+            <div className="absolute top-1/2 right-0 translate-x-1/2 -translate-y-1/2 flex items-center justify-center">
+              <span className="w-2.5 h-2.5 rounded-full bg-cyan-400 shadow-[0_0_10px_#22d3ee] animate-beacon" />
+              <span className="absolute -top-5 px-1.5 py-0.5 rounded-full bg-cyan-500/15 border border-cyan-500/30 text-[8px] font-mono font-bold text-cyan-600 dark:text-cyan-400 backdrop-blur-md whitespace-nowrap">
+                0.8 km
+              </span>
+            </div>
+          </div>
+
+          {/* 4. Extra Outer Ring (1080px) - Rotating Counter-Clockwise */}
+          <div className="
+            absolute top-[60%] sm:top-[58%] left-1/2
+            w-[920px] sm:w-[1080px]
+            h-[920px] sm:h-[1080px]
+            rounded-full
+            border border-slate-100/60 dark:border-slate-800/30
+            animate-orbit-reverse-slower
+          " />
+
+        </div>
+
+        {/* MAIN TITLE */}
+        <div className="text-center relative z-20 space-y-3 pt-2 sm:pt-4">
+
+          <h1 className="text-4xl sm:text-6xl lg:text-7xl font-extrabold
+            text-slate-900 dark:text-white tracking-tight leading-[1.08]">
+            Welcome To{' '}
+            <span className="bg-gradient-to-r from-slate-950 via-amber-600 to-slate-950 dark:from-white dark:via-amber-400 dark:to-white bg-clip-text text-transparent animate-text-shimmer inline-block">
+              SmartFix
             </span>
           </h1>
 
-          {/* Subtitle */}
-          <p className="text-sm sm:text-base text-slate-400 leading-relaxed font-normal max-w-2xl mx-auto">
-            Direct coordination with certified repair workshops within 1–2 km walking distance. 
-            Zero middleman markup, 100% genuine OEM parts, and live WhatsApp milestone updates.
-          </p>
+          <div className="inline-flex items-center gap-2 px-3 py-1
+            rounded-full bg-slate-100 dark:bg-slate-800
+            border border-slate-200 dark:border-slate-700
+            text-xs font-semibold text-slate-700 dark:text-slate-300 shadow-xs">
 
-          {/* Instant Ticket Tracker Search Box */}
-          <div className="max-w-xl mx-auto pt-2">
-            <form onSubmit={handleTrackSubmit} className="relative flex items-center bg-slate-900/90 border border-slate-800 focus-within:border-amber-400/80 rounded-2xl p-1.5 shadow-2xl backdrop-blur-xl transition">
-              <div className="pl-3.5 pr-2 text-slate-400">
-                <Search className="w-5 h-5 text-amber-400" />
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+
+            <span>
+              Hyperlocal Repair &amp; Verified Accessories Network
+            </span>
+          </div>
+        </div>
+
+        {/* THREE COLUMN HERO */}
+        <div className="relative z-20 grid grid-cols-1 lg:grid-cols-12
+          gap-8 items-end pt-6 sm:pt-10">
+
+          {/* LEFT COLUMN: Animated Floating Card & Copy */}
+          <div className="lg:col-span-3 space-y-6 pb-8 lg:pb-16
+            text-center lg:text-left order-2 lg:order-1">
+
+            {/* Floating Icon Card with gentle levitation physics */}
+            <div className="inline-block p-4 sm:p-5 rounded-3xl
+              bg-white dark:bg-slate-800/90
+              border border-slate-100 dark:border-slate-700/80
+              shadow-[0_15px_35px_rgba(0,0,0,0.06)]
+              dark:shadow-[0_15px_35px_rgba(0,0,0,0.4)]
+              animate-float-slow hover:[animation-play-state:paused] transition-all duration-300 hover:scale-105">
+
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl
+                bg-indigo-50 dark:bg-indigo-950/60
+                border border-indigo-100 dark:border-indigo-800
+                flex items-center justify-center
+                text-indigo-600 dark:text-indigo-400 relative">
+
+                <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-emerald-500 rounded-full animate-ping" />
+                <span className="absolute -top-1 -right-1 w-2 h-2 bg-emerald-400 rounded-full" />
+                <Zap className="w-6 h-6 fill-current" />
               </div>
+
+              <div className="text-[11px] font-bold
+                text-slate-800 dark:text-slate-200 mt-2">
+                45-Min Express Bay
+              </div>
+            </div>
+
+            {/* Left Headline */}
+            <div className="space-y-2">
+
+              <h2 className="text-2xl sm:text-3xl font-extrabold
+                text-slate-900 dark:text-white
+                tracking-tight leading-snug">
+                The ultimate repair &amp; care hack is here.
+              </h2>
+
+              <p className="text-xs text-slate-500 dark:text-slate-400
+                leading-relaxed max-w-xs mx-auto lg:mx-0">
+                Direct walk-in to 1–2 km certified labs with zero markup
+                and live milestone alerts.
+              </p>
+            </div>
+
+            {/* Ticket Search */}
+            <form
+              onSubmit={handleTrackSubmit}
+              className="relative flex items-center
+                bg-slate-50 dark:bg-slate-800/80
+                border border-slate-200 dark:border-slate-700
+                focus-within:border-slate-900 dark:focus-within:border-slate-400
+                rounded-2xl p-1 shadow-inner max-w-xs mx-auto lg:mx-0 transition"
+            >
+
+              <Search className="w-4 h-4 text-slate-400 ml-2.5 shrink-0" />
+
               <input
                 type="text"
                 value={ticketQuery}
                 onChange={(e) => setTicketQuery(e.target.value)}
-                placeholder="Track Ticket ID (e.g. REP-7477)..."
-                className="w-full py-2.5 bg-transparent border-0 text-white placeholder:text-slate-500 font-mono text-sm tracking-wide focus:outline-none uppercase"
+                placeholder="REP-7477..."
+                className="w-full px-2 py-1.5 bg-transparent border-0
+                  text-xs font-mono uppercase text-slate-900
+                  dark:text-white placeholder:text-slate-400
+                  focus:outline-none"
               />
+
               <button
                 type="submit"
-                className="px-5 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-bold text-xs sm:text-sm rounded-xl transition shadow-md shrink-0 flex items-center gap-1.5 transform hover:-translate-y-0.5"
+                className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800
+                  dark:bg-white dark:hover:bg-slate-100
+                  text-white dark:text-slate-950 font-bold
+                  text-xs rounded-xl transition shrink-0 transform hover:scale-105 active:scale-95"
               >
-                <span>Track Status</span>
-                <ArrowRight className="w-4 h-4" />
+                Track
               </button>
             </form>
 
-            {/* Quick Demo Pill Links */}
-            <div className="flex items-center justify-center gap-2 pt-2 text-[11px] text-slate-400 flex-wrap">
-              <span>Quick Demo:</span>
-              <button
-                type="button"
-                onClick={() => handleFillDemo('REP-7477')}
-                className="px-2.5 py-0.5 rounded-lg bg-slate-900 border border-slate-800 text-amber-400 hover:border-amber-400/40 transition font-mono"
+          </div>
+
+          {/* CENTER COLUMN: LEVITATING SMARTPHONE WITH FLOATING MICRO-BADGES */}
+          <div className="lg:col-span-6 flex flex-col items-center
+            justify-end relative order-1 lg:order-2">
+
+            <div className="relative w-[300px] sm:w-[350px] mx-auto pt-2 animate-float-phone">
+
+              {/* Floating Micro-Badge 1: OLED Calibrated */}
+              <div className="hidden sm:flex absolute -top-3 -right-2 sm:-right-6 z-30
+                bg-white/95 dark:bg-slate-900/95 backdrop-blur-md
+                border border-slate-200/90 dark:border-slate-700/80
+                shadow-xl rounded-2xl py-1.5 px-3 items-center gap-2
+                animate-float-delayed pointer-events-none">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="text-[10px] font-bold text-slate-800 dark:text-slate-200 whitespace-nowrap">
+                  ✓ 100% OLED Calibrated
+                </span>
+              </div>
+
+              {/* Floating Micro-Badge 2: Price Guarantee */}
+              <div className="hidden sm:flex absolute bottom-14 -left-2 sm:-left-6 z-30
+                bg-white/95 dark:bg-slate-900/95 backdrop-blur-md
+                border border-slate-200/90 dark:border-slate-700/80
+                shadow-xl rounded-2xl py-1.5 px-3 items-center gap-1.5
+                animate-float-slow pointer-events-none">
+                <span className="text-amber-500 text-xs">⚡</span>
+                <span className="text-[10px] font-bold text-slate-800 dark:text-slate-200 whitespace-nowrap">
+                  ₹1,499 • Zero Markup
+                </span>
+              </div>
+
+              {/* Central Phone Mockup Image */}
+              <div className="relative z-10 mx-auto
+                drop-shadow-[0_20px_35px_rgba(0,0,0,0.18)]
+                dark:drop-shadow-[0_25px_45px_rgba(0,0,0,0.7)]
+                transition-transform duration-500 hover:scale-[1.02]">
+
+                <img
+                  src="/hero-hand-phone.png"
+                  alt="SmartFix Mobile App Mockup held in hand"
+                  className="w-full h-auto object-contain mx-auto
+                    block max-h-[520px] select-none pointer-events-none"
+                />
+
+              </div>
+            </div>
+
+          </div>
+
+          {/* RIGHT COLUMN: Animated Floating Technician Card & CTAs */}
+          <div className="lg:col-span-3 space-y-6 pb-8 lg:pb-16
+            text-center lg:text-left order-3">
+
+            {/* Technician Card with Delayed Floating Physics */}
+            <div className="inline-flex items-center gap-3
+              p-3 sm:p-3.5 rounded-3xl
+              bg-white dark:bg-slate-800/90
+              border border-slate-100 dark:border-slate-700/80
+              shadow-[0_15px_35px_rgba(0,0,0,0.06)]
+              dark:shadow-[0_15px_35px_rgba(0,0,0,0.4)]
+              text-left
+              animate-float-delayed hover:[animation-play-state:paused] transition-all duration-300 hover:scale-105">
+
+              <div className="w-12 h-12 rounded-2xl
+                bg-gradient-to-tr from-amber-400 to-orange-500
+                p-0.5 shrink-0 shadow-md">
+
+                <div className="w-full h-full rounded-[14px]
+                  bg-slate-900 flex items-center justify-center
+                  text-white font-bold text-sm">
+                  ⚡
+                </div>
+              </div>
+
+              <div className="space-y-0.5">
+
+                <div className="flex items-center gap-1 text-amber-500 text-xs">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <Star
+                      key={star}
+                      className="w-3.5 h-3.5 fill-current"
+                    />
+                  ))}
+                </div>
+
+                <div className="text-xs font-extrabold
+                  text-slate-900 dark:text-white leading-tight">
+                  Verified Lab Tech #04
+                </div>
+
+                <div className="text-[10px] text-slate-500 dark:text-slate-400">
+                  1,420+ 5-Star Phone Fixes
+                </div>
+              </div>
+            </div>
+
+            {/* Right Subtitle */}
+            <div className="space-y-2">
+
+              <p className="text-sm font-semibold
+                text-slate-800 dark:text-slate-200
+                leading-relaxed max-w-xs mx-auto lg:mx-0">
+                Bye bye repair stress. See you later overpriced quotes.
+                Adios fake duplicate parts.
+              </p>
+
+              <p className="text-xs text-slate-500 dark:text-slate-400
+                leading-relaxed">
+                60-day replacement warranty and 100% genuine OEM
+                components certified by local masters.
+              </p>
+            </div>
+
+            {/* CTA BUTTONS */}
+            <div className="flex flex-wrap items-center
+              justify-center lg:justify-start gap-2.5 pt-1">
+
+              <Link
+                href="/marketplace"
+                className="px-5 py-3 rounded-2xl
+                  bg-slate-950 hover:bg-slate-800
+                  dark:bg-white dark:hover:bg-slate-100
+                  text-white dark:text-slate-950
+                  text-xs font-extrabold transition shadow-md
+                  flex items-center gap-2 transform hover:-translate-y-0.5 active:translate-y-0"
               >
-                REP-7477 (Screen)
-              </button>
-              <button
-                type="button"
-                onClick={() => handleFillDemo('REP-8821')}
-                className="px-2.5 py-0.5 rounded-lg bg-slate-900 border border-slate-800 text-emerald-400 hover:border-emerald-400/40 transition font-mono"
+                <ShoppingBag className="w-4 h-4" />
+                <span>Shop Accessories</span>
+              </Link>
+
+              <a
+                href="https://wa.me/919845011223"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-5 py-3 rounded-2xl
+                  bg-emerald-600 hover:bg-emerald-500
+                  text-white text-xs font-extrabold transition
+                  shadow-md flex items-center gap-2
+                  transform hover:-translate-y-0.5 active:translate-y-0"
               >
-                REP-8821 (Battery)
-              </button>
+                <MessageSquare className="w-4 h-4 fill-current" />
+                <span>Book on WhatsApp</span>
+              </a>
+
             </div>
-          </div>
-
-          {/* Primary Action Buttons */}
-          <div className="flex flex-wrap items-center justify-center gap-3 pt-3">
-            <Link
-              href="/marketplace"
-              className="px-6 py-3 bg-white hover:bg-slate-100 text-slate-950 font-black text-xs sm:text-sm rounded-2xl transition shadow-xl flex items-center gap-2 transform hover:-translate-y-0.5"
-            >
-              <ShoppingBag className="w-4 h-4 text-slate-950" />
-              <span>Explore Nearby Stores (1–2 km)</span>
-              <ArrowRight className="w-4 h-4" />
-            </Link>
-
-            <a
-              href="https://wa.me/919845011223"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-5 py-3 bg-slate-900/80 hover:bg-slate-900 text-slate-300 hover:text-white font-bold text-xs sm:text-sm rounded-2xl border border-slate-800 hover:border-slate-700 transition flex items-center gap-2"
-            >
-              <MessageSquare className="w-4 h-4 text-emerald-400" />
-              <span>Direct WhatsApp Lab Inquiry</span>
-            </a>
           </div>
 
         </div>
-
-        {/* 2. THE 3D SMARTPHONE HARDWARE SHOWCASE & FLOATING DIAGNOSTIC BADGES */}
-        <div className="relative max-w-4xl mx-auto flex items-center justify-center py-6 sm:py-10">
-          
-          {/* FLOATING BADGE: TOP LEFT (45-Min Express Turnaround) */}
-          <div className="hidden md:flex absolute -left-4 lg:-left-12 top-6 z-20 animate-float-slow">
-            <div className="bento-card p-3.5 rounded-2xl border border-slate-800/80 bg-slate-900/90 shadow-2xl flex items-center gap-3 max-w-[240px]">
-              <div className="w-10 h-10 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">
-                <Clock className="w-5 h-5" />
-              </div>
-              <div className="space-y-0.5 text-left">
-                <div className="text-xs font-bold text-white flex items-center gap-1">
-                  <span>45-Min Express Bay</span>
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block animate-pulse" />
-                </div>
-                <div className="text-[10px] text-slate-400 leading-tight">
-                  Display, battery &amp; charging IC diagnostics
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* FLOATING BADGE: BOTTOM LEFT (90-Day Warranty) */}
-          <div className="hidden md:flex absolute -left-8 lg:-left-16 bottom-10 z-20 animate-float-delayed">
-            <div className="bento-card p-3.5 rounded-2xl border border-slate-800/80 bg-slate-900/90 shadow-2xl flex items-center gap-3 max-w-[230px]">
-              <div className="w-10 h-10 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0">
-                <ShieldCheck className="w-5 h-5" />
-              </div>
-              <div className="space-y-0.5 text-left">
-                <div className="text-xs font-bold text-white">90-Day Guarantee</div>
-                <div className="text-[10px] text-slate-400 leading-tight">
-                  100% Genuine OEM Certified Parts
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* FLOATING BADGE: TOP RIGHT (Hyperlocal Store 0.8 km) */}
-          <div className="hidden md:flex absolute -right-4 lg:-right-12 top-6 z-20 animate-float-delayed">
-            <div className="bento-card p-3.5 rounded-2xl border border-slate-800/80 bg-slate-900/90 shadow-2xl flex items-center gap-3 max-w-[240px]">
-              <div className="w-10 h-10 rounded-xl bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-center text-cyan-400 shrink-0">
-                <MapPin className="w-5 h-5" />
-              </div>
-              <div className="space-y-0.5 text-left">
-                <div className="text-xs font-bold text-white flex items-center gap-1">
-                  <span>Apex Tech Hub</span>
-                  <span className="text-cyan-400 text-[10px] font-bold">0.8 km</span>
-                </div>
-                <div className="text-[10px] text-slate-400 leading-tight">
-                  GaN Chargers &amp; Armor Cases in stock
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* FLOATING BADGE: BOTTOM RIGHT (Active Ticket Live Status) */}
-          <div className="hidden md:flex absolute -right-8 lg:-right-16 bottom-10 z-20 animate-float-slow">
-            <div className="bento-card p-3.5 rounded-2xl border border-slate-800/80 bg-slate-900/90 shadow-2xl flex items-center gap-3 max-w-[240px]">
-              <div className="w-10 h-10 rounded-xl bg-indigo-500/15 border border-indigo-500/30 flex items-center justify-center text-indigo-400 shrink-0">
-                <CheckCircle2 className="w-5 h-5" />
-              </div>
-              <div className="space-y-0.5 text-left">
-                <div className="text-xs font-bold text-white flex items-center gap-1">
-                  <span>Ticket REP-7477</span>
-                  <span className="px-1.5 py-0.2 rounded text-[9px] bg-emerald-500/20 text-emerald-400 font-bold">READY</span>
-                </div>
-                <div className="text-[10px] text-slate-400 leading-tight">
-                  OLED Screen Fitted • WhatsApp Notified
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* THE 3D CENTERPIECE SMARTPHONE MOCKUP */}
-          <div className="relative z-10 w-[290px] sm:w-[325px] h-[580px] sm:h-[620px] bg-slate-950 rounded-[48px] p-3 border-[6px] border-slate-800/90 shadow-[0_30px_90px_rgba(0,0,0,0.8)] flex flex-col justify-between overflow-hidden">
-            
-            {/* Top Gloss Screen Reflection */}
-            <div className="absolute top-0 right-0 w-full h-1/2 bg-gradient-to-bl from-white/10 via-transparent to-transparent pointer-events-none rounded-t-[44px]" />
-
-            {/* Dynamic Island Sensor */}
-            <div className="absolute top-3.5 left-1/2 -translate-x-1/2 w-24 h-5 bg-black rounded-full flex items-center justify-end px-2 z-30">
-              <div className="w-2.5 h-2.5 rounded-full bg-slate-900 mr-1" />
-              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            </div>
-
-            {/* Smartphone Live App Screen */}
-            <div className="w-full h-full bg-slate-900/95 rounded-[38px] overflow-hidden flex flex-col justify-between pt-7 pb-3 px-3.5 text-left border border-slate-800/60 font-sans">
-              
-              {/* Header Status Bar */}
-              <div className="space-y-2 border-b border-slate-800/80 pb-2.5">
-                <div className="flex items-center justify-between text-[10px] text-slate-400 font-mono">
-                  <span>9:41</span>
-                  <span className="flex items-center gap-1 text-emerald-400 font-bold">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block animate-pulse" />
-                    LAB BAY #04
-                  </span>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="text-[11px] font-bold text-white leading-tight">Apple iPhone 13 Pro</div>
-                    <div className="text-[9px] text-slate-400 font-mono">Ticket #REP-7477</div>
-                  </div>
-                  <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-amber-500/15 text-amber-400 border border-amber-500/30">
-                    Express Fix
-                  </span>
-                </div>
-              </div>
-
-              {/* Live 4-Point Diagnostic Card Feed */}
-              <div className="space-y-1.5 my-auto">
-                <div className="text-[9px] font-bold uppercase tracking-wider text-slate-400">
-                  Hardware Diagnostic Progress
-                </div>
-
-                {/* 1. Screen Replacement */}
-                <div className="bg-slate-950/70 border border-slate-800/90 rounded-xl p-2 flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 rounded-lg bg-emerald-500/15 text-emerald-400 flex items-center justify-center text-[10px] font-black">
-                      ✓
-                    </div>
-                    <div>
-                      <div className="text-[10px] font-bold text-white leading-tight">OLED Display Fitted</div>
-                      <div className="text-[8.5px] text-slate-400">120Hz Super Retina OEM</div>
-                    </div>
-                  </div>
-                  <span className="text-[9px] font-bold text-emerald-400">Passed</span>
-                </div>
-
-                {/* 2. Battery Health */}
-                <div className="bg-slate-950/70 border border-slate-800/90 rounded-xl p-2 flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 rounded-lg bg-emerald-500/15 text-emerald-400 flex items-center justify-center text-[10px] font-black">
-                      ✓
-                    </div>
-                    <div>
-                      <div className="text-[10px] font-bold text-white leading-tight">Battery Diagnostics</div>
-                      <div className="text-[8.5px] text-slate-400">Health Restored 100%</div>
-                    </div>
-                  </div>
-                  <span className="text-[9px] font-bold text-emerald-400">100%</span>
-                </div>
-
-                {/* 3. TrueTone & FaceID */}
-                <div className="bg-slate-950/70 border border-slate-800/90 rounded-xl p-2 flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 rounded-lg bg-amber-500/15 text-amber-400 flex items-center justify-center text-[10px] font-black">
-                      ⚡
-                    </div>
-                    <div>
-                      <div className="text-[10px] font-bold text-white leading-tight">TrueTone Calibration</div>
-                      <div className="text-[8.5px] text-slate-400">EEPROM Data Transfer</div>
-                    </div>
-                  </div>
-                  <span className="text-[9px] font-bold text-amber-400">Final QC</span>
-                </div>
-
-                {/* Price & Turnaround Summary */}
-                <div className="bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20 rounded-xl p-2 flex items-center justify-between">
-                  <div>
-                    <div className="text-[9px] text-slate-400">Certified Estimate</div>
-                    <div className="text-xs font-black text-white">₹2,499 <span className="text-[9px] font-normal text-slate-400">(Zero Markup)</span></div>
-                  </div>
-                  <span className="text-[9px] font-bold text-amber-400 flex items-center gap-1">
-                    <Clock className="w-3 h-3" />
-                    Ready in 20m
-                  </span>
-                </div>
-              </div>
-
-              {/* Bottom Action Button & Home Bar */}
-              <div className="space-y-2 pt-2 border-t border-slate-800/80 text-center">
-                <Link
-                  href="/track?ticket=REP-7477"
-                  className="block w-full py-2 bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-bold text-[10px] rounded-xl transition text-center shadow-md hover:brightness-110"
-                >
-                  View Live Certificate &amp; Invoice →
-                </Link>
-                <div className="w-20 h-1 bg-slate-700/60 rounded-full mx-auto" />
-              </div>
-
-            </div>
-
-          </div>
-
-        </div>
-
-        {/* 3. FEATURED SERVICE & PRODUCT SHOWCASE CARDS (3 Interactive Cards) */}
-        <div className="space-y-4">
-          <div className="text-center space-y-1">
-            <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-              Certified Hyperlocal Hardware Services
-            </h2>
-            <p className="text-xs sm:text-sm text-slate-400">
-              Walk in within 5 minutes or schedule express doorstep pickup across verified 1–2 km partners.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            
-            {/* Card 1: Screen & Display */}
-            <div className="bento-card p-5 rounded-2xl border border-slate-800/80 bg-slate-900/60 hover:border-amber-500/40 transition space-y-3 group">
-              <div className="flex items-center justify-between">
-                <div className="w-10 h-10 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400">
-                  <Smartphone className="w-5 h-5" />
-                </div>
-                <span className="text-[11px] font-bold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20">
-                  45 Mins Fix
-                </span>
-              </div>
-              <div>
-                <h3 className="font-bold text-base text-white group-hover:text-amber-400 transition">
-                  Screen &amp; OLED Replacement
-                </h3>
-                <p className="text-xs text-slate-400 pt-1 leading-relaxed">
-                  Original high-gamut 120Hz displays with TrueTone preservation &amp; touch digitizer calibration.
-                </p>
-              </div>
-              <div className="flex items-center justify-between pt-2 border-t border-slate-800/80 text-xs">
-                <span className="text-slate-400 font-mono">From <strong className="text-white text-sm">₹1,499</strong></span>
-                <Link href="/track" className="font-bold text-amber-400 flex items-center gap-1 hover:underline">
-                  Book Diagnostic →
-                </Link>
-              </div>
-            </div>
-
-            {/* Card 2: Battery & Charging Bay */}
-            <div className="bento-card p-5 rounded-2xl border border-slate-800/80 bg-slate-900/60 hover:border-emerald-500/40 transition space-y-3 group">
-              <div className="flex items-center justify-between">
-                <div className="w-10 h-10 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
-                  <BatteryCharging className="w-5 h-5" />
-                </div>
-                <span className="text-[11px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
-                  30 Mins Fix
-                </span>
-              </div>
-              <div>
-                <h3 className="font-bold text-base text-white group-hover:text-emerald-400 transition">
-                  Battery &amp; Power Health
-                </h3>
-                <p className="text-xs text-slate-400 pt-1 leading-relaxed">
-                  Zero-cycle high-density lithium cells with surge protection. Restores battery health to 100%.
-                </p>
-              </div>
-              <div className="flex items-center justify-between pt-2 border-t border-slate-800/80 text-xs">
-                <span className="text-slate-400 font-mono">From <strong className="text-white text-sm">₹899</strong></span>
-                <Link href="/track" className="font-bold text-emerald-400 flex items-center gap-1 hover:underline">
-                  Check Health →
-                </Link>
-              </div>
-            </div>
-
-            {/* Card 3: Genuine Accessories & Fast Chargers */}
-            <div className="bento-card p-5 rounded-2xl border border-slate-800/80 bg-slate-900/60 hover:border-cyan-500/40 transition space-y-3 group">
-              <div className="flex items-center justify-between">
-                <div className="w-10 h-10 rounded-xl bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
-                  <Zap className="w-5 h-5" />
-                </div>
-                <span className="text-[11px] font-bold text-cyan-400 bg-cyan-500/10 px-2 py-0.5 rounded-full border border-cyan-500/20">
-                  In Stock Nearby
-                </span>
-              </div>
-              <div>
-                <h3 className="font-bold text-base text-white group-hover:text-cyan-400 transition">
-                  GaN 65W Chargers &amp; Armor
-                </h3>
-                <p className="text-xs text-slate-400 pt-1 leading-relaxed">
-                  Certified dual-port fast adapters, 10ft drop armor cases, and 9H privacy tempered glass protectors.
-                </p>
-              </div>
-              <div className="flex items-center justify-between pt-2 border-t border-slate-800/80 text-xs">
-                <span className="text-slate-400 font-mono">From <strong className="text-white text-sm">₹349</strong></span>
-                <Link href="/marketplace" className="font-bold text-cyan-400 flex items-center gap-1 hover:underline">
-                  Browse Store →
-                </Link>
-              </div>
-            </div>
-
-          </div>
-        </div>
-
-        {/* 4. VALUE PROPOSITION STATS STRIP */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t border-slate-900">
-          <div className="bento-card p-5 rounded-2xl text-center space-y-1">
-            <div className="text-2xl sm:text-3xl font-black text-white">1–2 km</div>
-            <div className="text-xs font-bold text-amber-400">Strict Hyperlocal Geofence</div>
-            <div className="text-[11px] text-slate-400">Guaranteed walking radius</div>
-          </div>
-
-          <div className="bento-card p-5 rounded-2xl text-center space-y-1">
-            <div className="text-2xl sm:text-3xl font-black text-white">45 Mins</div>
-            <div className="text-xs font-bold text-emerald-400">Express Diagnostics</div>
-            <div className="text-[11px] text-slate-400">Display, battery &amp; charging fix</div>
-          </div>
-
-          <div className="bento-card p-5 rounded-2xl text-center space-y-1">
-            <div className="text-2xl sm:text-3xl font-black text-white">Zero Markup</div>
-            <div className="text-xs font-bold text-cyan-400">Direct Store Prices</div>
-            <div className="text-[11px] text-slate-400">Pay directly to local shop</div>
-          </div>
-
-          <div className="bento-card p-5 rounded-2xl text-center space-y-1">
-            <div className="text-2xl sm:text-3xl font-black text-white">2% Cut</div>
-            <div className="text-xs font-bold text-rose-400">Partner Referral</div>
-            <div className="text-[11px] text-slate-400">Instant commission payout</div>
-          </div>
-        </div>
-
       </div>
+
+      {/* BENEFIT TILES (Interactive Hover Lift) */}
+      <div className="max-w-7xl mx-auto pt-6 px-2 sm:px-4">
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+          {/* Benefit 1 */}
+          <div className="p-4 rounded-2xl bg-white dark:bg-slate-900
+            border border-slate-200/80 dark:border-slate-800
+            flex items-center gap-3.5 shadow-xs
+            group hover:-translate-y-1 hover:shadow-md transition-all duration-300">
+
+            <div className="w-10 h-10 rounded-xl
+              bg-amber-500/10 border border-amber-500/20
+              text-amber-600 dark:text-amber-400
+              flex items-center justify-center shrink-0
+              group-hover:scale-110 transition-transform duration-300">
+
+              <Clock className="w-5 h-5" />
+            </div>
+
+            <div>
+              <h4 className="text-xs font-extrabold
+                text-slate-900 dark:text-white">
+                45-Min Express Diagnostics
+              </h4>
+
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                Rapid screen, battery &amp; charging IC restoration.
+              </p>
+            </div>
+          </div>
+
+          {/* Benefit 2 */}
+          <div className="p-4 rounded-2xl bg-white dark:bg-slate-900
+            border border-slate-200/80 dark:border-slate-800
+            flex items-center gap-3.5 shadow-xs
+            group hover:-translate-y-1 hover:shadow-md transition-all duration-300">
+
+            <div className="w-10 h-10 rounded-xl
+              bg-emerald-500/10 border border-emerald-500/20
+              text-emerald-600 dark:text-emerald-400
+              flex items-center justify-center shrink-0
+              group-hover:scale-110 transition-transform duration-300">
+
+              <ShieldCheck className="w-5 h-5" />
+            </div>
+
+            <div>
+              <h4 className="text-xs font-extrabold
+                text-slate-900 dark:text-white">
+                60-Day Warranty Protection
+              </h4>
+
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                100% Genuine OEM components verified by invoice.
+              </p>
+            </div>
+          </div>
+
+          {/* Benefit 3 */}
+          <div className="p-4 rounded-2xl bg-white dark:bg-slate-900
+            border border-slate-200/80 dark:border-slate-800
+            flex items-center gap-3.5 shadow-xs
+            group hover:-translate-y-1 hover:shadow-md transition-all duration-300">
+
+            <div className="w-10 h-10 rounded-xl
+              bg-blue-500/10 border border-blue-500/20
+              text-blue-600 dark:text-blue-400
+              flex items-center justify-center shrink-0
+              group-hover:scale-110 transition-transform duration-300">
+
+              <MapPin className="w-5 h-5" />
+            </div>
+
+            <div>
+              <h4 className="text-xs font-extrabold
+                text-slate-900 dark:text-white">
+                1–2 km Walking Radius
+              </h4>
+
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                Direct lab connection with no middleman markup.
+              </p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
     </section>
   );
 }

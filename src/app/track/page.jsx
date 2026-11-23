@@ -72,31 +72,31 @@ function TrackPageContent() {
       
       {/* Header */}
       <div className="text-center space-y-3">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/15 text-blue-400 text-xs font-bold border border-blue-500/30">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 dark:bg-blue-500/15 text-blue-600 dark:text-blue-400 text-xs font-bold border border-blue-500/20 dark:border-blue-500/30">
           <Smartphone className="w-3.5 h-3.5" />
           <span>Public Diagnostic &amp; Bill Portal</span>
         </div>
-        <h1 className="text-3xl sm:text-4xl font-black text-white tracking-tight">Track Device Repair Ticket</h1>
-        <p className="text-xs sm:text-sm text-slate-400 max-w-md mx-auto leading-relaxed">
+        <h1 className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tight">Track Device Repair Ticket</h1>
+        <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 max-w-md mx-auto leading-relaxed">
           Enter your repair Ticket ID (e.g. <strong>REP-1385</strong>) to view live technician diagnostic stages, assigned repair shop, and verified bills.
         </p>
       </div>
 
       {/* Search Input Box */}
-      <form onSubmit={handleTrackSubmit} className="bg-slate-900 border border-slate-800 p-3 sm:p-4 rounded-3xl flex gap-3 shadow-2xl backdrop-blur-xl">
+      <form onSubmit={handleTrackSubmit} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-3 sm:p-4 rounded-3xl flex gap-3 shadow-sm dark:shadow-2xl backdrop-blur-xl">
         <div className="relative flex-1">
           <input
             type="text"
             value={ticketInput}
             onChange={(e) => setTicketInput(e.target.value)}
             placeholder="Enter Ticket ID (e.g. REP-1385)"
-            className="w-full px-4 py-3 bg-slate-950 border border-slate-700/80 rounded-2xl text-sm font-bold text-white uppercase focus:outline-none focus:border-blue-500 font-mono tracking-wider shadow-inner"
+            className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700/80 rounded-2xl text-sm font-bold text-slate-900 dark:text-white uppercase focus:outline-none focus:border-blue-500 font-mono tracking-wider shadow-inner placeholder:text-slate-400 dark:placeholder:text-slate-600"
           />
         </div>
         <button
           type="submit"
           disabled={loading}
-          className="px-6 py-3 bg-blue-600 hover:bg-blue-500 rounded-2xl text-xs font-black flex items-center gap-2 shadow-lg shadow-blue-600/30 transition shrink-0 transform hover:-translate-y-0.5"
+          className="px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl text-xs font-black flex items-center gap-2 shadow-lg shadow-blue-600/30 transition shrink-0 transform hover:-translate-y-0.5"
         >
           <Search className="w-4 h-4" />
           <span>{loading ? 'Searching...' : 'Track Ticket'}</span>
@@ -104,24 +104,24 @@ function TrackPageContent() {
       </form>
 
       {error && (
-        <div className="bg-rose-950/60 border border-rose-800 text-rose-300 p-4 rounded-2xl text-xs animate-in fade-in">
+        <div className="bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-800 text-rose-600 dark:text-rose-300 p-4 rounded-2xl text-xs animate-in fade-in">
           ⚠️ {error}
         </div>
       )}
 
       {/* Live Ticket Card */}
       {job && (
-        <div className="bg-slate-900/90 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6 animate-in fade-in zoom-in-95">
+        <div className="bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-8 shadow-sm dark:shadow-2xl space-y-6 animate-in fade-in zoom-in-95 text-slate-900 dark:text-white">
           
           {/* Top Bar of Ticket */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-5 border-b border-slate-800 gap-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-5 border-b border-slate-100 dark:border-slate-800 gap-3">
             <div>
-              <span className="font-mono text-amber-400 font-black text-xs tracking-wider bg-amber-500/10 px-2.5 py-0.5 rounded-full border border-amber-500/20">
+              <span className="font-mono text-amber-600 dark:text-amber-400 font-black text-xs tracking-wider bg-amber-500/10 px-2.5 py-0.5 rounded-full border border-amber-500/20">
                 {job.ticket_id}
               </span>
-              <h2 className="text-xl font-black text-white mt-1.5">{job.device_brand} {job.device_model}</h2>
-              <div className="text-xs text-slate-400 mt-0.5">
-                Customer: <strong className="text-slate-200">{job.customer_name}</strong> {job.customer_phone && `(${job.customer_phone})`}
+              <h2 className="text-xl font-black text-slate-900 dark:text-white mt-1.5">{job.device_brand} {job.device_model}</h2>
+              <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                Customer: <strong className="text-slate-800 dark:text-slate-200">{job.customer_name}</strong> {job.customer_phone && `(${job.customer_phone})`}
               </div>
             </div>
 
@@ -179,13 +179,13 @@ function TrackPageContent() {
                       ? 'bg-emerald-500 text-slate-950 border-emerald-400 shadow'
                       : status === 'current'
                       ? 'bg-blue-600 text-white border-blue-400 animate-pulse'
-                      : 'bg-slate-950 text-slate-600 border-slate-800'
+                      : 'bg-slate-100 dark:bg-slate-950 text-slate-400 dark:text-slate-600 border-slate-200 dark:border-slate-800'
                   }`}>
                     <Icon className="w-3.5 h-3.5" />
                   </div>
                   <div className={`text-[10px] font-bold ${
-                    status === 'completed' ? 'text-emerald-400' :
-                    status === 'current' ? 'text-white' : 'text-slate-600'
+                    status === 'completed' ? 'text-emerald-600 dark:text-emerald-400' :
+                    status === 'current' ? 'text-slate-900 dark:text-white' : 'text-slate-400 dark:text-slate-600'
                   }`}>
                     {step.title}
                   </div>
@@ -196,15 +196,15 @@ function TrackPageContent() {
 
           {/* Diagnostic Details Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-            <div className="bg-slate-950/80 p-4 rounded-2xl border border-slate-800/80 space-y-1">
-              <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Reported Issue</div>
-              <div className="text-white font-medium">{job.problem_description}</div>
+            <div className="bg-slate-50 dark:bg-slate-950/80 p-4 rounded-2xl border border-slate-200 dark:border-slate-800/80 space-y-1">
+              <div className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Reported Issue</div>
+              <div className="text-slate-900 dark:text-white font-medium">{job.problem_description}</div>
             </div>
 
-            <div className="bg-slate-950/80 p-4 rounded-2xl border border-slate-800/80 space-y-1">
-              <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Assigned Repair Center</div>
-              <div className="text-white font-medium flex items-center gap-1.5">
-                <ShieldCheck className="w-4 h-4 text-emerald-400" />
+            <div className="bg-slate-50 dark:bg-slate-950/80 p-4 rounded-2xl border border-slate-200 dark:border-slate-800/80 space-y-1">
+              <div className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Assigned Repair Center</div>
+              <div className="text-slate-900 dark:text-white font-medium flex items-center gap-1.5">
+                <ShieldCheck className="w-4 h-4 text-emerald-500 dark:text-emerald-400" />
                 <span>{job.shop_name || 'Verified Partner Repair Center'}</span>
               </div>
             </div>
@@ -212,12 +212,12 @@ function TrackPageContent() {
 
           {/* Verified Device Intake Condition */}
           {job.notes && (
-            <div className="p-3.5 bg-slate-950/90 rounded-2xl border border-slate-800/90 text-xs space-y-1">
-              <div className="text-[10px] font-bold text-blue-400 uppercase tracking-wider flex items-center gap-1.5">
+            <div className="p-3.5 bg-slate-50 dark:bg-slate-950/90 rounded-2xl border border-slate-200 dark:border-slate-800/90 text-xs space-y-1">
+              <div className="text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider flex items-center gap-1.5">
                 <ShieldCheck className="w-3.5 h-3.5" />
                 <span>Verified Device Intake Condition</span>
               </div>
-              <div className="text-slate-300 font-mono text-[11px] leading-relaxed">
+              <div className="text-slate-700 dark:text-slate-300 font-mono text-[11px] leading-relaxed">
                 {job.notes}
               </div>
             </div>
@@ -225,9 +225,9 @@ function TrackPageContent() {
 
           {/* Verified Device Intake Condition Photos */}
           {getRepairJobImages(job).length > 0 && (
-            <div className="p-4 bg-slate-950/90 rounded-2xl border border-slate-800 space-y-3">
+            <div className="p-4 bg-slate-50 dark:bg-slate-950/90 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-3">
               <div className="flex items-center justify-between text-xs">
-                <div className="text-[11px] font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+                <div className="text-[11px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
                   <Camera className="w-4 h-4" />
                   <span>Verified Device Intake Photos ({getRepairJobImages(job).length})</span>
                 </div>
@@ -242,7 +242,7 @@ function TrackPageContent() {
                       setLightboxImages(getRepairJobImages(job));
                       setLightboxTitle(`${job.ticket_id} • Intake Photo ${idx + 1}`);
                     }}
-                    className="relative group aspect-square rounded-xl overflow-hidden border border-slate-700 hover:border-amber-400 bg-slate-900 shadow-md transition"
+                    className="relative group aspect-square rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 hover:border-amber-400 bg-slate-100 dark:bg-slate-900 shadow-xs transition"
                   >
                     <img
                       src={photoUrl}
@@ -261,18 +261,18 @@ function TrackPageContent() {
           )}
 
           {/* Bill Summary Banner */}
-          <div className="bg-gradient-to-r from-slate-950 to-slate-900 p-5 rounded-2xl border border-slate-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div className="bg-slate-50 dark:bg-gradient-to-r dark:from-slate-950 dark:to-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
-              <div className="text-xs text-slate-400">Total Bill Amount</div>
-              <div className="text-2xl font-black text-white mt-0.5">
+              <div className="text-xs text-slate-500 dark:text-slate-400">Total Bill Amount</div>
+              <div className="text-2xl font-black text-slate-900 dark:text-white mt-0.5">
                 {job.final_amount ? `₹${Number(job.final_amount).toLocaleString('en-IN')}` : (job.estimated_cost ? `₹${job.estimated_cost} (estimate)` : 'Diagnostics in progress')}
               </div>
               <div className="text-[11px] text-slate-500 mt-0.5">Includes genuine parts and technician labor</div>
             </div>
 
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 self-start sm:self-auto">
-              <div className="text-xs text-slate-400 bg-slate-950 px-3 py-2 rounded-xl border border-slate-800">
-                Referred via: <strong className="text-emerald-400">{job.seller_name || 'Partner Accessory Store'}</strong>
+              <div className="text-xs text-slate-600 dark:text-slate-400 bg-white dark:bg-slate-950 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800">
+                Referred via: <strong className="text-emerald-600 dark:text-emerald-400">{job.seller_name || 'Partner Accessory Store'}</strong>
               </div>
 
               {job.status === 'COMPLETED' && (
@@ -290,20 +290,20 @@ function TrackPageContent() {
 
           {/* Warranty & Guarantee Callout Banner */}
           {job.status === 'COMPLETED' && (
-            <div className="p-4 rounded-2xl bg-gradient-to-r from-emerald-950/30 to-purple-950/30 border border-emerald-500/30 flex items-center justify-between gap-3 text-xs">
+            <div className="p-4 rounded-2xl bg-emerald-500/10 dark:bg-gradient-to-r dark:from-emerald-950/30 dark:to-purple-950/30 border border-emerald-500/30 flex items-center justify-between gap-3 text-xs">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
+                <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
                   <ShieldCheck className="w-5 h-5" />
                 </div>
                 <div>
-                  <div className="font-bold text-white">SmartFix 60-Day Protection Active</div>
-                  <div className="text-slate-400 text-[11px]">Free component defect replacement valid for 60 days from completion.</div>
+                  <div className="font-bold text-slate-900 dark:text-white">SmartFix 60-Day Protection Active</div>
+                  <div className="text-slate-600 dark:text-slate-400 text-[11px]">Free component defect replacement valid for 60 days from completion.</div>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setIsInvoiceOpen(true)}
-                className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-emerald-300 font-bold rounded-xl text-[11px] shrink-0 border border-slate-700 transition"
+                className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-[11px] shrink-0 border border-emerald-600 transition"
               >
                 Verify Certificate
               </button>
@@ -333,7 +333,7 @@ function TrackPageContent() {
 
 export default function TrackPage() {
   return (
-    <div className="min-h-screen bg-slate-950 text-white flex flex-col font-sans">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white flex flex-col font-sans transition-colors duration-200">
       <Navbar />
       <Suspense fallback={
         <div className="flex-1 flex items-center justify-center p-12">

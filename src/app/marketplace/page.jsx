@@ -158,27 +158,27 @@ export default function MarketplacePage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-amber-500 selection:text-slate-950">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col font-sans selection:bg-amber-500 selection:text-slate-950 transition-colors duration-200">
 
       {/* Top Navbar */}
       <Navbar />
 
       {/* Hero Header */}
-      <section className="bg-gradient-to-b from-slate-900 to-slate-950 border-b border-slate-800 py-10 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+      <section className="bg-slate-100/70 dark:bg-gradient-to-b dark:from-slate-900 dark:to-slate-950 border-b border-slate-200 dark:border-slate-800 py-10 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
         <div className="absolute top-0 right-1/4 w-96 h-96 bg-amber-500/10 blur-3xl pointer-events-none rounded-full" />
         <div className="absolute bottom-0 left-1/4 w-80 h-80 bg-emerald-500/10 blur-3xl pointer-events-none rounded-full" />
 
         <div className="max-w-7xl mx-auto space-y-6 relative z-10">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
             <div>
-              <div className="inline-flex items-center space-x-2 bg-slate-800/80 border border-slate-700 px-3 py-1 rounded-full text-xs font-semibold text-amber-400 mb-3">
+              <div className="inline-flex items-center space-x-2 bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 px-3 py-1 rounded-full text-xs font-semibold text-amber-600 dark:text-amber-400 mb-3 shadow-xs">
                 <Sparkles className="w-3.5 h-3.5" />
                 <span>Hyperlocal Mobile Accessories &amp; Hardware</span>
               </div>
-              <h1 className="text-3xl sm:text-4xl font-black text-white tracking-tight">
+              <h1 className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tight">
                 Products Catalog
               </h1>
-              <p className="text-sm text-slate-400 max-w-2xl mt-1.5 leading-relaxed">
+              <p className="text-sm text-slate-600 dark:text-slate-400 max-w-2xl mt-1.5 leading-relaxed">
                 Explore certified accessories, chargers, protectors, and gear uploaded by verified local accessory sellers and repair shops.
               </p>
             </div>
@@ -198,7 +198,7 @@ export default function MarketplacePage() {
           </div>
 
           {/* Search and Filters Bar */}
-          <div className="pt-2 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 border-t border-slate-800/80">
+          <div className="pt-2 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 border-t border-slate-200 dark:border-slate-800/80">
             {/* Search Input */}
             <div className="relative flex-1 max-w-md">
               <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
@@ -207,19 +207,19 @@ export default function MarketplacePage() {
                 placeholder="Search products by title, brand, model..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500 transition shadow-inner"
+                className="w-full pl-10 pr-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-amber-500 transition shadow-xs"
               />
             </div>
 
             {/* Uploader Role Filter */}
             <div className="flex items-center space-x-2 text-xs">
               <span className="text-slate-500 font-bold hidden sm:inline">Source:</span>
-              <div className="inline-flex p-1 bg-slate-900 border border-slate-800 rounded-xl">
+              <div className="inline-flex p-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xs">
                 <button
                   onClick={() => setUploaderFilter('ALL')}
                   className={`px-3 py-1 rounded-lg font-bold text-xs transition ${uploaderFilter === 'ALL'
-                    ? 'bg-slate-800 text-white shadow'
-                    : 'text-slate-400 hover:text-white'
+                    ? 'bg-slate-900 text-white dark:bg-slate-800 dark:text-white shadow'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-950 dark:hover:text-white'
                     }`}
                 >
                   All
@@ -228,7 +228,7 @@ export default function MarketplacePage() {
                   onClick={() => setUploaderFilter('SELLER')}
                   className={`px-3 py-1 rounded-lg font-bold text-xs transition flex items-center gap-1 ${uploaderFilter === 'SELLER'
                     ? 'bg-emerald-600 text-white shadow'
-                    : 'text-slate-400 hover:text-emerald-400'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-emerald-500'
                     }`}
                 >
                   <Store className="w-3 h-3" />
@@ -238,7 +238,7 @@ export default function MarketplacePage() {
                   onClick={() => setUploaderFilter('ADMIN')}
                   className={`px-3 py-1 rounded-lg font-bold text-xs transition flex items-center gap-1 ${uploaderFilter === 'ADMIN'
                     ? 'bg-amber-600 text-white shadow'
-                    : 'text-slate-400 hover:text-amber-400'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-amber-500'
                     }`}
                 >
                   <Wrench className="w-3 h-3" />
@@ -260,7 +260,7 @@ export default function MarketplacePage() {
                 onClick={() => setSelectedCategory(cat)}
                 className={`px-3.5 py-1.5 rounded-xl font-bold whitespace-nowrap transition-all ${selectedCategory === cat
                   ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
-                  : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800 hover:border-slate-700'
+                  : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-400 hover:text-slate-950 dark:hover:text-white border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 shadow-xs'
                   }`}
               >
                 {cat}
@@ -275,12 +275,12 @@ export default function MarketplacePage() {
 
         {/* PRODUCTS GRID */}
         <section className="space-y-6 animate-in fade-in duration-300">
-          <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+          <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-800">
             <div className="flex items-center space-x-2">
-              <ShoppingBag className="w-5 h-5 text-emerald-400" />
-              <h2 className="text-lg font-black text-white">Available Mobile Accessories &amp; Devices</h2>
+              <ShoppingBag className="w-5 h-5 text-emerald-500 dark:text-emerald-400" />
+              <h2 className="text-lg font-black text-slate-900 dark:text-white">Available Mobile Accessories &amp; Devices</h2>
             </div>
-            <span className="text-xs text-slate-400">{filteredProducts.length} Items Listed</span>
+            <span className="text-xs text-slate-500 dark:text-slate-400">{filteredProducts.length} Items Listed</span>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
@@ -292,11 +292,11 @@ export default function MarketplacePage() {
               return (
                 <div
                   key={prod.id}
-                  className="bg-slate-900 border border-slate-800 hover:border-slate-700 rounded-3xl p-4 shadow-xl flex flex-col justify-between group transition hover:-translate-y-1 relative overflow-hidden"
+                  className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 rounded-3xl p-4 shadow-xs dark:shadow-xl flex flex-col justify-between group transition hover:-translate-y-1 relative overflow-hidden"
                 >
                   <div className="space-y-3">
                     {/* Product Image Frame */}
-                    <div className="relative w-full aspect-square rounded-2xl overflow-hidden bg-slate-950 border border-slate-800/80 group-hover:border-slate-700 transition">
+                    <div className="relative w-full aspect-square rounded-2xl overflow-hidden bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800/80 group-hover:border-slate-300 dark:group-hover:border-slate-700 transition">
                       <Link href={`/products/${prod.id}`} className="block w-full h-full relative">
                         <img
                           src={coverImg}
@@ -304,32 +304,32 @@ export default function MarketplacePage() {
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                           loading="lazy"
                         />
-                        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent opacity-60" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/40 dark:from-slate-950/80 via-transparent to-transparent opacity-60" />
                       </Link>
 
                       {/* Stock Pill */}
                       {prod.stock != null && (
-                        <span className="absolute top-2.5 right-2.5 px-2.5 py-0.5 rounded-full text-[10px] font-black bg-slate-950/90 text-emerald-400 border border-emerald-500/30 backdrop-blur-md shadow-md">
+                        <span className="absolute top-2.5 right-2.5 px-2.5 py-0.5 rounded-full text-[10px] font-black bg-white/90 dark:bg-slate-950/90 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 backdrop-blur-md shadow-xs">
                           {prod.stock > 0 ? `${prod.stock} in stock` : 'Out of stock'}
                         </span>
                       )}
 
                       {/* Multi-image photo count badge */}
                       {prodImages.length > 1 && (
-                        <span className="absolute bottom-2.5 right-2.5 px-2 py-0.5 rounded-full text-[10px] font-black bg-slate-950/90 text-slate-200 border border-slate-700 backdrop-blur-md shadow flex items-center gap-1">
+                        <span className="absolute bottom-2.5 right-2.5 px-2 py-0.5 rounded-full text-[10px] font-black bg-white/90 dark:bg-slate-950/90 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 backdrop-blur-md shadow-xs flex items-center gap-1">
                           <span>📷 {prodImages.length}</span>
                         </span>
                       )}
                     </div>
 
                     <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                      <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                         {prod.category}
                       </span>
                       <span
                         className={`text-[9px] font-extrabold px-2 py-0.5 rounded-full border ${isAdmin
-                          ? 'bg-amber-500/10 text-amber-300 border-amber-500/30'
-                          : 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30'
+                          ? 'bg-amber-500/10 text-amber-600 dark:text-amber-300 border-amber-500/30'
+                          : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-300 border-emerald-500/30'
                           }`}
                       >
                         {isAdmin ? 'Workshop' : 'Store'}
@@ -337,33 +337,33 @@ export default function MarketplacePage() {
                     </div>
 
                     <div>
-                      <div className="text-[11px] font-extrabold text-amber-400">{prod.brand}</div>
+                      <div className="text-[11px] font-extrabold text-amber-600 dark:text-amber-400">{prod.brand}</div>
                       <Link href={`/products/${prod.id}`} className="block hover:underline">
-                        <h3 className="font-extrabold text-white text-sm line-clamp-2 mt-0.5 group-hover:text-emerald-400 transition">
+                        <h3 className="font-extrabold text-slate-900 dark:text-white text-sm line-clamp-2 mt-0.5 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition">
                           {prod.name}
                         </h3>
                       </Link>
                     </div>
 
                     <div className="flex items-baseline space-x-2 pt-1">
-                      <span className="text-xl font-black text-white">
+                      <span className="text-xl font-black text-slate-900 dark:text-white">
                         ₹{Number(prod.price || 0).toLocaleString('en-IN')}
                       </span>
-                      <span className="text-xs text-slate-500 line-through">
+                      <span className="text-xs text-slate-400 dark:text-slate-500 line-through">
                         ₹{Math.round(Number(prod.price || 0) * 1.25).toLocaleString('en-IN')}
                       </span>
                     </div>
 
                     {prod.description && (
-                      <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed">
+                      <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">
                         {prod.description}
                       </p>
                     )}
                   </div>
 
-                  <div className="pt-4 mt-4 border-t border-slate-800 flex flex-wrap items-center justify-between text-xs gap-2">
-                    <div className="flex items-center space-x-1.5 text-slate-400">
-                      <span className="truncate max-w-[120px] text-[11px] text-slate-400">
+                  <div className="pt-4 mt-4 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between text-xs gap-2">
+                    <div className="flex items-center space-x-1.5 text-slate-500 dark:text-slate-400">
+                      <span className="truncate max-w-[120px] text-[11px]">
                         {prod.uploader_name || 'Verified Store'}
                       </span>
                     </div>
@@ -380,7 +380,7 @@ export default function MarketplacePage() {
                         })}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="px-2.5 py-1.5 bg-[#25D366]/20 hover:bg-[#25D366] text-[#25D366] hover:text-slate-950 font-bold rounded-xl text-xs transition flex items-center gap-1 border border-[#25D366]/30 shadow-sm"
+                        className="px-2.5 py-1.5 bg-[#25D366]/20 hover:bg-[#25D366] text-[#25D366] hover:text-slate-950 font-bold rounded-xl text-xs transition flex items-center gap-1 border border-[#25D366]/30 shadow-xs"
                         title="Inquire on WhatsApp"
                       >
                         <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
@@ -392,7 +392,7 @@ export default function MarketplacePage() {
                       {/* View Details Link */}
                       <Link
                         href={`/products/${prod.id}`}
-                        className="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold rounded-xl text-xs transition flex items-center gap-1"
+                        className="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-bold rounded-xl text-xs transition flex items-center gap-1 border border-slate-200 dark:border-slate-700"
                       >
                         <span>Details</span>
                         <ArrowRight className="w-3 h-3" />

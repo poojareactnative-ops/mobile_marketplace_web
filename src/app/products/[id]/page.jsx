@@ -76,14 +76,14 @@ export default function ProductDetailPage() {
 
   if (!product) {
     return (
-      <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans">
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col font-sans transition-colors duration-200">
         <Navbar />
         <div className="flex-1 max-w-xl mx-auto px-4 py-20 text-center space-y-4">
-          <div className="w-16 h-16 rounded-3xl bg-slate-900 border border-slate-800 text-slate-500 flex items-center justify-center mx-auto">
-            <ShoppingBag className="w-8 h-8 text-slate-600" />
+          <div className="w-16 h-16 rounded-3xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-400 dark:text-slate-500 flex items-center justify-center mx-auto">
+            <ShoppingBag className="w-8 h-8 text-slate-400 dark:text-slate-600" />
           </div>
-          <h2 className="text-xl font-black text-white">Product Not Found</h2>
-          <p className="text-xs text-slate-400">
+          <h2 className="text-xl font-black text-slate-900 dark:text-white">Product Not Found</h2>
+          <p className="text-xs text-slate-500 dark:text-slate-400">
             This item may have been sold out or unlisted by the partner store.
           </p>
           <div className="pt-2">
@@ -114,41 +114,40 @@ export default function ProductDetailPage() {
     price: product.price,
     shopName: cleanSellerName,
     brand: product.brand,
-
   });
 
   const estimatedMrp = Math.round(Number(product.price || 0) * 1.3);
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-amber-500 selection:text-slate-950">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col font-sans selection:bg-amber-500 selection:text-slate-950 transition-colors duration-200">
       <Navbar />
 
       <main className="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-10 flex-1">
 
         {/* Top Breadcrumb & Navigation */}
         <div className="flex items-center justify-between gap-3 text-xs">
-          <div className="flex items-center gap-2 text-slate-400 truncate">
-            <Link href="/" className="hover:text-white transition">Home</Link>
-            <ChevronRight className="w-3.5 h-3.5 text-slate-600 shrink-0" />
-            <Link href="/#marketplace" className="hover:text-white transition">Marketplace</Link>
-            <ChevronRight className="w-3.5 h-3.5 text-slate-600 shrink-0" />
-            <span className="text-amber-400 font-semibold">{product.category || 'Accessories'}</span>
-            <ChevronRight className="w-3.5 h-3.5 text-slate-600 shrink-0 hidden sm:inline" />
-            <span className="text-slate-200 truncate hidden sm:inline">{product.name}</span>
+          <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 truncate">
+            <Link href="/" className="hover:text-slate-900 dark:hover:text-white transition">Home</Link>
+            <ChevronRight className="w-3.5 h-3.5 text-slate-400 dark:text-slate-600 shrink-0" />
+            <Link href="/#marketplace" className="hover:text-slate-900 dark:hover:text-white transition">Marketplace</Link>
+            <ChevronRight className="w-3.5 h-3.5 text-slate-400 dark:text-slate-600 shrink-0" />
+            <span className="text-amber-600 dark:text-amber-400 font-semibold">{product.category || 'Accessories'}</span>
+            <ChevronRight className="w-3.5 h-3.5 text-slate-400 dark:text-slate-600 shrink-0 hidden sm:inline" />
+            <span className="text-slate-800 dark:text-slate-200 truncate hidden sm:inline">{product.name}</span>
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
             <button
               type="button"
               onClick={handleShare}
-              className="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white text-xs font-semibold flex items-center gap-1.5 transition"
+              className="px-3 py-1.5 rounded-xl bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white text-xs font-semibold flex items-center gap-1.5 transition shadow-xs"
             >
               <Share2 className="w-3.5 h-3.5" />
               <span>{copied ? 'Link Copied!' : 'Share'}</span>
             </button>
             <Link
               href="/#marketplace"
-              className="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white text-xs font-semibold flex items-center gap-1.5 transition"
+              className="px-3 py-1.5 rounded-xl bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white text-xs font-semibold flex items-center gap-1.5 transition shadow-xs"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Back</span>
@@ -167,7 +166,7 @@ export default function ProductDetailPage() {
               return (
                 <div className="space-y-3">
                   {/* Main Featured Photo */}
-                  <div className="relative aspect-[4/3] w-full rounded-3xl overflow-hidden border border-slate-800/90 bg-slate-900/60 shadow-2xl group">
+                  <div className="relative aspect-[4/3] w-full rounded-3xl overflow-hidden border border-slate-200 dark:border-slate-800/90 bg-white dark:bg-slate-900/60 shadow-lg dark:shadow-2xl group">
                     <img
                       src={currentImage}
                       alt={`${product.name} - Photo ${activeImageIndex + 1}`}
@@ -176,11 +175,11 @@ export default function ProductDetailPage() {
 
                     {/* Top Badges */}
                     <div className="absolute top-4 left-4 flex flex-col gap-2">
-                      <span className="px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-wider bg-slate-950/80 backdrop-blur-md text-amber-400 border border-amber-500/30 shadow-lg">
+                      <span className="px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-wider bg-white/90 dark:bg-slate-950/80 backdrop-blur-md text-amber-600 dark:text-amber-400 border border-slate-200 dark:border-amber-500/30 shadow-sm dark:shadow-lg">
                         {product.category || 'Accessories'}
                       </span>
                       {product.brand && (
-                        <span className="px-3 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-slate-950/80 backdrop-blur-md text-slate-300 border border-slate-700 w-fit">
+                        <span className="px-3 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-white/90 dark:bg-slate-950/80 backdrop-blur-md text-slate-800 dark:text-slate-300 border border-slate-200 dark:border-slate-700 w-fit shadow-xs">
                           Brand: {product.brand}
                         </span>
                       )}
@@ -189,7 +188,7 @@ export default function ProductDetailPage() {
                     {/* Photo Counter */}
                     {allImages.length > 1 && (
                       <div className="absolute bottom-4 left-4">
-                        <span className="px-3 py-1 rounded-full text-xs font-bold bg-slate-950/85 backdrop-blur-md text-slate-200 border border-slate-700 shadow-lg">
+                        <span className="px-3 py-1 rounded-full text-xs font-bold bg-white/90 dark:bg-slate-950/85 backdrop-blur-md text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 shadow-sm dark:shadow-lg">
                           Photo {activeImageIndex + 1} of {allImages.length}
                         </span>
                       </div>
@@ -197,7 +196,7 @@ export default function ProductDetailPage() {
 
                     {/* Verified Genuine Badge */}
                     <div className="absolute bottom-4 right-4">
-                      <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/90 text-slate-950 flex items-center gap-1.5 shadow-xl backdrop-blur-md">
+                      <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-500 text-slate-950 flex items-center gap-1.5 shadow-xl backdrop-blur-md">
                         <CheckCircle2 className="w-3.5 h-3.5" />
                         <span>Verified Genuine Product</span>
                       </span>
@@ -215,8 +214,8 @@ export default function ProductDetailPage() {
                             type="button"
                             onClick={() => setActiveImageIndex(idx)}
                             className={`relative w-20 h-20 rounded-2xl overflow-hidden border-2 transition-all shrink-0 ${isSelected
-                                ? 'border-amber-400 ring-2 ring-amber-400/40 shadow-lg scale-105'
-                                : 'border-slate-800 hover:border-slate-600 opacity-60 hover:opacity-100'
+                                ? 'border-amber-500 ring-2 ring-amber-500/40 shadow-lg scale-105'
+                                : 'border-slate-200 dark:border-slate-800 hover:border-slate-400 dark:hover:border-slate-600 opacity-70 hover:opacity-100'
                               }`}
                             title={`View image ${idx + 1}`}
                           >
@@ -226,7 +225,7 @@ export default function ProductDetailPage() {
                               className="w-full h-full object-cover"
                             />
                             {isSelected && (
-                              <span className="absolute bottom-1 right-1 w-2.5 h-2.5 rounded-full bg-amber-400 ring-1 ring-slate-950" />
+                              <span className="absolute bottom-1 right-1 w-2.5 h-2.5 rounded-full bg-amber-500 ring-1 ring-white dark:ring-slate-950" />
                             )}
                           </button>
                         );
@@ -245,40 +244,40 @@ export default function ProductDetailPage() {
             {/* Title & Brand */}
             <div className="space-y-2">
               {product.brand && (
-                <div className="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+                <div className="text-xs font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
                   <Sparkles className="w-3.5 h-3.5" />
                   <span>{product.brand} Official Accessory</span>
                 </div>
               )}
-              <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight leading-snug">
+              <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight leading-snug">
                 {product.name}
               </h1>
-              <p className="text-xs text-slate-400 leading-relaxed">
+              <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
                 {product.description || `Original high-grade mobile accessory backed by local partner store warranty. Available for immediate walk-in purchase or hyperlocal home delivery.`}
               </p>
             </div>
 
             {/* Price Box */}
-            <div className="p-5 rounded-3xl bg-gradient-to-br from-slate-900 to-slate-950 border border-slate-800 space-y-3 shadow-xl">
+            <div className="p-5 rounded-3xl bg-white dark:bg-gradient-to-br dark:from-slate-900 dark:to-slate-950 border border-slate-200 dark:border-slate-800 space-y-3 shadow-sm dark:shadow-xl">
               <div className="flex items-baseline gap-3">
-                <span className="text-3xl sm:text-4xl font-black text-white">
+                <span className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white">
                   ₹{Number(product.price || 0).toLocaleString('en-IN')}
                 </span>
-                <span className="text-sm text-slate-500 line-through">
+                <span className="text-sm text-slate-400 dark:text-slate-500 line-through">
                   ₹{estimatedMrp.toLocaleString('en-IN')}
                 </span>
-                <span className="text-xs font-extrabold px-2 py-0.5 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                <span className="text-xs font-extrabold px-2 py-0.5 rounded-lg bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
                   Save ₹{(estimatedMrp - Number(product.price || 0)).toLocaleString('en-IN')}
                 </span>
               </div>
 
-              <div className="flex items-center gap-3 text-xs pt-1 border-t border-slate-800/80 text-slate-400">
-                <div className="flex items-center gap-1.5 text-emerald-400 font-bold">
+              <div className="flex items-center gap-3 text-xs pt-1 border-t border-slate-100 dark:border-slate-800/80 text-slate-500 dark:text-slate-400">
+                <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-bold">
                   <CheckCircle2 className="w-4 h-4" />
                   <span>In Stock: {product.stock || 12} units</span>
                 </div>
                 <span>&bull;</span>
-                <span className="text-slate-400">Inclusive of all local taxes</span>
+                <span className="text-slate-500 dark:text-slate-400">Inclusive of all local taxes</span>
               </div>
             </div>
 
@@ -302,21 +301,21 @@ export default function ProductDetailPage() {
             </div>
 
             {/* Verified Seller Store Card */}
-            <div className="p-4 rounded-3xl bg-slate-900/90 border border-slate-800 space-y-3">
+            <div className="p-4 rounded-3xl bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 space-y-3 shadow-xs">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 font-bold text-white text-sm">
-                  <Store className="w-4 h-4 text-emerald-400" />
+                <div className="flex items-center gap-2 font-bold text-slate-900 dark:text-white text-sm">
+                  <Store className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                   <span>{cleanSellerName}</span>
                 </div>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-300 border border-emerald-500/30">
                   Verified Seller Store
                 </span>
               </div>
 
-              <div className="space-y-1.5 text-xs text-slate-400">
+              <div className="space-y-1.5 text-xs text-slate-500 dark:text-slate-400">
                 <div className="flex items-center gap-1.5">
-                  <Phone className="w-3.5 h-3.5 text-slate-500 shrink-0" />
-                  <span className="font-mono text-slate-300">{sellerPhone}</span>
+                  <Phone className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500 shrink-0" />
+                  <span className="font-mono text-slate-700 dark:text-slate-300">{sellerPhone}</span>
                 </div>
               </div>
             </div>
@@ -326,15 +325,15 @@ export default function ProductDetailPage() {
 
         {/* Related Products from this Category */}
         {relatedProducts.length > 0 && (
-          <div className="pt-8 border-t border-slate-800 space-y-4">
+          <div className="pt-8 border-t border-slate-200 dark:border-slate-800 space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-base font-extrabold text-white">More in {product.category || 'Accessories'}</h3>
-                <p className="text-xs text-slate-400 mt-0.5">Explore more products from verified nearby sellers</p>
+                <h3 className="text-base font-extrabold text-slate-900 dark:text-white">More in {product.category || 'Accessories'}</h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Explore more products from verified nearby sellers</p>
               </div>
               <Link
                 href="/#marketplace"
-                className="text-xs font-bold text-amber-400 hover:text-amber-300 flex items-center gap-1"
+                className="text-xs font-bold text-amber-600 dark:text-amber-400 hover:text-amber-500 flex items-center gap-1"
               >
                 <span>View All</span>
                 <ChevronRight className="w-3.5 h-3.5" />
@@ -348,22 +347,22 @@ export default function ProductDetailPage() {
                   <Link
                     key={rel.id}
                     href={`/products/${rel.id}`}
-                    className="p-3 rounded-2xl bg-slate-900 border border-slate-800 hover:border-slate-700 transition flex flex-col justify-between group"
+                    className="p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 transition flex flex-col justify-between group shadow-xs"
                   >
                     <div className="space-y-2">
-                      <div className="aspect-[4/3] rounded-xl overflow-hidden bg-slate-950">
+                      <div className="aspect-[4/3] rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-950">
                         <img
                           src={relImg}
                           alt={rel.name}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                         />
                       </div>
-                      <div className="text-[10px] font-bold text-amber-400 truncate">{rel.brand || rel.category}</div>
-                      <h4 className="font-bold text-xs text-white truncate group-hover:text-amber-300 transition">
+                      <div className="text-[10px] font-bold text-amber-600 dark:text-amber-400 truncate">{rel.brand || rel.category}</div>
+                      <h4 className="font-bold text-xs text-slate-900 dark:text-white truncate group-hover:text-amber-600 dark:group-hover:text-amber-300 transition">
                         {rel.name}
                       </h4>
                     </div>
-                    <div className="pt-2 font-black text-sm text-white">
+                    <div className="pt-2 font-black text-sm text-slate-900 dark:text-white">
                       ₹{Number(rel.price || 0).toLocaleString('en-IN')}
                     </div>
                   </Link>

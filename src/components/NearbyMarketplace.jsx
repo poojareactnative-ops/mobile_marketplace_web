@@ -185,7 +185,7 @@ export default function NearbyMarketplace() {
   }, [filteredItems]);
 
   return (
-    <section id="nearby" className="py-20 px-4 sm:px-6 lg:px-8 border-b border-slate-800/80 bg-slate-950 relative overflow-hidden">
+    <section id="nearby" className="py-20 px-4 sm:px-6 lg:px-8 border-b border-slate-200 dark:border-slate-800/80 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white relative overflow-hidden transition-colors duration-200">
 
       {/* Ambient background glows */}
       <div className="absolute top-1/2 left-0 w-96 h-96 bg-amber-500/10 blur-[130px] pointer-events-none rounded-full" />
@@ -196,54 +196,54 @@ export default function NearbyMarketplace() {
         {/* 1. SECTION HEADER */}
         <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
           <div className="space-y-3 max-w-3xl">
-            <div className="inline-flex items-center space-x-2 bg-slate-900 border border-slate-800 px-3.5 py-1 rounded-full text-xs font-semibold text-slate-300 shadow-md">
-              <Compass className="w-3.5 h-3.5 text-amber-400 animate-spin" style={{ animationDuration: '8s' }} />
-              <span className="bg-gradient-to-r from-amber-400 to-emerald-400 bg-clip-text text-transparent font-bold">
+            <div className="inline-flex items-center space-x-2 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-3.5 py-1 rounded-full text-xs font-semibold text-slate-700 dark:text-slate-300 shadow-xs dark:shadow-md">
+              <Compass className="w-3.5 h-3.5 text-amber-500 dark:text-amber-400 animate-spin" style={{ animationDuration: '8s' }} />
+              <span className="bg-gradient-to-r from-amber-600 to-emerald-600 dark:from-amber-400 dark:to-emerald-400 bg-clip-text text-transparent font-bold">
                 Nearby Products &amp; Stores (1–2 km Radius)
               </span>
             </div>
 
-            <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tight">
+            <h2 className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tight">
               Hyperlocal Mobile Marketplace
             </h2>
 
-            <p className="text-sm text-slate-400 leading-relaxed">
+            <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
               Explore genuine smartphone accessories, cables, chargers, and protectors from verified neighborhood shops strictly within{' '}
-              <strong className="text-white underline decoration-amber-500 decoration-2 underline-offset-4">
+              <strong className="text-slate-900 dark:text-white underline decoration-amber-500 decoration-2 underline-offset-4">
                 1–2 km of your location
               </strong>.
             </p>
           </div>
 
           {/* Quick metric pill */}
-          <div className="flex items-center gap-3 bg-slate-900/80 border border-slate-800 p-3 rounded-2xl shrink-0 backdrop-blur-md">
-            <div className="text-center px-4 border-r border-slate-800">
-              <div className="text-xl font-black text-emerald-400">{filteredItems.length}</div>
-              <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Products</div>
+          <div className="flex items-center gap-3 bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 p-3 rounded-2xl shrink-0 backdrop-blur-md shadow-xs dark:shadow-lg">
+            <div className="text-center px-4 border-r border-slate-200 dark:border-slate-800">
+              <div className="text-xl font-black text-emerald-600 dark:text-emerald-400">{filteredItems.length}</div>
+              <div className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Products</div>
             </div>
-            <div className="text-center px-4 border-r border-slate-800">
-              <div className="text-xl font-black text-amber-400">{uniqueShopsCount}</div>
-              <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Local Stores</div>
+            <div className="text-center px-4 border-r border-slate-200 dark:border-slate-800">
+              <div className="text-xl font-black text-amber-500 dark:text-amber-400">{uniqueShopsCount}</div>
+              <div className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Local Stores</div>
             </div>
             <div className="text-center px-4">
-              <div className="text-xl font-black text-white">{radiusKm} km</div>
-              <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Radius Limit</div>
+              <div className="text-xl font-black text-slate-900 dark:text-white">{radiusKm} km</div>
+              <div className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Radius Limit</div>
             </div>
           </div>
         </div>
 
         {/* 2. GEOFENCE RADIAL CONTROLS BAR */}
-        <div className="bg-slate-900/90 border border-slate-800 rounded-3xl p-5 sm:p-6 backdrop-blur-xl space-y-5 shadow-2xl">
+        <div className="bg-white dark:bg-slate-900/90 border border-slate-200/90 dark:border-slate-800 rounded-3xl p-5 sm:p-6 backdrop-blur-xl space-y-5 shadow-sm dark:shadow-2xl">
           <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
 
             {/* GPS Location Status Pill */}
-            <div className="md:col-span-4 flex items-center space-x-3 bg-slate-950 p-2.5 rounded-2xl border border-slate-800">
-              <div className="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">
+            <div className="md:col-span-4 flex items-center space-x-3 bg-slate-50 dark:bg-slate-950 p-2.5 rounded-2xl border border-slate-200 dark:border-slate-800">
+              <div className="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-500 dark:text-amber-400 shrink-0">
                 <MapPin className="w-4 h-4" />
               </div>
               <div className="truncate text-xs">
-                <div className="font-extrabold text-white truncate">{userAddress}</div>
-                <div className="text-[10px] text-slate-400">GPS Coordinates: {userCoords.lat.toFixed(3)}, {userCoords.lng.toFixed(3)}</div>
+                <div className="font-extrabold text-slate-900 dark:text-white truncate">{userAddress}</div>
+                <div className="text-[10px] text-slate-500 dark:text-slate-400">GPS Coordinates: {userCoords.lat.toFixed(3)}, {userCoords.lng.toFixed(3)}</div>
               </div>
             </div>
 
@@ -253,16 +253,16 @@ export default function NearbyMarketplace() {
                 type="button"
                 onClick={handleDetectLiveLocation}
                 disabled={gpsLoading}
-                className="w-full py-2.5 px-4 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white font-extrabold rounded-2xl text-xs transition flex items-center justify-center space-x-2 border border-slate-700 disabled:opacity-50 shadow-md"
+                className="w-full py-2.5 px-4 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 hover:text-slate-950 dark:hover:text-white font-extrabold rounded-2xl text-xs transition flex items-center justify-center space-x-2 border border-slate-200 dark:border-slate-700 disabled:opacity-50 shadow-xs"
               >
-                <Navigation className={`w-3.5 h-3.5 text-amber-400 ${gpsLoading ? 'animate-spin' : ''}`} />
+                <Navigation className={`w-3.5 h-3.5 text-amber-500 dark:text-amber-400 ${gpsLoading ? 'animate-spin' : ''}`} />
                 <span>{gpsLoading ? 'Locating...' : 'Use My Live GPS'}</span>
               </button>
             </div>
 
             {/* Strict Radius Switcher */}
-            <div className="md:col-span-5 flex items-center justify-end space-x-1.5 bg-slate-950/80 p-1.5 rounded-2xl border border-slate-800">
-              <span className="text-[11px] font-bold text-slate-400 px-2 shrink-0">Radius:</span>
+            <div className="md:col-span-5 flex items-center justify-end space-x-1.5 bg-slate-50 dark:bg-slate-950/80 p-1.5 rounded-2xl border border-slate-200 dark:border-slate-800">
+              <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 px-2 shrink-0">Radius:</span>
               {[1.0, 1.5, 2.0].map((r) => (
                 <button
                   key={r}
@@ -270,7 +270,7 @@ export default function NearbyMarketplace() {
                   onClick={() => setRadiusKm(r)}
                   className={`flex-1 py-1.5 px-3 rounded-xl font-black text-xs transition duration-200 ${radiusKm === r
                     ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 shadow-md'
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-950 dark:hover:text-slate-200 hover:bg-slate-200/60 dark:hover:bg-slate-900'
                     }`}
                 >
                   {r.toFixed(1)} km
@@ -281,35 +281,35 @@ export default function NearbyMarketplace() {
           </div>
 
           {gpsError && (
-            <div className="text-xs text-rose-400 bg-rose-950/30 border border-rose-900/50 p-2.5 rounded-xl font-medium">
+            <div className="text-xs text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/50 p-2.5 rounded-xl font-medium">
               ⚠️ {gpsError}
             </div>
           )}
 
           {/* Search Filters Row */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-12 gap-3 pt-3 border-t border-slate-800">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-12 gap-3 pt-3 border-t border-slate-200 dark:border-slate-800">
 
             {/* Keyword Search */}
             <div className="md:col-span-7 relative">
-              <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
+              <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
               <input
                 type="text"
                 placeholder="Search products by title, brand (e.g. Fast Charger, Armor Case)..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
+                className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-amber-500"
               />
             </div>
 
             {/* Local Street/Area filter */}
             <div className="md:col-span-5 relative">
-              <MapPin className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
+              <MapPin className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
               <input
                 type="text"
                 placeholder="Filter by street or plaza name..."
                 value={areaFilter}
                 onChange={(e) => setAreaFilter(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
+                className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-amber-500"
               />
             </div>
 
@@ -319,11 +319,11 @@ export default function NearbyMarketplace() {
         {/* 3. PRODUCTS DISPLAY GRID */}
         <div className="space-y-6">
 
-          <div className="flex items-center justify-between text-xs text-slate-400 px-1">
+          <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 px-1">
             <span>
-              Showing <strong className="text-white">{filteredItems.length} verified products</strong> within a <strong className="text-amber-400">{radiusKm} km radius</strong>.
+              Showing <strong className="text-slate-900 dark:text-white">{filteredItems.length} verified products</strong> within a <strong className="text-amber-600 dark:text-amber-400">{radiusKm} km radius</strong>.
             </span>
-            <span className="hidden sm:inline text-slate-500">
+            <span className="hidden sm:inline text-slate-400 dark:text-slate-500">
               Sorted by closest distance
             </span>
           </div>
@@ -331,10 +331,10 @@ export default function NearbyMarketplace() {
           {isLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {[1, 2, 3].map((n) => (
-                <div key={n} className="bento-card rounded-3xl p-6 border border-slate-800 animate-pulse space-y-4">
-                  <div className="h-4 bg-slate-800 rounded w-1/3" />
-                  <div className="h-6 bg-slate-800 rounded w-3/4" />
-                  <div className="h-16 bg-slate-800/40 rounded-xl" />
+                <div key={n} className="bento-card rounded-3xl p-6 border border-slate-200 dark:border-slate-800 animate-pulse space-y-4">
+                  <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-1/3" />
+                  <div className="h-6 bg-slate-200 dark:bg-slate-800 rounded w-3/4" />
+                  <div className="h-16 bg-slate-200/60 dark:bg-slate-800/40 rounded-xl" />
                 </div>
               ))}
             </div>
@@ -347,29 +347,29 @@ export default function NearbyMarketplace() {
                 return (
                   <div
                     key={`prod-${item.id}`}
-                    className="bento-card rounded-3xl p-6 shadow-xl flex flex-col justify-between group transition relative overflow-hidden backdrop-blur-xl border border-slate-800 hover:border-slate-700"
+                    className="bento-card rounded-3xl p-6 shadow-xs dark:shadow-xl flex flex-col justify-between group transition relative overflow-hidden backdrop-blur-xl border border-slate-200/90 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700"
                   >
                     {/* Subtle color highlight ribbon */}
-                    <div className="absolute top-0 right-0 w-36 h-36 rounded-bl-full pointer-events-none transition opacity-30 bg-emerald-500/25" />
+                    <div className="absolute top-0 right-0 w-36 h-36 rounded-bl-full pointer-events-none transition opacity-20 dark:opacity-30 bg-emerald-500/25" />
 
                     <div className="space-y-4">
 
                       {/* Top Row: Distance Badge & Store Pill */}
                       <div className="flex items-center justify-between gap-2">
                         {/* Distance Pill */}
-                        <span className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full text-xs font-black bg-slate-950 border border-slate-700 text-white shadow-inner">
-                          <span className={`w-2 h-2 rounded-full ${item.distanceKm <= 1.0 ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`} />
+                        <span className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full text-xs font-black bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white shadow-xs">
+                          <span className={`w-2 h-2 rounded-full ${item.distanceKm <= 1.0 ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`} />
                           <span>{distanceText}</span>
                         </span>
 
                         {/* Store Badge */}
-                        <span className="text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full border bg-emerald-500/15 text-emerald-300 border-emerald-500/40">
+                        <span className="text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full border bg-emerald-500/10 text-emerald-600 dark:text-emerald-300 border-emerald-500/30">
                           🏪 Verified Store
                         </span>
                       </div>
 
                       {/* Product Image */}
-                      <div className="relative w-full h-44 rounded-2xl overflow-hidden bg-slate-900 border border-slate-800/80 group-hover:border-slate-700 transition">
+                      <div className="relative w-full h-44 rounded-2xl overflow-hidden bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800/80 group-hover:border-slate-300 dark:group-hover:border-slate-700 transition">
                         <Link href={`/products/${item.id}`} className="block w-full h-full relative">
                           <img
                             src={getProductImage(item)}
@@ -393,37 +393,37 @@ export default function NearbyMarketplace() {
 
                       {/* Title & Pricing */}
                       <div className="space-y-1.5">
-                        <div className="text-[11px] font-bold text-amber-400 uppercase tracking-wider">
+                        <div className="text-[11px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider">
                           {item.brand || 'Accessories'} &bull; {item.category || 'General'}
                         </div>
                         <Link href={`/products/${item.id}`} className="block hover:underline">
-                          <h3 className="font-extrabold text-white text-base leading-snug group-hover:text-emerald-400 transition">
+                          <h3 className="font-extrabold text-slate-900 dark:text-white text-base leading-snug group-hover:text-emerald-500 transition">
                             {item.name}
                           </h3>
                         </Link>
                         <div className="flex items-baseline space-x-2 pt-1">
-                          <span className="text-2xl font-black text-white">
+                          <span className="text-2xl font-black text-slate-900 dark:text-white">
                             ₹{Number(item.price || 0).toLocaleString('en-IN')}
                           </span>
-                          <span className="text-xs text-slate-500 line-through">
+                          <span className="text-xs text-slate-400 dark:text-slate-500 line-through">
                             ₹{Math.round(Number(item.price || 0) * 1.25).toLocaleString('en-IN')}
                           </span>
                         </div>
                       </div>
 
                       {/* Shop Identity & Physical Location Info */}
-                      <div className="bg-slate-950/80 border border-slate-800/80 rounded-2xl p-3 text-xs space-y-1.5">
+                      <div className="bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800/80 rounded-2xl p-3 text-xs space-y-1.5">
                         <div className="flex items-center justify-between">
-                          <span className="font-extrabold text-slate-200 truncate flex items-center gap-1.5">
-                            <Store className="w-3.5 h-3.5 text-emerald-400" />
+                          <span className="font-extrabold text-slate-800 dark:text-slate-200 truncate flex items-center gap-1.5">
+                            <Store className="w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400" />
                             <span>{item.uploader_name || item.shop?.name || 'Accessory Store'}</span>
                           </span>
-                          <span className="text-[10px] font-bold text-slate-400">
+                          <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400">
                             ⭐ {item.shop?.rating || '4.8'}
                           </span>
                         </div>
-                        <div className="text-[11px] text-slate-400 flex items-start gap-1 leading-snug">
-                          <MapPin className="w-3 h-3 text-slate-500 shrink-0 mt-0.5" />
+                        <div className="text-[11px] text-slate-500 dark:text-slate-400 flex items-start gap-1 leading-snug">
+                          <MapPin className="w-3 h-3 text-slate-400 dark:text-slate-500 shrink-0 mt-0.5" />
                           <span className="truncate">{item.shop?.address || 'Local Partner Center'}</span>
                         </div>
                       </div>
@@ -431,9 +431,9 @@ export default function NearbyMarketplace() {
                     </div>
 
                     {/* Card Bottom CTA */}
-                    <div className="pt-4 mt-4 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-2 text-xs">
-                      <div className="text-slate-400 text-[11px]">
-                        <span className="text-emerald-400 font-semibold">Available In Store</span>
+                    <div className="pt-4 mt-4 border-t border-slate-100 dark:border-slate-800/80 flex flex-wrap items-center justify-between gap-2 text-xs">
+                      <div className="text-slate-500 dark:text-slate-400 text-[11px]">
+                        <span className="text-emerald-600 dark:text-emerald-400 font-semibold">Available In Store</span>
                       </div>
 
                       <div className="flex items-center gap-1.5 flex-wrap">
@@ -460,7 +460,7 @@ export default function NearbyMarketplace() {
                         {/* Product Detail Page Link */}
                         <Link
                           href={`/products/${item.id}`}
-                          className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold rounded-xl text-xs transition flex items-center space-x-1"
+                          className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-bold rounded-xl text-xs transition flex items-center space-x-1 border border-slate-200 dark:border-slate-700"
                         >
                           <span>Details</span>
                           <ArrowRight className="w-3 h-3" />
@@ -476,13 +476,13 @@ export default function NearbyMarketplace() {
 
           {/* Genuine Empty State when no items exist */}
           {!isLoading && filteredItems.length === 0 && (
-            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-12 text-center text-slate-400 space-y-4 max-w-xl mx-auto shadow-2xl">
-              <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-12 text-center text-slate-600 dark:text-slate-400 space-y-4 max-w-xl mx-auto shadow-sm dark:shadow-2xl">
+              <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto">
                 <ShoppingBag className="w-7 h-7" />
               </div>
               <div>
-                <h3 className="text-base font-extrabold text-white">No Products Found Within {radiusKm} km</h3>
-                <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                <h3 className="text-base font-extrabold text-slate-900 dark:text-white">No Products Found Within {radiusKm} km</h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
                   There are currently no mobile accessories matching your search criteria in this geofence radius.
                 </p>
               </div>

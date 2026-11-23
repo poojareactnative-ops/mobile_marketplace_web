@@ -9,7 +9,7 @@ import {
 
 export default function AnimatedFooter() {
   return (
-    <footer className="w-full relative bg-black text-slate-200 overflow-hidden pt-16 pb-10 border-t border-slate-900">
+    <footer className="w-full relative bg-slate-950 dark:bg-black text-slate-300 dark:text-slate-200 overflow-hidden pt-16 pb-10 border-t border-slate-800 dark:border-slate-900">
 
       {/* 1. LAYERED ANIMATED DARK WAVES (Matching Reference Design) */}
       <div className="absolute top-0 left-0 right-0 h-44 pointer-events-none overflow-hidden z-0">

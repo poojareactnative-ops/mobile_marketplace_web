@@ -3,16 +3,15 @@
 @tailwind utilities;
 
 :root {
-  color-scheme: dark;
+  color-scheme: light dark;
 }
 
 body {
   margin: 0;
   min-height: 100vh;
-  background-color: #030712;
-  color: #f8fafc;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   overflow-x: hidden;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 /* Custom Webkit Scrollbar */
@@ -86,13 +85,18 @@ body {
 
 /* Pixelwise Studio Aesthetic Utilities */
 .bg-studio-grid {
+  background-image: radial-gradient(rgba(0, 0, 0, 0.06) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
+.dark .bg-studio-grid {
   background-image: radial-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px);
   background-size: 28px 28px;
 }
 
 /* Nothing-Style Industrial Hardware Utilities */
 .bg-tech-grid {
-  background-image: 
+  background-image:
     linear-gradient(to right, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
     linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
   background-size: 32px 32px;
@@ -145,15 +149,27 @@ body {
 
 .bento-card {
   position: relative;
-  background: rgba(15, 23, 42, 0.65);
+  background: rgba(255, 255, 255, 0.88);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.dark .bento-card {
+  background: rgba(15, 23, 42, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: none;
 }
 
 .bento-card:hover {
   transform: translateY(-3px);
+  border-color: rgba(0, 0, 0, 0.16);
+  box-shadow: 0 16px 32px -10px rgba(0, 0, 0, 0.1);
+}
+
+.dark .bento-card:hover {
   border-color: rgba(255, 255, 255, 0.2);
   box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.6);
 }
@@ -175,9 +191,11 @@ body {
   0% {
     transform: translateX(0) translateZ(0) scaleY(1);
   }
+
   50% {
     transform: translateX(-25%) translateZ(0) scaleY(1.08);
   }
+
   100% {
     transform: translateX(-50%) translateZ(0) scaleY(1);
   }
@@ -187,18 +205,23 @@ body {
   0% {
     transform: translateX(0) translateZ(0) scaleY(1);
   }
+
   50% {
     transform: translateX(-35%) translateZ(0) scaleY(0.92);
   }
+
   100% {
     transform: translateX(-70%) translateZ(0) scaleY(1);
   }
 }
 
 @keyframes floatGentle {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: translateY(0);
   }
+
   50% {
     transform: translateY(-8px);
   }
@@ -220,3 +243,252 @@ body {
   animation: floatGentle 6s ease-in-out 2.5s infinite;
 }
 
+
+/* =================================
+   SMARTFIX HERO & ORBITAL RING ANIMATIONS
+================================= */
+
+@keyframes orbitRotate {
+  from {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+
+  to {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
+
+/* Inner ring */
+.animate-orbit-slow {
+  animation: orbitRotate 35s linear infinite;
+}
+
+/* Middle ring */
+.animate-orbit-reverse {
+  animation: orbitRotate 50s linear infinite reverse;
+}
+
+/* Outer ring */
+.animate-orbit-slower {
+  animation: orbitRotate 70s linear infinite;
+}
+
+/* Extra outer ring */
+.animate-orbit-reverse-slower {
+  animation: orbitRotate 90s linear infinite reverse;
+}
+
+/* Sonar radar pulse expanding from phone */
+@keyframes pulseSonar {
+  0% {
+    transform: translate(-50%, -50%) scale(0.7);
+    opacity: 0.55;
+  }
+  70% {
+    opacity: 0.25;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1.35);
+    opacity: 0;
+  }
+}
+
+.animate-sonar-1 {
+  animation: pulseSonar 6s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+
+.animate-sonar-2 {
+  animation: pulseSonar 6s cubic-bezier(0.16, 1, 0.3, 1) 3s infinite;
+}
+
+/* Smooth levitation for central phone mockup */
+@keyframes floatPhone {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-9px);
+  }
+}
+
+.animate-float-phone {
+  animation: floatPhone 6s ease-in-out infinite;
+}
+
+/* Text Shimmer for headline */
+@keyframes textShimmer {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 200% 50%;
+  }
+}
+
+.animate-text-shimmer {
+  background-size: 200% auto;
+  animation: textShimmer 6s linear infinite;
+}
+
+/* Pulsing satellite beacons */
+@keyframes beaconGlow {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.3);
+    opacity: 0.7;
+  }
+}
+
+.animate-beacon {
+  animation: beaconGlow 2.5s ease-in-out infinite;
+}
+
+/* =================================
+   GLOWING PHONE SCREEN & HOLOGRAM
+================================= */
+
+@keyframes laserSweep {
+  0% {
+    top: -15%;
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  85% {
+    opacity: 1;
+  }
+  100% {
+    top: 105%;
+    opacity: 0;
+  }
+}
+
+.animate-laser-sweep {
+  animation: laserSweep 1.4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+@keyframes particleUp1 {
+  0% {
+    transform: translateY(0) scale(0.6);
+    opacity: 0;
+  }
+  30% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-90px) scale(1.2);
+    opacity: 0;
+  }
+}
+
+@keyframes particleUp2 {
+  0% {
+    transform: translateY(0) scale(0.8);
+    opacity: 0;
+  }
+  40% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-110px) scale(1.4);
+    opacity: 0;
+  }
+}
+
+@keyframes particleUp3 {
+  0% {
+    transform: translateY(0) scale(0.5);
+    opacity: 0;
+  }
+  35% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-80px) scale(1.1);
+    opacity: 0;
+  }
+}
+
+@keyframes particleUp4 {
+  0% {
+    transform: translateY(0) scale(0.6);
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-100px) scale(1.3);
+    opacity: 0;
+  }
+}
+
+.animate-particle-up-1 {
+  animation: particleUp1 3s ease-out infinite;
+}
+
+.animate-particle-up-2 {
+  animation: particleUp2 3.6s ease-out 0.8s infinite;
+}
+
+.animate-particle-up-3 {
+  animation: particleUp3 2.8s ease-out 1.5s infinite;
+}
+
+.animate-particle-up-4 {
+  animation: particleUp4 3.4s ease-out 2.1s infinite;
+}
+
+@keyframes hologramShimmer {
+  0%, 100% {
+    box-shadow: 0 0 25px rgba(16, 185, 129, 0.25), 0 0 45px rgba(6, 182, 212, 0.15);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(16, 185, 129, 0.45), 0 0 70px rgba(6, 182, 212, 0.3);
+  }
+}
+
+.animate-hologram-shimmer {
+  animation: hologramShimmer 4s ease-in-out infinite;
+}
+
+@keyframes gradientX {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 100% 50%;
+  }
+}
+
+.animate-gradient-x {
+  background-size: 200% 200%;
+  animation: gradientX 3s ease infinite;
+}
+
+/* Accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .animate-orbit-slow,
+  .animate-orbit-reverse,
+  .animate-orbit-slower,
+  .animate-orbit-reverse-slower,
+  .animate-sonar-1,
+  .animate-sonar-2,
+  .animate-float-phone,
+  .animate-float-slow,
+  .animate-float-delayed,
+  .animate-text-shimmer,
+  .animate-beacon,
+  .animate-laser-sweep,
+  .animate-particle-up-1,
+  .animate-particle-up-2,
+  .animate-particle-up-3,
+  .animate-particle-up-4,
+  .animate-hologram-shimmer {
+    animation: none !important;
+  }
+}
