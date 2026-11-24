@@ -148,7 +148,7 @@ Track & Verify: ${window.location.origin}/track?ticket=${job.ticket_id}`;
           </div>
 
           {/* Itemized Service Bill Table */}
-          <div className="overflow-hidden rounded-xl border border-slate-200">
+          <div className="overflow-x-auto rounded-xl border border-slate-200">
             <table className="w-full text-left text-xs">
               <thead className="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
                 <tr>

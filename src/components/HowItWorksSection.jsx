@@ -33,7 +33,7 @@ const STEPS = [
 
 export default function HowItWorksSection() {
   return (
-    <section className="py-20 px-4 sm:px-6 lg:px-8 bg-white dark:bg-slate-950 border-b border-slate-200 dark:border-slate-900 relative overflow-hidden transition-colors duration-200">
+    <section className="py-12 sm:py-20 px-3 sm:px-6 lg:px-8 bg-white dark:bg-slate-950 border-b border-slate-200 dark:border-slate-900 relative overflow-hidden transition-colors duration-200">
       
       {/* Ambient background glow */}
       <div className="absolute top-1/2 right-1/4 w-80 h-80 bg-amber-500/10 rounded-full blur-[120px] pointer-events-none" />
@@ -111,7 +111,7 @@ export default function HowItWorksSection() {
 
           <Link
             href="/track"
-            className="px-6 py-3.5 bg-slate-800 hover:bg-slate-700 text-white font-extrabold rounded-2xl text-xs transition flex items-center space-x-2 border border-slate-700 shadow-lg shrink-0 transform hover:-translate-y-0.5"
+            className="w-full sm:w-auto justify-center px-6 py-3.5 bg-slate-800 hover:bg-slate-700 text-white font-extrabold rounded-2xl text-xs transition flex items-center space-x-2 border border-slate-700 shadow-lg shrink-0 transform active:scale-95"
           >
             <span>Open Job Tracker</span>
             <ArrowRight className="w-4 h-4 text-amber-400" />

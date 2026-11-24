@@ -216,25 +216,25 @@ export default function NearbyMarketplace() {
           </div>
 
           {/* Quick metric pill */}
-          <div className="flex items-center gap-3 bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 p-3 rounded-2xl shrink-0 backdrop-blur-md shadow-xs dark:shadow-lg">
-            <div className="text-center px-4 border-r border-slate-200 dark:border-slate-800">
-              <div className="text-xl font-black text-emerald-600 dark:text-emerald-400">{filteredItems.length}</div>
-              <div className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Products</div>
+          <div className="grid grid-cols-3 sm:flex items-center gap-1 sm:gap-3 bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 p-2 sm:p-3 rounded-2xl w-full sm:w-auto backdrop-blur-md shadow-xs dark:shadow-lg">
+            <div className="text-center px-2 sm:px-4 border-r border-slate-200 dark:border-slate-800">
+              <div className="text-lg sm:text-xl font-black text-emerald-600 dark:text-emerald-400">{filteredItems.length}</div>
+              <div className="text-[9px] sm:text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Products</div>
             </div>
-            <div className="text-center px-4 border-r border-slate-200 dark:border-slate-800">
-              <div className="text-xl font-black text-amber-500 dark:text-amber-400">{uniqueShopsCount}</div>
-              <div className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Local Stores</div>
+            <div className="text-center px-2 sm:px-4 border-r border-slate-200 dark:border-slate-800">
+              <div className="text-lg sm:text-xl font-black text-amber-500 dark:text-amber-400">{uniqueShopsCount}</div>
+              <div className="text-[9px] sm:text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Local Stores</div>
             </div>
-            <div className="text-center px-4">
-              <div className="text-xl font-black text-slate-900 dark:text-white">{radiusKm} km</div>
-              <div className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Radius Limit</div>
+            <div className="text-center px-2 sm:px-4">
+              <div className="text-lg sm:text-xl font-black text-slate-900 dark:text-white">{radiusKm} km</div>
+              <div className="text-[9px] sm:text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Radius Limit</div>
             </div>
           </div>
         </div>
 
         {/* 2. GEOFENCE RADIAL CONTROLS BAR */}
-        <div className="bg-white dark:bg-slate-900/90 border border-slate-200/90 dark:border-slate-800 rounded-3xl p-5 sm:p-6 backdrop-blur-xl space-y-5 shadow-sm dark:shadow-2xl">
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
+        <div className="bg-white dark:bg-slate-900/90 border border-slate-200/90 dark:border-slate-800 rounded-3xl p-4 sm:p-6 backdrop-blur-xl space-y-4 sm:space-y-5 shadow-sm dark:shadow-2xl">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-3 sm:gap-4 items-center">
 
             {/* GPS Location Status Pill */}
             <div className="md:col-span-4 flex items-center space-x-3 bg-slate-50 dark:bg-slate-950 p-2.5 rounded-2xl border border-slate-200 dark:border-slate-800">
@@ -261,14 +261,14 @@ export default function NearbyMarketplace() {
             </div>
 
             {/* Strict Radius Switcher */}
-            <div className="md:col-span-5 flex items-center justify-end space-x-1.5 bg-slate-50 dark:bg-slate-950/80 p-1.5 rounded-2xl border border-slate-200 dark:border-slate-800">
-              <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 px-2 shrink-0">Radius:</span>
+            <div className="md:col-span-5 flex items-center justify-between sm:justify-end space-x-1.5 bg-slate-50 dark:bg-slate-950/80 p-1.5 rounded-2xl border border-slate-200 dark:border-slate-800">
+              <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 px-1 sm:px-2 shrink-0">Radius:</span>
               {[1.0, 1.5, 2.0].map((r) => (
                 <button
                   key={r}
                   type="button"
                   onClick={() => setRadiusKm(r)}
-                  className={`flex-1 py-1.5 px-3 rounded-xl font-black text-xs transition duration-200 ${radiusKm === r
+                  className={`flex-1 py-1.5 px-2 sm:px-3 rounded-xl font-black text-xs transition duration-200 ${radiusKm === r
                     ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 shadow-md'
                     : 'text-slate-600 dark:text-slate-400 hover:text-slate-950 dark:hover:text-slate-200 hover:bg-slate-200/60 dark:hover:bg-slate-900'
                     }`}
@@ -347,7 +347,7 @@ export default function NearbyMarketplace() {
                 return (
                   <div
                     key={`prod-${item.id}`}
-                    className="bento-card rounded-3xl p-6 shadow-xs dark:shadow-xl flex flex-col justify-between group transition relative overflow-hidden backdrop-blur-xl border border-slate-200/90 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700"
+                    className="bento-card rounded-3xl p-4 sm:p-6 shadow-xs dark:shadow-xl flex flex-col justify-between group transition relative overflow-hidden backdrop-blur-xl border border-slate-200/90 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700"
                   >
                     {/* Subtle color highlight ribbon */}
                     <div className="absolute top-0 right-0 w-36 h-36 rounded-bl-full pointer-events-none transition opacity-20 dark:opacity-30 bg-emerald-500/25" />

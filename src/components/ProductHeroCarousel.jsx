@@ -325,7 +325,7 @@ export default function ProductHeroCarousel() {
               )}
 
               {/* CTA Action Buttons */}
-              <div className="pt-2 flex flex-wrap items-center gap-3.5">
+              <div className="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-3.5">
                 <a
                   href={getWhatsAppInquiryUrl({
                     phone: sellerPhone,
@@ -336,9 +336,9 @@ export default function ProductHeroCarousel() {
                   })}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className={`px-7 py-4 font-black rounded-2xl text-sm transition flex items-center space-x-2 shadow-2xl transform hover:-translate-y-0.5 ${themeStyle.btn}`}
+                  className={`w-full sm:w-auto justify-center px-6 sm:px-7 py-3.5 sm:py-4 font-black rounded-2xl text-xs sm:text-sm transition flex items-center space-x-2 shadow-2xl transform active:scale-95 ${themeStyle.btn}`}
                 >
-                  <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4 fill-current shrink-0" viewBox="0 0 24 24">
                     <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.771-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.312.045-.694.06-2.222-.572-1.828-.757-3.003-2.617-3.094-2.738-.09-.122-.74-1.024-.74-1.953 0-.929.479-1.386.65-1.577.171-.191.373-.239.498-.239.125 0 .25.002.359.007.114.005.267-.043.418.32.155.373.53 1.293.576 1.388.046.096.077.208.016.331-.061.123-.092.2-.183.308-.092.107-.193.24-.275.322-.093.093-.19.194-.082.38.109.186.483.797 1.036 1.29 0.713.636 1.314.833 1.5.926.186.093.295.077.404-.047.109-.123.468-.544.592-.73.125-.187.25-.156.421-.093.171.062 1.089.513 1.276.607.187.094.312.14.359.219.046.078.046.452-.098.857z" />
                   </svg>
                   <span>Inquire on WhatsApp</span>
@@ -348,7 +348,7 @@ export default function ProductHeroCarousel() {
                 {isRealProduct ? (
                   <Link
                     href={`/products/${currentProduct.id}`}
-                    className="px-6 py-4 bg-slate-900/90 hover:bg-slate-800/90 border border-slate-700/80 text-slate-200 hover:text-white font-bold rounded-2xl text-sm transition flex items-center space-x-2 backdrop-blur-md transform hover:-translate-y-0.5"
+                    className="w-full sm:w-auto justify-center px-5 sm:px-6 py-3.5 sm:py-4 bg-slate-900/90 hover:bg-slate-800/90 border border-slate-700/80 text-slate-200 hover:text-white font-bold rounded-2xl text-xs sm:text-sm transition flex items-center space-x-2 backdrop-blur-md transform active:scale-95"
                   >
                     <span>View Product Details</span>
                     <ArrowRight className="w-4 h-4 text-amber-400" />
@@ -356,7 +356,7 @@ export default function ProductHeroCarousel() {
                 ) : (
                   <a
                     href="#nearby"
-                    className="px-6 py-4 bg-slate-900/90 hover:bg-slate-800/90 border border-slate-700/80 text-slate-200 hover:text-white font-bold rounded-2xl text-sm transition flex items-center space-x-2 backdrop-blur-md transform hover:-translate-y-0.5"
+                    className="w-full sm:w-auto justify-center px-5 sm:px-6 py-3.5 sm:py-4 bg-slate-900/90 hover:bg-slate-800/90 border border-slate-700/80 text-slate-200 hover:text-white font-bold rounded-2xl text-xs sm:text-sm transition flex items-center space-x-2 backdrop-blur-md transform active:scale-95"
                   >
                     <MapPin className="w-4 h-4 text-amber-400" />
                     <span>Explore Nearby (1–2 km) &darr;</span>
@@ -481,18 +481,18 @@ export default function ProductHeroCarousel() {
             type="button"
             onClick={handlePrev}
             aria-label="Previous product"
-            className="absolute left-2 sm:left-6 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-slate-900/80 hover:bg-slate-800 border border-slate-700/80 text-white flex items-center justify-center shadow-2xl transition backdrop-blur-xl hover:scale-110 z-20 group"
+            className="absolute left-1.5 sm:left-6 top-1/2 -translate-y-1/2 w-8 h-8 sm:w-11 sm:h-11 rounded-full bg-slate-900/80 hover:bg-slate-800 border border-slate-700/80 text-white flex items-center justify-center shadow-2xl transition backdrop-blur-xl hover:scale-110 z-20 group"
           >
-            <ChevronLeft className="w-6 h-6 text-slate-300 group-hover:text-white" />
+            <ChevronLeft className="w-4 h-4 sm:w-6 sm:h-6 text-slate-300 group-hover:text-white" />
           </button>
 
           <button
             type="button"
             onClick={handleNext}
             aria-label="Next product"
-            className="absolute right-2 sm:right-6 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-slate-900/80 hover:bg-slate-800 border border-slate-700/80 text-white flex items-center justify-center shadow-2xl transition backdrop-blur-xl hover:scale-110 z-20 group"
+            className="absolute right-1.5 sm:right-6 top-1/2 -translate-y-1/2 w-8 h-8 sm:w-11 sm:h-11 rounded-full bg-slate-900/80 hover:bg-slate-800 border border-slate-700/80 text-white flex items-center justify-center shadow-2xl transition backdrop-blur-xl hover:scale-110 z-20 group"
           >
-            <ChevronRight className="w-6 h-6 text-slate-300 group-hover:text-white" />
+            <ChevronRight className="w-4 h-4 sm:w-6 sm:h-6 text-slate-300 group-hover:text-white" />
           </button>
         </>
       )}

@@ -122,11 +122,11 @@ export default function ProductDetailPage() {
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col font-sans selection:bg-amber-500 selection:text-slate-950 transition-colors duration-200">
       <Navbar />
 
-      <main className="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-10 flex-1">
+      <main className="max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6 sm:space-y-10 flex-1">
 
         {/* Top Breadcrumb & Navigation */}
-        <div className="flex items-center justify-between gap-3 text-xs">
-          <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 truncate">
+        <div className="flex items-center justify-between gap-2 text-xs overflow-x-auto pb-1 scrollbar-none">
+          <div className="flex items-center gap-1.5 sm:gap-2 text-slate-500 dark:text-slate-400 shrink-0">
             <Link href="/" className="hover:text-slate-900 dark:hover:text-white transition">Home</Link>
             <ChevronRight className="w-3.5 h-3.5 text-slate-400 dark:text-slate-600 shrink-0" />
             <Link href="/#marketplace" className="hover:text-slate-900 dark:hover:text-white transition">Marketplace</Link>
@@ -136,18 +136,18 @@ export default function ProductDetailPage() {
             <span className="text-slate-800 dark:text-slate-200 truncate hidden sm:inline">{product.name}</span>
           </div>
 
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             <button
               type="button"
               onClick={handleShare}
-              className="px-3 py-1.5 rounded-xl bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white text-xs font-semibold flex items-center gap-1.5 transition shadow-xs"
+              className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white text-xs font-semibold flex items-center gap-1.5 transition shadow-xs"
             >
               <Share2 className="w-3.5 h-3.5" />
-              <span>{copied ? 'Link Copied!' : 'Share'}</span>
+              <span>{copied ? 'Copied!' : 'Share'}</span>
             </button>
             <Link
               href="/#marketplace"
-              className="px-3 py-1.5 rounded-xl bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white text-xs font-semibold flex items-center gap-1.5 transition shadow-xs"
+              className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white text-xs font-semibold flex items-center gap-1.5 transition shadow-xs"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Back</span>
@@ -187,18 +187,18 @@ export default function ProductDetailPage() {
 
                     {/* Photo Counter */}
                     {allImages.length > 1 && (
-                      <div className="absolute bottom-4 left-4">
-                        <span className="px-3 py-1 rounded-full text-xs font-bold bg-white/90 dark:bg-slate-950/85 backdrop-blur-md text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 shadow-sm dark:shadow-lg">
-                          Photo {activeImageIndex + 1} of {allImages.length}
+                      <div className="absolute bottom-3 left-3 sm:bottom-4 sm:left-4">
+                        <span className="px-2.5 sm:px-3 py-1 rounded-full text-[11px] sm:text-xs font-bold bg-white/90 dark:bg-slate-950/85 backdrop-blur-md text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 shadow-sm dark:shadow-lg">
+                          {activeImageIndex + 1} / {allImages.length}
                         </span>
                       </div>
                     )}
 
                     {/* Verified Genuine Badge */}
-                    <div className="absolute bottom-4 right-4">
-                      <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-500 text-slate-950 flex items-center gap-1.5 shadow-xl backdrop-blur-md">
-                        <CheckCircle2 className="w-3.5 h-3.5" />
-                        <span>Verified Genuine Product</span>
+                    <div className="absolute bottom-3 right-3 sm:bottom-4 sm:right-4">
+                      <span className="px-2.5 sm:px-3 py-1 rounded-full text-[11px] sm:text-xs font-bold bg-emerald-500 text-slate-950 flex items-center gap-1.5 shadow-xl backdrop-blur-md">
+                        <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                        <span>Verified Genuine</span>
                       </span>
                     </div>
                   </div>

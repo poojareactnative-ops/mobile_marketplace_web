@@ -68,7 +68,7 @@ function TrackPageContent() {
   };
 
   return (
-    <main className="max-w-3xl w-full mx-auto px-4 py-16 space-y-8 flex-1">
+    <main className="max-w-3xl w-full mx-auto px-3 sm:px-4 py-10 sm:py-16 space-y-6 sm:space-y-8 flex-1">
       
       {/* Header */}
       <div className="text-center space-y-3">
@@ -83,20 +83,20 @@ function TrackPageContent() {
       </div>
 
       {/* Search Input Box */}
-      <form onSubmit={handleTrackSubmit} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-3 sm:p-4 rounded-3xl flex gap-3 shadow-sm dark:shadow-2xl backdrop-blur-xl">
+      <form onSubmit={handleTrackSubmit} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-2.5 sm:p-4 rounded-3xl flex flex-col sm:flex-row gap-2.5 sm:gap-3 shadow-sm dark:shadow-2xl backdrop-blur-xl">
         <div className="relative flex-1">
           <input
             type="text"
             value={ticketInput}
             onChange={(e) => setTicketInput(e.target.value)}
             placeholder="Enter Ticket ID (e.g. REP-1385)"
-            className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700/80 rounded-2xl text-sm font-bold text-slate-900 dark:text-white uppercase focus:outline-none focus:border-blue-500 font-mono tracking-wider shadow-inner placeholder:text-slate-400 dark:placeholder:text-slate-600"
+            className="w-full px-3.5 sm:px-4 py-2.5 sm:py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700/80 rounded-2xl text-xs sm:text-sm font-bold text-slate-900 dark:text-white uppercase focus:outline-none focus:border-blue-500 font-mono tracking-wider shadow-inner placeholder:text-slate-400 dark:placeholder:text-slate-600"
           />
         </div>
         <button
           type="submit"
           disabled={loading}
-          className="px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl text-xs font-black flex items-center gap-2 shadow-lg shadow-blue-600/30 transition shrink-0 transform hover:-translate-y-0.5"
+          className="w-full sm:w-auto px-6 py-2.5 sm:py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl text-xs font-black flex items-center justify-center gap-2 shadow-lg shadow-blue-600/30 transition shrink-0 transform active:scale-95"
         >
           <Search className="w-4 h-4" />
           <span>{loading ? 'Searching...' : 'Track Ticket'}</span>
