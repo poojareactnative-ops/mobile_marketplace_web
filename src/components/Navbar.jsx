@@ -1,13 +1,14 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import {
   Wrench, ShieldCheck, Store, User, Database, LogOut,
   LogIn, UserPlus, ChevronDown, ShoppingBag, LayoutDashboard,
   Search, Sparkles, MapPin, Compass, KeyRound, Menu, X,
-  Sun, Moon, Monitor
+  Sun, Moon, Monitor, MessageSquareQuote, AlertTriangle,
+  Bell, Clock, CheckCircle2, ArrowRight
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
@@ -20,6 +21,34 @@ export default function Navbar() {
   const { theme, setTheme } = useTheme();
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // Coming Soon & Remind Me Feature State
+  const [comingSoonFeature, setComingSoonFeature] = useState(null);
+  const [reminderEmail, setReminderEmail] = useState('');
+  const [reminderSet, setReminderSet] = useState(false);
+
+  useEffect(() => {
+    if (user?.email) {
+      setReminderEmail(user.email);
+    }
+  }, [user]);
+
+  const handleSetReminder = (e) => {
+    e.preventDefault();
+    if (!reminderEmail.trim()) return;
+
+    try {
+      const existing = JSON.parse(localStorage.getItem('smartfix_feature_reminders') || '[]');
+      existing.push({
+        email: reminderEmail.trim(),
+        feature: comingSoonFeature?.title,
+        date: new Date().toISOString(),
+      });
+      localStorage.setItem('smartfix_feature_reminders', JSON.stringify(existing));
+    } catch (err) {}
+
+    setReminderSet(true);
+  };
 
   const handleSignOut = () => {
     setShowUserMenu(false);
@@ -82,11 +111,10 @@ export default function Navbar() {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`px-3 py-2 rounded-xl transition flex items-center gap-1.5 ${
-                    isActive
-                      ? 'bg-slate-100 dark:bg-slate-900 text-amber-600 dark:text-amber-400 font-bold border border-slate-200 dark:border-slate-800'
-                      : 'hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-900/60'
-                  }`}
+                  className={`px-3 py-2 rounded-xl transition flex items-center gap-1.5 ${isActive
+                    ? 'bg-slate-100 dark:bg-slate-900 text-amber-600 dark:text-amber-400 font-bold border border-slate-200 dark:border-slate-800'
+                    : 'hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-900/60'
+                    }`}
                 >
                   {Icon && <Icon className="w-3.5 h-3.5" />}
                   <span>{item.label}</span>
@@ -98,11 +126,10 @@ export default function Navbar() {
             {isAuthenticated && (
               <Link
                 href={dashboardUrl}
-                className={`px-3 py-2 rounded-xl transition flex items-center gap-1.5 ${
-                  pathname === dashboardUrl || pathname === '/dashboard'
-                    ? 'bg-slate-100 dark:bg-slate-900 text-amber-600 dark:text-amber-400 font-bold border border-slate-200 dark:border-slate-800'
-                    : 'hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-900/60'
-                }`}
+                className={`px-3 py-2 rounded-xl transition flex items-center gap-1.5 ${pathname === dashboardUrl || pathname === '/dashboard'
+                  ? 'bg-slate-100 dark:bg-slate-900 text-amber-600 dark:text-amber-400 font-bold border border-slate-200 dark:border-slate-800'
+                  : 'hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-900/60'
+                  }`}
               >
                 <LayoutDashboard className="w-3.5 h-3.5" />
                 <span>{dashboardLabel}</span>
@@ -179,6 +206,54 @@ export default function Navbar() {
                         <ShoppingBag className="w-3.5 h-3.5 text-emerald-500" />
                         <span>Products</span>
                       </Link>
+
+                      {/* Common Fault Solutions (Coming Soon) */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowUserMenu(false);
+                          setComingSoonFeature({
+                            title: 'Common Fault Solutions',
+                            type: 'FAULT',
+                            description: 'Comprehensive chip-level diagnostic guides, symptom search, and estimated repair cost calculator.',
+                            previewUrl: '/common-faults',
+                          });
+                          setReminderSet(false);
+                        }}
+                        className="w-full text-left px-3 py-2 rounded-xl text-xs text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/80 transition flex items-center justify-between font-medium group"
+                      >
+                        <div className="flex items-center gap-2">
+                          <Wrench className="w-3.5 h-3.5 text-amber-500" />
+                          <span>Common Fault Solutions</span>
+                        </div>
+                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 group-hover:bg-amber-500/20 transition">
+                          Coming Soon
+                        </span>
+                      </button>
+
+                      {/* Experience Sharing (Coming Soon) */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowUserMenu(false);
+                          setComingSoonFeature({
+                            title: 'Experience Sharing',
+                            type: 'EXPERIENCE',
+                            description: 'Verified community repair logs, before & after case studies, and bench technician tips.',
+                            previewUrl: '/experience-share',
+                          });
+                          setReminderSet(false);
+                        }}
+                        className="w-full text-left px-3 py-2 rounded-xl text-xs text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/80 transition flex items-center justify-between font-medium group"
+                      >
+                        <div className="flex items-center gap-2">
+                          <MessageSquareQuote className="w-3.5 h-3.5 text-purple-500" />
+                          <span>Experience Sharing</span>
+                        </div>
+                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 group-hover:bg-purple-500/20 transition">
+                          Coming Soon
+                        </span>
+                      </button>
                     </div>
 
                     <div className="pt-1 border-t border-slate-100 dark:border-slate-800">
@@ -242,11 +317,10 @@ export default function Navbar() {
                   key={item.href}
                   href={item.href}
                   onClick={() => setMobileMenuOpen(false)}
-                  className={`flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-xs font-bold transition ${
-                    isActive
-                      ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30'
-                      : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-900'
-                  }`}
+                  className={`flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-xs font-bold transition ${isActive
+                    ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30'
+                    : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-900'
+                    }`}
                 >
                   {Icon ? <Icon className="w-4 h-4 text-amber-500" /> : <div className="w-4 h-4 rounded-full bg-amber-500/20" />}
                   <span>{item.label}</span>
@@ -259,16 +333,63 @@ export default function Navbar() {
               <Link
                 href={dashboardUrl}
                 onClick={() => setMobileMenuOpen(false)}
-                className={`flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-xs font-bold transition ${
-                  pathname === dashboardUrl || pathname === '/dashboard'
-                    ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30'
-                    : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-900'
-                }`}
+                className={`flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-xs font-bold transition ${pathname === dashboardUrl || pathname === '/dashboard'
+                  ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30'
+                  : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-900'
+                  }`}
               >
                 <LayoutDashboard className="w-4 h-4 text-amber-500" />
                 <span>{dashboardLabel}</span>
               </Link>
             )}
+
+            {/* Mobile Common Faults (Coming Soon) */}
+            <button
+              type="button"
+              onClick={() => {
+                setMobileMenuOpen(false);
+                setComingSoonFeature({
+                  title: 'Common Fault Solutions',
+                  type: 'FAULT',
+                  description: 'Comprehensive chip-level diagnostic guides, symptom search, and estimated repair cost calculator.',
+                  previewUrl: '/common-faults',
+                });
+                setReminderSet(false);
+              }}
+              className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-900 transition"
+            >
+              <div className="flex items-center gap-3">
+                <Wrench className="w-4 h-4 text-amber-500" />
+                <span>Common Fault Solutions</span>
+              </div>
+              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+                Coming Soon
+              </span>
+            </button>
+
+            {/* Mobile Experience Sharing (Coming Soon) */}
+            <button
+              type="button"
+              onClick={() => {
+                setMobileMenuOpen(false);
+                setComingSoonFeature({
+                  title: 'Experience Sharing',
+                  type: 'EXPERIENCE',
+                  description: 'Verified community repair logs, before & after case studies, and bench technician tips.',
+                  previewUrl: '/experience-share',
+                });
+                setReminderSet(false);
+              }}
+              className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-900 transition"
+            >
+              <div className="flex items-center gap-3">
+                <MessageSquareQuote className="w-4 h-4 text-purple-500" />
+                <span>Experience Sharing</span>
+              </div>
+              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20">
+                Coming Soon
+              </span>
+            </button>
 
             {isAuthenticated && user?.role === 'SELLER' && (
               <Link
@@ -335,6 +456,133 @@ export default function Navbar() {
                 </button>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* COMING SOON & REMIND ME MODAL */}
+      {comingSoonFeature && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md animate-in fade-in duration-150"
+          onClick={() => setComingSoonFeature(null)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="relative w-full max-w-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-7 shadow-2xl space-y-5 text-slate-900 dark:text-white animate-in zoom-in-95 duration-200"
+          >
+            {/* Close button */}
+            <button
+              type="button"
+              onClick={() => setComingSoonFeature(null)}
+              className="absolute top-4 right-4 p-2 rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+              aria-label="Close"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            {/* Header / Icon */}
+            <div className="flex items-start gap-4">
+              <div
+                className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 shadow-lg ${
+                  comingSoonFeature.type === 'FAULT'
+                    ? 'bg-amber-500/15 text-amber-500 border border-amber-500/30'
+                    : 'bg-purple-500/15 text-purple-500 border border-purple-500/30'
+                }`}
+              >
+                {comingSoonFeature.type === 'FAULT' ? (
+                  <Wrench className="w-6 h-6" />
+                ) : (
+                  <MessageSquareQuote className="w-6 h-6" />
+                )}
+              </div>
+              <div className="space-y-1 pr-6">
+                <div className="flex items-center gap-2">
+                  <span
+                    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                      comingSoonFeature.type === 'FAULT'
+                        ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30'
+                        : 'bg-purple-500/15 text-purple-600 dark:text-purple-400 border border-purple-500/30'
+                    }`}
+                  >
+                    <Clock className="w-2.5 h-2.5" />
+                    Coming Soon
+                  </span>
+                </div>
+                <h3 className="text-lg font-black tracking-tight text-slate-900 dark:text-white">
+                  {comingSoonFeature.title}
+                </h3>
+              </div>
+            </div>
+
+            {/* Description */}
+            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+              {comingSoonFeature.description}
+            </p>
+
+            {/* Remind Me Section */}
+            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 space-y-3">
+              <div className="flex items-center gap-2">
+                <Bell className="w-4 h-4 text-amber-500" />
+                <span className="text-xs font-bold text-slate-900 dark:text-white">
+                  Get Notified When It Launches
+                </span>
+              </div>
+
+              {reminderSet ? (
+                <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-400 text-xs flex items-center gap-2 font-medium">
+                  <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-500" />
+                  <span>
+                    Reminder set! We will notify <strong>{reminderEmail}</strong> as soon as this feature goes live.
+                  </span>
+                </div>
+              ) : (
+                <form onSubmit={handleSetReminder} className="space-y-2">
+                  <div className="flex gap-2">
+                    <input
+                      type="email"
+                      required
+                      value={reminderEmail}
+                      onChange={(e) => setReminderEmail(e.target.value)}
+                      placeholder="Enter your email address"
+                      className="flex-1 px-3 py-2 text-xs rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-amber-500 text-slate-900 dark:text-white placeholder-slate-400"
+                    />
+                    <button
+                      type="submit"
+                      className="px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-black rounded-xl text-xs shadow-md transition whitespace-nowrap"
+                    >
+                      Remind Me
+                    </button>
+                  </div>
+                  <p className="text-[10px] text-slate-400">
+                    No spam. We'll only send a single ping when the module opens for public release.
+                  </p>
+                </form>
+              )}
+            </div>
+
+            {/* Actions Footer */}
+            <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+              <button
+                type="button"
+                onClick={() => setComingSoonFeature(null)}
+                className="px-3.5 py-2 text-xs font-semibold rounded-xl text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+              >
+                Close
+              </button>
+
+              {comingSoonFeature.previewUrl && (
+                <Link
+                  href={comingSoonFeature.previewUrl}
+                  onClick={() => setComingSoonFeature(null)}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold rounded-xl text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 border border-amber-500/20 transition"
+                >
+                  <span>Preview Early Draft</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
+              )}
+            </div>
           </div>
         </div>
       )}

@@ -4,7 +4,8 @@ import React, { useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '../context/AuthContext';
-import { ShieldAlert, LogIn, ArrowRight, Lock, Clock } from 'lucide-react';
+import { ShieldAlert, LogIn, ArrowRight, Lock, Clock, MessageSquare } from 'lucide-react';
+import { getWhatsAppSuperAdminRegistrationAlertUrl } from '../utils/productImages';
 
 export default function RoleGuard({ allowedRoles = [], children }) {
   const router = useRouter();
@@ -87,21 +88,35 @@ export default function RoleGuard({ allowedRoles = [], children }) {
         <div className="p-3 bg-slate-950 rounded-2xl border border-slate-800 text-[11px] text-slate-400 text-left">
           <strong className="text-white">Governance Status:</strong> Awaiting platform root acceptance. Super Admin will verify your repair center details.
         </div>
-        <div className="pt-2 flex items-center justify-center gap-3">
+        <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-2.5">
+          <a
+            href={getWhatsAppSuperAdminRegistrationAlertUrl({
+              shopName: user?.shopName,
+              ownerName: user?.name,
+              email: user?.email,
+              phone: user?.phone,
+            })}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-full sm:w-auto px-4 py-2 bg-[#25D366] hover:bg-[#20ba59] text-slate-950 font-black rounded-xl text-xs transition flex items-center justify-center gap-1.5 shadow"
+          >
+            <MessageSquare className="w-3.5 h-3.5 fill-current" />
+            <span>Alert Super Admin on WhatsApp</span>
+          </a>
           <button
             type="button"
             onClick={async () => {
               if (refreshSession) await refreshSession();
               window.location.reload();
             }}
-            className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl text-xs transition"
+            className="w-full sm:w-auto px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl text-xs transition"
           >
             Refresh Status
           </button>
           <button
             type="button"
             onClick={() => window.location.href = '/'}
-            className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold rounded-xl text-xs transition"
+            className="w-full sm:w-auto px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold rounded-xl text-xs transition"
           >
             Back to Home
           </button>

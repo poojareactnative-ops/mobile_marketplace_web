@@ -7,8 +7,9 @@ import { useAuth } from '../../context/AuthContext';
 import { 
   Wrench, Store, User, ArrowRight, Lock, Mail, Phone, 
   Building, AlertCircle, CheckCircle2, ShieldCheck, Sparkles, 
-  Eye, EyeOff, ArrowLeft, Zap, Layers
+  Eye, EyeOff, ArrowLeft, Zap, Layers, MessageSquare
 } from 'lucide-react';
+import { getWhatsAppSuperAdminRegistrationAlertUrl } from '../../utils/productImages';
 
 function RegisterForm() {
   const router = useRouter();
@@ -28,6 +29,7 @@ function RegisterForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [registeredSuccess, setRegisteredSuccess] = useState(null);
 
   const handleRegister = async (e) => {
     e.preventDefault();
@@ -50,13 +52,101 @@ function RegisterForm() {
       setSubmitting(true);
       setError('');
       await register({ ...form, role: 'ADMIN' });
-      router.push(redirectTarget);
+
+      // Generate WhatsApp Alert URL for Super Admin
+      const waUrl = getWhatsAppSuperAdminRegistrationAlertUrl({
+        shopName: form.shopName.trim(),
+        ownerName: form.name.trim(),
+        email: form.email.trim(),
+        phone: form.phone.trim(),
+        registeredAt: new Date().toISOString(),
+      });
+
+      setRegisteredSuccess({
+        ...form,
+        waUrl,
+      });
+
+      // Attempt immediate dispatch on WhatsApp
+      if (typeof window !== 'undefined') {
+        try {
+          window.open(waUrl, '_blank');
+        } catch (e) {
+          // Fallback handled by visual button
+        }
+      }
     } catch (err) {
       setError(err.message || 'Registration failed. Please check details.');
     } finally {
       setSubmitting(false);
     }
   };
+
+  // SUCCESS VIEW: Registration done, WhatsApp Alert ready
+  if (registeredSuccess) {
+    return (
+      <div className="w-full space-y-5 animate-in fade-in zoom-in-95">
+        <div className="text-center space-y-2">
+          <div className="w-14 h-14 rounded-2xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center mx-auto shadow-lg shadow-emerald-950/40">
+            <CheckCircle2 className="w-7 h-7" />
+          </div>
+          <h3 className="text-xl font-extrabold text-white">
+            Workshop Account Submitted!
+          </h3>
+          <p className="text-xs text-slate-400 max-w-sm mx-auto leading-relaxed">
+            Your application is registered. We have prepared an instant WhatsApp alert to dispatch to the Super Admin.
+          </p>
+        </div>
+
+        {/* Application details pill */}
+        <div className="p-4 bg-slate-950 rounded-2xl border border-slate-800 space-y-2 text-xs">
+          <div className="flex items-center justify-between text-slate-400">
+            <span>Workshop Name:</span>
+            <strong className="text-white font-mono">{registeredSuccess.shopName}</strong>
+          </div>
+          <div className="flex items-center justify-between text-slate-400">
+            <span>Owner Name:</span>
+            <span className="text-white font-semibold">{registeredSuccess.name}</span>
+          </div>
+          <div className="flex items-center justify-between text-slate-400">
+            <span>Contact Email:</span>
+            <span className="text-slate-300 font-mono">{registeredSuccess.email}</span>
+          </div>
+          <div className="flex items-center justify-between pt-1 border-t border-slate-800/80">
+            <span className="text-slate-400">Platform Status:</span>
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">
+              Awaiting Approval
+            </span>
+          </div>
+        </div>
+
+        {/* PRIMARY CTA: Send / Open Alert on WhatsApp */}
+        <div className="space-y-2.5 pt-1">
+          <a
+            href={registeredSuccess.waUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-full py-3.5 px-4 bg-[#25D366] hover:bg-[#20ba59] text-slate-950 font-black rounded-xl text-xs sm:text-sm shadow-xl shadow-[#25D366]/20 transition flex items-center justify-center gap-2 transform active:scale-95"
+          >
+            <MessageSquare className="w-4 h-4 fill-current" />
+            <span>Open WhatsApp Alert to Super Admin</span>
+          </a>
+
+          <Link
+            href={redirectTarget || '/dashboard'}
+            className="w-full py-2.5 px-4 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl text-xs transition flex items-center justify-center gap-1.5"
+          >
+            <span>Proceed to Pending Approval Workspace</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </Link>
+        </div>
+
+        <p className="text-[11px] text-slate-500 text-center">
+          Super Admin will verify your repair center. You will receive immediate WhatsApp access updates.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full space-y-5">

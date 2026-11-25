@@ -838,6 +838,19 @@ export const supabaseService = {
       }
     }
 
+    // Alert Super Admin of new workshop user registration awaiting verification
+    try {
+      const shopDisplayName = userData.shopName || createdUser.shopName || 'New Repair Hub';
+      await notificationService.addNotificationAlert({
+        type: 'NEW_USER_REGISTRATION',
+        title: `New Workshop Registered: ${shopDisplayName}`,
+        message: `${createdUser.name} registered repair workshop "${shopDisplayName}" (${cleanEmail}, Phone: ${createdUser.phone || 'N/A'}). Awaiting Super Admin review and approval.`,
+        recipientRole: 'SUPER_ADMIN',
+      });
+    } catch (notifErr) {
+      console.warn('Super Admin registration alert notice:', notifErr.message);
+    }
+
     return createdUser;
   },
 

@@ -9,12 +9,13 @@ import NotificationBell from '../../components/NotificationBell';
 import RoleGuard from '../../components/RoleGuard';
 import { supabaseService } from '../../services/supabaseService';
 import { useAuth } from '../../context/AuthContext';
+import { formatWhatsAppPhone } from '../../utils/productImages';
 import {
   ShieldCheck, Store, Users, Banknote, Clock, TrendingUp, Layers,
   Wrench, Plus, Search, RefreshCw, AlertCircle,
   IndianRupee, ChevronRight, Sparkles, Phone, Mail, CheckCircle2,
   Menu, X, LogOut, Home, ExternalLink, ArrowUpRight, BarChart3, Shield,
-  Building2, UserCheck, UserX,
+  Building2, UserCheck, UserX, ArrowRight, MessageSquare
 } from 'lucide-react';
 
 export default function SuperAdminPage() {
@@ -402,6 +403,37 @@ export default function SuperAdminPage() {
 
           {/* Workspace Body */}
           <main className="p-4 sm:p-8 space-y-6 flex-1 max-w-7xl w-full mx-auto">
+
+            {/* Live Registration Alert Banner for Super Admin */}
+            {pendingAdminsCount > 0 && (
+              <div className="bg-gradient-to-r from-amber-500/15 via-purple-500/10 to-amber-500/15 border border-amber-500/40 rounded-3xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xl animate-in fade-in">
+                <div className="flex items-center gap-3">
+                  <span className="p-2.5 rounded-2xl bg-amber-500/20 text-amber-400 border border-amber-500/30 shrink-0">
+                    <AlertCircle className="w-5 h-5 animate-pulse" />
+                  </span>
+                  <div>
+                    <h4 className="font-extrabold text-white text-sm sm:text-base flex items-center gap-2">
+                      <span>{pendingAdminsCount} New Workshop Registration{pendingAdminsCount > 1 ? 's' : ''} Awaiting Review</span>
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 uppercase tracking-wider">
+                        Action Required
+                      </span>
+                    </h4>
+                    <p className="text-xs text-slate-400 mt-0.5">
+                      New repair shop admin accounts have registered and require your verification before workshop access is activated.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('ADMINS')}
+                  className="px-4 py-2.5 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-400 hover:to-orange-500 text-slate-950 font-black rounded-xl text-xs shadow-lg transition flex items-center gap-1.5 shrink-0"
+                >
+                  <UserCheck className="w-4 h-4" />
+                  <span>Review &amp; Approve ({pendingAdminsCount})</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )}
 
             {/* Macro KPI Cards Grid */}
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
@@ -846,6 +878,21 @@ export default function SuperAdminPage() {
 
                               <td className="py-3.5 px-4 text-right">
                                 <div className="flex items-center justify-end gap-2">
+                                  {adm.phone && (
+                                    <a
+                                      href={`https://wa.me/${formatWhatsAppPhone(adm.phone)}?text=${encodeURIComponent(
+                                        `Hello ${adm.name}! SmartFix Platform Governance: We received your workshop registration for "${adm.shopName}". Let us know if you have any questions during verification.`
+                                      )}`}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-emerald-400 font-bold text-xs border border-slate-700/80 transition flex items-center gap-1 shadow-sm"
+                                      title="Chat with Workshop Owner on WhatsApp"
+                                    >
+                                      <MessageSquare className="w-3.5 h-3.5" />
+                                      <span className="hidden sm:inline">WhatsApp</span>
+                                    </a>
+                                  )}
+
                                   {adm.status !== 'ACTIVE' && (
                                     <button
                                       type="button"

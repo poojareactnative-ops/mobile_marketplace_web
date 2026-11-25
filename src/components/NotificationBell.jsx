@@ -117,13 +117,15 @@ export default function NotificationBell() {
                       <div className="flex items-center gap-1.5 font-bold text-slate-200">
                         {alert.type === 'PARTNER_VERIFIED' ? (
                           <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                        ) : alert.type === 'NEW_USER_REGISTRATION' || alert.type === 'NEW_ADMIN_REGISTRATION' ? (
+                          <UserCheck className="w-3.5 h-3.5 text-amber-400" />
                         ) : (
                           <Bell className="w-3.5 h-3.5 text-purple-400" />
                         )}
                         <span>{alert.title || 'Platform Notice'}</span>
                       </div>
                       <span className="text-[10px] text-slate-500 font-mono">
-                        {new Date(alert.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        {new Date(alert.timestamp || alert.created_at || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </span>
                     </div>
 

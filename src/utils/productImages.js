@@ -351,3 +351,58 @@ export function getRepairJobImages(job) {
   return list;
 }
 
+/**
+ * Generates an instant WhatsApp alert URL to the platform Super Admin
+ * when a new workshop admin registers their repair center.
+ */
+export function getWhatsAppSuperAdminRegistrationAlertUrl({
+  superAdminPhone,
+  shopName,
+  ownerName,
+  email,
+  phone,
+  registeredAt,
+} = {}) {
+  const targetPhone = formatWhatsAppPhone(
+    superAdminPhone ||
+    (typeof process !== 'undefined' ? process.env.NEXT_PUBLIC_SUPER_ADMIN_PHONE : null) ||
+    '919845011223'
+  );
+
+  const superAdminUrl = typeof window !== 'undefined'
+    ? `${window.location.origin}/super-admin`
+    : 'https://smartfixhub.com/super-admin';
+
+  const dateStr = registeredAt
+    ? new Date(registeredAt).toLocaleString('en-IN')
+    : new Date().toLocaleString('en-IN');
+
+  const message =
+`🔔 *NEW WORKSHOP REGISTRATION ALERT* 🔔
+*SmartFix Platform Governance*
+━━━━━━━━━━━━━━━━━━━━
+
+A new repair center has registered on *SmartFix Hub* and is awaiting your governance approval:
+
+🏪 *WORKSHOP DETAILS*
+━━━━━━━━━━━━━━━━━━━━
+▪️ *Shop Name:* *${shopName || 'Mobile Repair Hub'}*
+▪️ *Owner Name:* *${ownerName || 'Workshop Admin'}*
+▪️ *Email:* ✉️ ${email || 'N/A'}
+▪️ *Contact Phone:* 📞 ${phone || 'N/A'}
+▪️ *Registered At:* ⏱️ ${dateStr}
+▪️ *Status:* ⏳ *PENDING_APPROVAL*
+
+🛡️ *GOVERNANCE ACTION REQUIRED*
+━━━━━━━━━━━━━━━━━━━━
+Please review credentials and accept/activate this workshop on the platform:
+
+👉 *Open Super Admin Approvals Panel:*
+${superAdminUrl}
+`;
+
+  return `https://wa.me/${targetPhone}?text=${encodeURIComponent(message)}`;
+}
+
+
+
