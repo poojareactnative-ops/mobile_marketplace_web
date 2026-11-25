@@ -1,24 +1,60 @@
 'use client';
 
-import React, { useState } from 'react';
-import { CheckCircle2, AlertCircle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { CheckCircle2, AlertCircle, Smartphone, Sparkles } from 'lucide-react';
+import { validateUpiId, POPULAR_UPI_HANDLES } from '../utils/upiValidation';
 
 export default function AdminPayCommissionModal({ isOpen, onClose, commission, onPaid }) {
+  const [upiId, setUpiId] = useState('');
   const [paymentRef, setPaymentRef] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [upiTouched, setUpiTouched] = useState(false);
+
+  useEffect(() => {
+    if (commission?.seller_upi) {
+      setUpiId(commission.seller_upi);
+    } else {
+      setUpiId('');
+    }
+    setPaymentRef('');
+    setError('');
+    setUpiTouched(false);
+  }, [commission, isOpen]);
 
   if (!isOpen || !commission) return null;
 
+  const upiValidation = validateUpiId(upiId);
+  const isUpiValid = upiId ? upiValidation.isValid : true; // optional if only recording reference, but if entered must be valid
+
+  const handleHandleClick = (handle) => {
+    const base = upiId.includes('@') ? upiId.split('@')[0] : upiId.trim();
+    if (base) {
+      setUpiId(`${base}${handle}`);
+      setUpiTouched(true);
+    }
+  };
+
+  const handleAutoGenerateRef = () => {
+    setPaymentRef(`UPI-${Date.now().toString().slice(-6)}-${Math.floor(1000 + Math.random() * 9000)}`);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const ref = paymentRef.trim() || `UPI-${Math.floor(100000 + Math.random() * 900000)}`;
+    if (upiId && !upiValidation.isValid) {
+      setUpiTouched(true);
+      setError(upiValidation.error || 'Please enter a valid UPI ID');
+      return;
+    }
+
+    const ref = paymentRef.trim() || (upiId ? `${upiValidation.normalized} / UPI-${Math.floor(100000 + Math.random() * 900000)}` : `UPI-${Math.floor(100000 + Math.random() * 900000)}`);
 
     try {
       setLoading(true);
       setError('');
       await onPaid(commission.id, ref);
       setPaymentRef('');
+      setUpiId('');
       onClose();
     } catch (err) {
       setError(err.message || 'Payment recording failed');
@@ -57,29 +93,91 @@ export default function AdminPayCommissionModal({ isOpen, onClose, commission, o
             </div>
           </div>
 
+          {/* UPI ID verification */}
+          <div className="space-y-1">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                <Smartphone className="w-3.5 h-3.5 text-emerald-400" />
+                Seller UPI ID
+              </label>
+              {upiId && upiTouched && upiValidation.isValid && (
+                <span className="text-[10px] text-emerald-400 font-bold flex items-center gap-1">
+                  <CheckCircle2 className="w-3 h-3" />
+                  Valid Format
+                </span>
+              )}
+            </div>
+            <input
+              type="text"
+              value={upiId}
+              onChange={(e) => {
+                setUpiId(e.target.value.trim());
+                setUpiTouched(true);
+              }}
+              placeholder="e.g. 9876543210@paytm or seller@okaxis"
+              className={`w-full px-3 py-2 bg-slate-950 border rounded-xl text-xs text-white font-mono focus:outline-none transition ${
+                upiId && upiTouched && !upiValidation.isValid
+                  ? 'border-rose-500 focus:border-rose-400'
+                  : upiId && upiValidation.isValid
+                  ? 'border-emerald-500/80 focus:border-emerald-400'
+                  : 'border-slate-700 focus:border-emerald-500'
+              }`}
+            />
+            {upiId && upiTouched && !upiValidation.isValid && (
+              <p className="text-[11px] text-rose-400 font-medium">
+                {upiValidation.error}
+              </p>
+            )}
+            {/* Quick Handle Chips */}
+            <div className="flex items-center gap-1 flex-wrap pt-0.5">
+              <span className="text-[10px] text-slate-500 mr-1">Handle:</span>
+              {POPULAR_UPI_HANDLES.slice(0, 4).map((handle) => (
+                <button
+                  key={handle}
+                  type="button"
+                  onClick={() => handleHandleClick(handle)}
+                  className="text-[9px] px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 font-mono transition"
+                >
+                  {handle}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <div>
-            <label className="block text-xs font-bold text-slate-300 mb-1">Settlement Reference / UPI ID</label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="text-xs font-bold text-slate-300">Settlement Reference / UTR</label>
+              <button
+                type="button"
+                onClick={handleAutoGenerateRef}
+                className="text-[10px] text-amber-400 hover:text-amber-300 flex items-center gap-1 font-semibold"
+              >
+                <Sparkles className="w-3 h-3" />
+                Auto-generate
+              </button>
+            </div>
             <input
               type="text"
               value={paymentRef}
               onChange={(e) => setPaymentRef(e.target.value)}
-              placeholder="e.g. UPI-9876543210 (leave empty to auto-generate)"
+              placeholder="e.g. UPI-9876543210 (or click Auto-generate)"
               className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-xs text-white font-mono focus:outline-none focus:border-emerald-500"
             />
           </div>
 
-          <div className="flex justify-end space-x-2 pt-2">
+          <div className="flex justify-end space-x-2 pt-2 border-t border-slate-800">
             <button
               type="button"
               onClick={onClose}
+              disabled={loading}
               className="px-4 py-2 rounded-xl text-xs font-bold text-slate-300 hover:bg-slate-800"
             >
               Cancel
             </button>
             <button
               type="submit"
-              disabled={loading}
-              className="px-5 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg flex items-center space-x-1"
+              disabled={loading || (upiId ? !upiValidation.isValid : false)}
+              className="px-5 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg flex items-center space-x-1.5 disabled:opacity-50"
             >
               <CheckCircle2 className="w-4 h-4" />
               <span>{loading ? 'Recording...' : 'Record Payment As Paid'}</span>

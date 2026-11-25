@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import AdminCompleteRepairModal from '../../components/AdminCompleteRepairModal';
 import AdminPayCommissionModal from '../../components/AdminPayCommissionModal';
+import AdminBatchSettleModal from '../../components/AdminBatchSettleModal';
 import AdminOnboardSellerModal from '../../components/AdminOnboardSellerModal';
 import InvoiceWarrantyModal from '../../components/InvoiceWarrantyModal';
 import ImageLightboxModal from '../../components/ImageLightboxModal';
@@ -20,7 +21,7 @@ import {
   Layers, ArrowRight, IndianRupee, FileText, ChevronRight, Sparkles,
   ShieldCheck, Check, Smartphone, Tag, ShoppingBag, Trash2, ArrowUpRight,
   Menu, X, LogOut, ArrowLeft, LayoutDashboard, Home, ExternalLink, Printer, Award,
-  Camera, Image as ImageIcon, UploadCloud, Loader2
+  Camera, Image as ImageIcon, UploadCloud, Loader2, Zap
 } from 'lucide-react';
 
 export default function AdminPage() {
@@ -48,6 +49,7 @@ export default function AdminPage() {
   // Modals state
   const [completingJob, setCompletingJob] = useState(null);
   const [payingCommission, setPayingCommission] = useState(null);
+  const [batchSettlingSeller, setBatchSettlingSeller] = useState(null);
   const [invoiceJob, setInvoiceJob] = useState(null);
   const [isOnboardOpen, setIsOnboardOpen] = useState(false);
   const [isDirectTicketOpen, setIsDirectTicketOpen] = useState(false);
@@ -141,9 +143,15 @@ export default function AdminPage() {
     await loadData();
   };
 
-  // Handle pay commission
+  // Handle pay commission (single)
   const handlePayCommission = async (commId, ref) => {
     await supabaseService.paySellerCommission(commId, ref);
+    await loadData();
+  };
+
+  // Handle batch pay commissions (1-click settlement for a partner seller's balance)
+  const handleBatchPayCommission = async (batchPayload) => {
+    await supabaseService.batchPaySellerCommissions(batchPayload);
     await loadData();
   };
 
@@ -750,7 +758,26 @@ export default function AdminPage() {
             )}
 
             {/* TAB CONTENT 2: 2% COMMISSION LEDGER */}
-            {activeTab === 'COMMISSIONS' && (
+            {activeTab === 'COMMISSIONS' && (() => {
+              const pendingCommissionsBySeller = (commissions.data || [])
+                .filter(c => c.status === 'PENDING')
+                .reduce((acc, c) => {
+                  const key = c.seller_id || c.seller_name || 'UNKNOWN';
+                  if (!acc[key]) {
+                    const matchingSeller = sellers.find(s => s.id === c.seller_id);
+                    acc[key] = {
+                      seller: matchingSeller || { id: c.seller_id, name: c.seller_name || 'Partner Store', shop_name: c.seller_name || 'Partner Store' },
+                      items: [],
+                      totalPending: 0,
+                    };
+                  }
+                  acc[key].items.push(c);
+                  acc[key].totalPending += Number(c.commission_amount || 0);
+                  return acc;
+                }, {});
+              const pendingSellerGroups = Object.values(pendingCommissionsBySeller);
+
+              return (
               <div className="space-y-4 animate-in fade-in duration-300">
                 <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
                   <div>
@@ -776,6 +803,62 @@ export default function AdminPage() {
                     </div>
                   </div>
                 </div>
+
+                {/* 1-Click Batch Settlement Cards */}
+                {pendingSellerGroups.length > 0 && (
+                  <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 sm:p-6 shadow-xl space-y-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                      <div className="flex items-center gap-2.5">
+                        <span className="p-2 rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-500/10 text-emerald-400 border border-emerald-500/30">
+                          <Zap className="w-5 h-5" />
+                        </span>
+                        <div>
+                          <h4 className="font-extrabold text-white text-sm sm:text-base">1-Click Batch Settle Partner Balances</h4>
+                          <p className="text-xs text-slate-400">Settle all accumulated referral tickets for a partner store in a single UPI transaction.</p>
+                        </div>
+                      </div>
+                      <span className="text-xs font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1 rounded-full self-start sm:self-auto">
+                        {pendingSellerGroups.length} Partner{pendingSellerGroups.length > 1 ? 's' : ''} Ready for Payout
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 pt-1">
+                      {pendingSellerGroups.map((group) => (
+                        <div
+                          key={group.seller.id || group.seller.name}
+                          className="bg-slate-950 border border-slate-800 hover:border-slate-700 rounded-2xl p-4 flex flex-col justify-between space-y-3.5 transition"
+                        >
+                          <div className="space-y-1">
+                            <div className="flex items-center justify-between gap-2">
+                              <h5 className="font-extrabold text-white text-sm truncate">
+                                {group.seller.shop_name || group.seller.name}
+                              </h5>
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30 shrink-0">
+                                {group.items.length} Ticket{group.items.length > 1 ? 's' : ''}
+                              </span>
+                            </div>
+                            <p className="text-xs text-slate-400 truncate">Owner: {group.seller.name}</p>
+                            <div className="pt-2">
+                              <div className="text-[10px] font-bold text-slate-500 uppercase">Accumulated Balance</div>
+                              <div className="text-2xl font-black text-emerald-400">
+                                ₹{group.totalPending.toLocaleString('en-IN')}
+                              </div>
+                            </div>
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={() => setBatchSettlingSeller(group)}
+                            className="w-full py-2.5 px-3 bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-500 hover:from-emerald-500 hover:to-teal-400 text-white font-extrabold rounded-xl text-xs shadow-lg shadow-emerald-950/40 flex items-center justify-center gap-1.5 transition"
+                          >
+                            <Zap className="w-4 h-4" />
+                            <span>Batch Settle ₹{group.totalPending.toLocaleString('en-IN')} (1 Click)</span>
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 <div className="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-xl">
                   <div className="p-4 border-b border-slate-800 flex items-center justify-between">
@@ -861,7 +944,8 @@ export default function AdminPage() {
                 </div>
 
               </div>
-            )}
+              );
+            })()}
 
             {/* TAB CONTENT 3: PARTNER STORES NETWORK */}
             {activeTab === 'SELLERS' && (
@@ -899,6 +983,8 @@ export default function AdminPage() {
                       const sellerCompleted = sellerJobs.filter(j => j.status === 'COMPLETED');
                       const sellerTotalVolume = sellerCompleted.reduce((sum, j) => sum + Number(j.final_amount || 0), 0);
                       const sellerCommission = Math.round(sellerTotalVolume * 0.02);
+                      const sellerPendingCommissions = (commissions.data || []).filter(c => c.seller_id === s.id && c.status === 'PENDING');
+                      const sellerPendingAmount = sellerPendingCommissions.reduce((sum, c) => sum + Number(c.commission_amount || 0), 0);
 
                       return (
                         <div key={s.id} className="bg-slate-900 border border-slate-800 hover:border-slate-700 rounded-3xl p-5 shadow-lg space-y-4 transition">
@@ -961,8 +1047,29 @@ export default function AdminPage() {
                               <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
                               <span>Active Partner</span>
                             </span>
-                            <span className="text-[10px] text-slate-500 font-mono">2% Referral Model</span>
+                            <span className="text-[10px] text-slate-500 font-mono">
+                              {sellerPendingAmount > 0 ? (
+                                <span className="text-rose-400 font-bold">₹{sellerPendingAmount} Pending</span>
+                              ) : (
+                                'Settled'
+                              )}
+                            </span>
                           </div>
+
+                          {sellerPendingAmount > 0 && (
+                            <button
+                              type="button"
+                              onClick={() => setBatchSettlingSeller({
+                                seller: s,
+                                items: sellerPendingCommissions,
+                                totalPending: sellerPendingAmount,
+                              })}
+                              className="w-full py-2 px-3 bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-500 hover:from-emerald-500 hover:to-teal-400 text-white font-extrabold rounded-xl text-xs shadow flex items-center justify-center gap-1.5 transition"
+                            >
+                              <Zap className="w-3.5 h-3.5" />
+                              <span>1-Click Settle ₹{sellerPendingAmount.toLocaleString('en-IN')} (UPI)</span>
+                            </button>
+                          )}
                         </div>
                       );
                     })}
@@ -1102,6 +1209,15 @@ export default function AdminPage() {
           onClose={() => setPayingCommission(null)}
           commission={payingCommission}
           onPaid={handlePayCommission}
+        />
+
+        <AdminBatchSettleModal
+          isOpen={!!batchSettlingSeller}
+          onClose={() => setBatchSettlingSeller(null)}
+          seller={batchSettlingSeller?.seller}
+          pendingCommissions={batchSettlingSeller?.items || []}
+          onBatchPaid={handleBatchPayCommission}
+          adminUser={user}
         />
 
         <AdminOnboardSellerModal

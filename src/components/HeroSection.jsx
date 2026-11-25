@@ -535,10 +535,7 @@ export default function HeroSection() {
         <div className="lg:col-span-6 flex flex-col items-center justify-center order-2 w-full max-w-lg mx-auto">
 
           {/* Interactive Graphic Showcase Card */}
-          <div className="w-full bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl
-            border border-slate-200/90 dark:border-slate-800/90
-            rounded-3xl p-4 sm:p-6 shadow-xl dark:shadow-2xl relative overflow-hidden transition-all duration-300">
-
+          <div className="">
             {/* Glowing Corner Accents */}
             <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/10 rounded-full blur-xl pointer-events-none" />
             <div className="absolute bottom-0 left-0 w-24 h-24 bg-indigo-500/10 rounded-full blur-xl pointer-events-none" />

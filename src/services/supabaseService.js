@@ -269,6 +269,79 @@ export const supabaseService = {
     return Array.isArray(res) && res[0] ? res[0] : updates;
   },
 
+  // 5.1 Admin Batch Settles 2% Commissions for a Partner Seller via UPI
+  async batchPaySellerCommissions({ commissionIds, sellerId, paymentReference, upiId, adminUser }) {
+    if (!commissionIds || commissionIds.length === 0) {
+      throw new Error('No pending commissions selected for batch settlement.');
+    }
+
+    const ref = paymentReference?.trim() || `UPI-BATCH-${Math.floor(100000 + Math.random() * 900000)}`;
+    const now = new Date().toISOString();
+    const updates = {
+      status: 'PAID',
+      payment_reference: ref,
+      paid_at: now,
+      updated_at: now,
+    };
+
+    let updatedRows = [];
+    try {
+      const idFilter = `(${commissionIds.join(',')})`;
+      const res = await supabaseRest(`repair_commissions?id=in.${idFilter}`, {
+        method: 'PATCH',
+        body: updates,
+      });
+      updatedRows = Array.isArray(res) ? res : [];
+    } catch (err) {
+      console.warn('Batch in-filter failed, settling individually:', err.message);
+      // Fallback: update individually
+      for (const id of commissionIds) {
+        try {
+          const row = await supabaseRest(`repair_commissions?id=eq.${id}`, {
+            method: 'PATCH',
+            body: updates,
+          });
+          if (Array.isArray(row) && row[0]) updatedRows.push(row[0]);
+        } catch (e) {}
+      }
+    }
+
+    // Also update associated repair_jobs commission_status to PAID
+    const targetRows = updatedRows.length > 0 ? updatedRows : commissionIds.map(id => ({ id }));
+    for (const item of targetRows) {
+      if (item.repair_job_id) {
+        try {
+          await supabaseRest(`repair_jobs?id=eq.${item.repair_job_id}`, {
+            method: 'PATCH',
+            body: { commission_status: 'PAID', paid_at: now },
+          });
+        } catch (e) {}
+      }
+    }
+
+    const totalAmount = updatedRows.reduce((sum, r) => sum + Number(r.commission_amount || 0), 0);
+
+    // Notify Partner Seller
+    try {
+      const sellerName = updatedRows[0]?.seller_name || 'Partner Store';
+      await notificationService.addNotificationAlert({
+        type: 'COMMISSION_PAID',
+        title: `₹${totalAmount} Commission Settled via UPI`,
+        message: `${adminUser?.name || 'Workshop Hub'} batch-settled ${commissionIds.length} referral commissions (Total: ₹${totalAmount}) to ${upiId || 'your UPI'}. UTR/Ref: ${ref}`,
+        recipientRole: 'SELLER',
+        recipientId: sellerId,
+      });
+    } catch (e) {}
+
+    return {
+      success: true,
+      settledCount: commissionIds.length,
+      totalAmount,
+      paymentReference: ref,
+      updatedRows,
+    };
+  },
+
   // 6. Get Commissions Ledger & Summaries
   async getCommissions(filter = {}) {
     let endpoint = 'repair_commissions?select=*&order=created_at.desc';
@@ -677,13 +750,22 @@ export const supabaseService = {
     }
   },
 
-  // 10. Public Authentication: Register (Admins & Customers only)
+  // 10. Public Authentication: Register (Repair Shop Admins only)
   async register(userData) {
     const cleanEmail = String(userData.email || '').trim().toLowerCase();
+
+    // Business Rule: Customers do not register (they track repairs directly at /track)
+    if (userData.role === 'CUSTOMER') {
+      throw new Error('Customer registration is disabled. Customers do not need an account and can track repairs directly at /track using their ticket ID.');
+    }
 
     // Business Rule: Sellers cannot self-register directly
     if (userData.role === 'SELLER') {
       throw new Error('Accessory Sellers cannot self-register. A registered Repair Shop Admin must onboard you to partner with their shop.');
+    }
+
+    if (userData.role !== 'ADMIN') {
+      throw new Error('Public registration is restricted to Repair Shop Admins only.');
     }
 
     // Check if user already exists
@@ -696,14 +778,13 @@ export const supabaseService = {
       if (e.message && e.message.includes('already exists')) throw e;
     }
 
-    const initialStatus = userData.role === 'ADMIN' ? 'PENDING' : 'ACTIVE';
     const newUser = {
       email: cleanEmail,
       password: userData.password || null,
       name: userData.name || cleanEmail.split('@')[0],
       phone: userData.phone || '',
-      role: userData.role === 'ADMIN' ? 'ADMIN' : 'CUSTOMER',
-      status: initialStatus,
+      role: 'ADMIN',
+      status: 'PENDING',
       is_default_password: false,
     };
 

@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { X, Send, AlertCircle, CheckCircle2, IndianRupee, Smartphone, Building2 } from 'lucide-react';
 import { supabaseService } from '../services/supabaseService';
+import { validateUpiId, POPULAR_UPI_HANDLES } from '../utils/upiValidation';
 
 export default function SellerPayoutRequestModal({
   isOpen,
@@ -33,9 +34,12 @@ export default function SellerPayoutRequestModal({
       setError(`Requested amount (₹${reqAmount}) exceeds your available pending balance (₹${pendingBalance}).`);
       return;
     }
-    if (paymentMethod === 'UPI' && !upiId.trim()) {
-      setError('Please enter your UPI ID (e.g. yourname@okaxis or phone@paytm).');
-      return;
+    if (paymentMethod === 'UPI') {
+      const upiValidation = validateUpiId(upiId);
+      if (!upiValidation.isValid) {
+        setError(upiValidation.error || 'Please enter a valid UPI ID (e.g. phone@paytm or name@okaxis)');
+        return;
+      }
     }
     if (paymentMethod === 'BANK' && (!bankAccountNo.trim() || !bankIfsc.trim())) {
       setError('Please provide both Account Number and IFSC Code for Bank Transfer.');

@@ -135,16 +135,26 @@ function LoginForm() {
         </span>
       </div>
 
-      {/* Registration link */}
-      <div className="pt-3 text-center text-xs text-slate-400 border-t border-slate-800">
-        Don&apos;t have an account yet?{' '}
-        <Link
-          href={`/register${redirectTarget !== '/dashboard' ? `?redirect=${encodeURIComponent(redirectTarget)}` : ''}`}
-          className="font-bold text-amber-400 hover:text-amber-300 inline-flex items-center gap-1 ml-1"
-        >
-          <span>Register New Account</span>
-          <ArrowRight className="w-3.5 h-3.5" />
-        </Link>
+      {/* Customer Notice & Registration links */}
+      <div className="pt-3 space-y-2 border-t border-slate-800 text-xs text-slate-400 text-center">
+        <div>
+          Repair workshop owner?{' '}
+          <Link
+            href={`/register${redirectTarget !== '/dashboard' ? `?redirect=${encodeURIComponent(redirectTarget)}` : ''}`}
+            className="font-bold text-amber-400 hover:text-amber-300 inline-flex items-center gap-1 ml-1"
+          >
+            <span>Register Workshop Admin</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </Link>
+        </div>
+
+        <div className="text-[11px] text-slate-500 pt-1">
+          Customer tracking a device? No account needed.{' '}
+          <Link href="/track" className="text-blue-400 hover:text-blue-300 font-bold inline-flex items-center gap-0.5 ml-1">
+            <span>Track Repair Live</span>
+            <ArrowRight className="w-3 h-3" />
+          </Link>
+        </div>
       </div>
 
     </div>

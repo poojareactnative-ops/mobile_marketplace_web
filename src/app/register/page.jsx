@@ -36,8 +36,8 @@ function RegisterForm() {
       return;
     }
 
-    if (form.role === 'ADMIN' && !form.shopName.trim()) {
-      setError('Please enter your repair shop name.');
+    if (!form.shopName.trim()) {
+      setError('Please enter your repair workshop / shop name.');
       return;
     }
 
@@ -49,7 +49,7 @@ function RegisterForm() {
     try {
       setSubmitting(true);
       setError('');
-      await register(form);
+      await register({ ...form, role: 'ADMIN' });
       router.push(redirectTarget);
     } catch (err) {
       setError(err.message || 'Registration failed. Please check details.');
@@ -59,7 +59,7 @@ function RegisterForm() {
   };
 
   return (
-    <div className="w-full space-y-6">
+    <div className="w-full space-y-5">
       
       {/* Error notification */}
       {error && (
@@ -69,86 +69,65 @@ function RegisterForm() {
         </div>
       )}
 
-      {/* Role Switcher */}
-      <div className="space-y-2">
-        <label className="block text-xs font-black uppercase tracking-wider text-slate-400">
-          Step 1: Select Your Account Role
-        </label>
-        
-        <div className="grid grid-cols-2 gap-3">
-          
-          {/* Option 1: Admin */}
-          <button
-            type="button"
-            onClick={() => setForm({ ...form, role: 'ADMIN' })}
-            className={`p-4 rounded-2xl border text-left transition relative overflow-hidden group ${
-              form.role === 'ADMIN'
-                ? 'bg-amber-500/15 border-amber-500/60 text-white shadow-xl shadow-amber-500/10'
-                : 'bg-slate-900/80 border-slate-800 text-slate-400 hover:text-white hover:border-slate-700'
-            }`}
-          >
-            <div className="flex items-center justify-between mb-2">
-              <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${
-                form.role === 'ADMIN' ? 'bg-amber-500 text-slate-950' : 'bg-slate-800 text-slate-400'
-              }`}>
-                <Wrench className="w-4 h-4 font-black" />
-              </div>
-              {form.role === 'ADMIN' && (
-                <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
-              )}
-            </div>
-            <div className="text-xs font-black text-white">Repair Shop Admin</div>
-            <p className="text-[11px] text-slate-400 mt-0.5 leading-snug">
-              Operate workshop, fix devices, onboard sellers &amp; settle 2% cut.
-            </p>
-          </button>
-
-          {/* Option 2: Customer */}
-          <button
-            type="button"
-            onClick={() => setForm({ ...form, role: 'CUSTOMER' })}
-            className={`p-4 rounded-2xl border text-left transition relative overflow-hidden group ${
-              form.role === 'CUSTOMER'
-                ? 'bg-blue-500/15 border-blue-500/60 text-white shadow-xl shadow-blue-500/10'
-                : 'bg-slate-900/80 border-slate-800 text-slate-400 hover:text-white hover:border-slate-700'
-            }`}
-          >
-            <div className="flex items-center justify-between mb-2">
-              <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${
-                form.role === 'CUSTOMER' ? 'bg-blue-500 text-slate-950' : 'bg-slate-800 text-slate-400'
-              }`}>
-                <User className="w-4 h-4 font-black" />
-              </div>
-              {form.role === 'CUSTOMER' && (
-                <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
-              )}
-            </div>
-            <div className="text-xs font-black text-white">Customer</div>
-            <p className="text-[11px] text-slate-400 mt-0.5 leading-snug">
-              Device owner tracking diagnosis, shop repairs &amp; itemized bills.
-            </p>
-          </button>
-
-        </div>
-
-        {/* Business Callout for Accessory Sellers */}
-        <div className="bg-slate-950/90 border border-slate-800/80 p-3.5 rounded-2xl text-[11px] text-slate-400 flex items-start gap-3 mt-3">
-          <Store className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+      {/* Customer Notice: Customers do NOT register */}
+      <div className="bg-blue-950/40 border border-blue-800/60 p-3.5 rounded-2xl text-[11px] text-blue-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-md">
+        <div className="flex items-start gap-2.5">
+          <User className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
           <div className="leading-relaxed">
-            <strong className="text-slate-200">Mobile Accessory Store Partner?</strong> Sellers only sell mobile accessories and do not do repairs. To ensure 2% referral attribution, <strong className="text-emerald-400">Sellers are onboarded directly by their partner Repair Shop Admin</strong>.
+            <strong className="text-white">Looking to track your repair?</strong> Customers do not need to register. You can check your device status instantly using your ticket ID.
           </div>
+        </div>
+        <Link
+          href="/track"
+          className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl text-xs shrink-0 flex items-center gap-1 transition shadow"
+        >
+          <span>Track Device</span>
+          <ArrowRight className="w-3.5 h-3.5" />
+        </Link>
+      </div>
+
+      {/* Accessory Store Partner Notice */}
+      <div className="bg-slate-950/90 border border-slate-800/80 p-3.5 rounded-2xl text-[11px] text-slate-400 flex items-start gap-3">
+        <Store className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+        <div className="leading-relaxed">
+          <strong className="text-slate-200">Mobile Accessory Store Partner?</strong> Sellers are onboarded directly by their affiliated Repair Shop Admin to preserve 2% referral commissions.
         </div>
       </div>
 
       {/* Registration Input Form */}
-      <form onSubmit={handleRegister} className="space-y-4 pt-2">
-        <label className="block text-xs font-black uppercase tracking-wider text-slate-400">
-          Step 2: Enter Account Credentials
-        </label>
+      <form onSubmit={handleRegister} className="space-y-4 pt-1">
+        <div className="flex items-center justify-between">
+          <label className="block text-xs font-black uppercase tracking-wider text-slate-300">
+            Repair Shop Admin Registration
+          </label>
+          <span className="text-[10px] font-bold text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-full">
+            Workshop Hub
+          </span>
+        </div>
+
+        {/* Repair Shop Name */}
+        <div>
+          <label className="block text-xs font-bold text-slate-300 mb-1.5">
+            Repair Shop / Center Name <span className="text-amber-400">*</span>
+          </label>
+          <div className="relative">
+            <Building className="w-4 h-4 absolute left-3.5 top-3 text-slate-500" />
+            <input
+              type="text"
+              required
+              value={form.shopName}
+              onChange={(e) => setForm({ ...form, shopName: e.target.value })}
+              placeholder="e.g. Pooja Mobile Care &amp; Repair Hub"
+              className="w-full pl-10 pr-4 py-2.5 bg-slate-950/90 border border-slate-700/80 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500 font-medium transition shadow-inner"
+            />
+          </div>
+        </div>
 
         {/* Full Name */}
         <div>
-          <label className="block text-xs font-bold text-slate-300 mb-1.5">Full Name</label>
+          <label className="block text-xs font-bold text-slate-300 mb-1.5">
+            Workshop Owner Full Name <span className="text-amber-400">*</span>
+          </label>
           <div className="relative">
             <User className="w-4 h-4 absolute left-3.5 top-3 text-slate-500" />
             <input
@@ -161,24 +140,6 @@ function RegisterForm() {
             />
           </div>
         </div>
-
-        {/* Repair Shop Name (Only for Admin) */}
-        {form.role === 'ADMIN' && (
-          <div className="animate-in fade-in">
-            <label className="block text-xs font-bold text-slate-300 mb-1.5">Repair Shop / Center Name</label>
-            <div className="relative">
-              <Building className="w-4 h-4 absolute left-3.5 top-3 text-slate-500" />
-              <input
-                type="text"
-                required
-                value={form.shopName}
-                onChange={(e) => setForm({ ...form, shopName: e.target.value })}
-                placeholder="e.g. Pooja Mobile Care &amp; Repair Hub"
-                className="w-full pl-10 pr-4 py-2.5 bg-slate-950/90 border border-slate-700/80 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500 font-medium transition shadow-inner"
-              />
-            </div>
-          </div>
-        )}
 
         {/* Email & Phone Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
@@ -243,7 +204,7 @@ function RegisterForm() {
           disabled={submitting}
           className="w-full py-3 mt-4 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-400 hover:to-orange-500 text-slate-950 font-black rounded-xl text-xs shadow-xl shadow-amber-500/20 transition flex items-center justify-center space-x-2 transform hover:-translate-y-0.5"
         >
-          <span>{submitting ? 'Registering Account...' : 'Complete Free Registration'}</span>
+          <span>{submitting ? 'Registering Workshop...' : 'Register Workshop Admin'}</span>
           <ArrowRight className="w-4 h-4" />
         </button>
       </form>
@@ -361,9 +322,9 @@ export default function RegisterPage() {
               <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/10 rounded-bl-full pointer-events-none" />
 
               <div className="mb-6 space-y-1">
-                <h2 className="text-2xl font-black text-white">Create Your Account</h2>
+                <h2 className="text-2xl font-black text-white">Register Repair Workshop</h2>
                 <p className="text-xs text-slate-400">
-                  Register as a Repair Center Admin or Customer in seconds
+                  Register your repair shop to join the SmartFix partner network
                 </p>
               </div>
 
